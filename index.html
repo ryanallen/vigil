@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Steer: everything you own runs itself. Hold the wheel.</title>
-<meta name="description" content="Steer is one console for everything you own: the house on Mars, the station in orbit, the mine on an asteroid and the robots that run them. A design concept you can play.">
+<title>Steer: one console for everything you own</title>
+<meta name="description" content="A house on Mars, a station in orbit, and a mine on an asteroid run by agents. See what they do, change the plan mid-job, and approve what can't be undone. Play Steer.">
 <meta name="theme-color" content="#03050b">
 <link rel="canonical" href="https://ryanallen.com/steer/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://ryanallen.com/steer/">
-<meta property="og:title" content="Steer: everything you own runs itself. Hold the wheel.">
-<meta property="og:description" content="One console for the house on Mars, the station in orbit, the mine on an asteroid and the twelve thousand agents that run them.">
+<meta property="og:title" content="Steer: one console for everything you own">
+<meta property="og:description" content="See what your agents do, change course while they work, and decide what can't be undone.">
 <meta property="og:image" content="https://ryanallen.com/steer/share.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -56,6 +56,8 @@
   .hero::after { content: ""; position: absolute; inset: auto 0 0; height: 22%; z-index: -1; background: linear-gradient(transparent, var(--void)); }
   .hero-copy { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; padding: 0 24px 22vh; }
   .hero h1 { margin: 22px 0 0; font: 800 clamp(72px, 17vw, 230px)/.82 var(--sans); letter-spacing: -.055em; background: linear-gradient(180deg, #fff 30%, #9fb4dc 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 40px rgb(111 214 255 / .18)); }
+  .hero h1, .ratio .n, .statement .b { padding: .06em .04em .16em; margin-bottom: -.16em; }
+  .statement .b { display: inline-block; }
   .hero .tag { margin: 26px 0 0; max-width: 680px; font: 500 clamp(19px, 2.4vw, 27px)/1.3 var(--sans); letter-spacing: -.01em; color: var(--ink-2); }
   .hero .tag b { color: var(--ink); font-weight: 650; }
   .hero .ctas { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 22px; margin-top: 38px; }
@@ -278,9 +280,9 @@
   <div class="hud bl" aria-hidden="true"><span class="dot"></span>Kirra Station · <b>needs you</b></div>
   <div class="hud br" aria-hidden="true">Scroll</div>
   <div class="hero-copy">
-    <span class="label">One wheel for everything you own</span>
+    <span class="label">One console for everything you own</span>
     <h1>Steer</h1>
-    <p class="tag">The house on Mars. The station in orbit. The mine on an asteroid. <b>It all runs itself. You hold the wheel.</b></p>
+    <p class="tag">Your house on Mars, station in orbit and mine on an asteroid all have agents on the job. <b>You can see what they're doing and change their minds.</b></p>
     <div class="ctas"><a class="launch big" href="app/">Launch Steer <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="ghost" href="#problem">See why ↓</a></div>
   </div>
 </section>
@@ -288,8 +290,8 @@
 <section class="s center" id="problem">
   <div class="wrap">
     <span class="label reveal">The problem</span>
-    <h2 class="reveal d1">Everything works for you.<br><span class="dim">Nothing waits for you.</span></h2>
-    <p class="lede reveal d2">Robots seal the house before the storms. The station rotates its own crews. Drills mine, haulers ship, and maintenance robots repair the robots. The hard part is no longer getting it done. It is knowing what is being done in your name, changing course while it happens, and saying no before something can't be undone.</p>
+    <h2 class="reveal d1">The agents can do the work.<br><span class="dim">You still have to be in charge.</span></h2>
+    <p class="lede reveal d2">Robots seal the house before a storm. The station rotates its crews. The mine repairs its own drill. The problem is knowing what they're doing in your name, changing course while they work, and saying no before the ore leaves for a 211-day trip.</p>
     <div class="ratio reveal d3" aria-label="12,408 agents, one of you">
       <div><span class="n" id="nAgents">12,408</span><span class="u">Agents at work</span></div>
       <span class="vs" aria-hidden="true">:</span>
@@ -300,7 +302,7 @@
 
 <section class="frame" aria-label="A person seen from behind in a dark room, facing a wall of screens that show many places at once.">
   <img src="media/the-owner-1920.webp" srcset="media/the-owner-960.webp 960w, media/the-owner-1920.webp 1920w, media/the-owner-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="A person seen from behind in a dark room, facing a wall of screens that show many places at once." loading="lazy" decoding="async">
-  <div class="wrap"><span class="label reveal">The owner</span><p class="reveal d1">You can’t watch it all.<br><span>So Steer watches for you.</span></p></div>
+  <div class="wrap"><span class="label reveal">Your call</span><p class="reveal d1">12,408 agents at work.<br><span>One person to answer to.</span></p></div>
 </section>
 
 <section class="s" id="fleet">
@@ -308,7 +310,7 @@
     <div class="fleet-head">
       <div>
         <span class="label reveal">The fleet</span>
-        <h2 class="reveal d1">Everything.<br>At a glance.</h2>
+        <h2 class="reveal d1">See what's running.<br>Find what needs you.</h2>
       </div>
       <div class="totals reveal d2" aria-live="off">
         <div>Holdings<b>7</b></div>
@@ -317,21 +319,21 @@
       </div>
     </div>
     <div class="fleet" id="fleetGrid"></div>
-    <p class="fleet-note reveal">Only what needs you rises. Everything else reports, and keeps going.</p>
+    <p class="fleet-note reveal">Kirra needs a decision. The other jobs keep moving and show you where they stand.</p>
   </div>
 </section>
 
 <section class="frame" aria-label="Maintenance robots repairing a giant drill bearing in low gravity, sparks flying under work lights.">
   <img src="media/maintenance-robots-1920.webp" srcset="media/maintenance-robots-900.webp 900w, media/maintenance-robots-1920.webp 1920w, media/maintenance-robots-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="Maintenance robots repairing a giant drill bearing in low gravity, sparks flying under work lights." loading="lazy" decoding="async">
-  <div class="wrap"><span class="label reveal">Kirra Station · 03:12</span><p class="reveal d1">Drill 7 is down.<br><span>Four robots are on their way.</span></p></div>
+  <div class="wrap"><span class="label reveal">Kirra Station · 03:12</span><p class="reveal d1">The bearing seized.<br><span>Four robots left Bay 2.</span></p></div>
 </section>
 
 <section class="s" id="how">
   <div class="wrap feat">
     <div>
       <span class="label reveal">Plan</span>
-      <h2 class="reveal d1">Read the plan before anything moves.</h2>
-      <p class="lede reveal d2">Every job starts as a plan in plain words, with what it will cost and what it will ask you. Change a step, drop one, add your own. Nothing runs until you say go.</p>
+      <h2 class="reveal d1">Read the plan before the agent starts.</h2>
+      <p class="lede reveal d2">Drill 7 has a seized bearing. The agent lays out the repair, the cost and the decision it will bring back to you. Move a step, drop it or add one before you approve the work.</p>
     </div>
     <div class="glass reveal d2">
       <span class="label">Kirra Station · Drill 7</span>
@@ -352,8 +354,8 @@
   <div class="wrap feat flip">
     <div>
       <span class="label reveal">Steer</span>
-      <h2 class="reveal d1">Change course mid-flight.</h2>
-      <p class="lede reveal d2">Say what you want while it works. The agents read your note before their next step, rewrite what's left, and keep everything already done. You see exactly where your words landed.</p>
+      <h2 class="reveal d1">Change the job while it's running.</h2>
+      <p class="lede reveal d2">Tell the crew to keep people out of the shaft. The agent changes the bearing step before it runs and shows you the edit. The steps already finished stay finished.</p>
     </div>
     <div class="glass reveal d2" id="steerDemo">
       <div class="note"><span class="who">You</span><span id="steerText" class="typed"></span></div>
@@ -369,15 +371,15 @@
 
 <section class="frame" aria-label="A mass driver firing an ore capsule off an asteroid toward a distant blue Earth.">
   <img src="media/ore-launch-1920.webp" srcset="media/ore-launch-960.webp 960w, media/ore-launch-1920.webp 1920w, media/ore-launch-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="A mass driver firing an ore capsule off an asteroid toward a distant blue Earth." loading="lazy" decoding="async">
-  <div class="wrap"><span class="label reveal">Ore launch KR-112</span><p class="reveal d1">4,000 tonnes.&nbsp;211&nbsp;days.<br><span>One yes, and it can’t come back.</span></p></div>
+  <div class="wrap"><span class="label reveal">Ore launch KR-112</span><p class="reveal d1">4,000 tonnes.&nbsp;211&nbsp;days.<br><span>If you fire it, you can't call it back.</span></p></div>
 </section>
 
 <section class="s">
   <div class="wrap feat">
     <div>
       <span class="label reveal">Ask</span>
-      <h2 class="reveal d1">Nothing irreversible without you.</h2>
-      <p class="lede reveal d2">Most work can be undone, so it just happens. The few things that can't stop and wait for you, with what will happen, what it costs and what can't be taken back, written out before you decide.</p>
+      <h2 class="reveal d1">The launch needs your yes.</h2>
+      <p class="lede reveal d2">KR-112 carries 4,000 tonnes to Halcyon Station. Once it fires, you can't call it back for 211 days. Read the checks, fire it or hold it.</p>
     </div>
     <div class="glass ask reveal d2">
       <span class="label">Needs you</span>
@@ -396,8 +398,8 @@
   <div class="wrap feat flip">
     <div>
       <span class="label reveal">Proof</span>
-      <h2 class="reveal d1">Proof, not “done”.</h2>
-      <p class="lede reveal d2">Every claim comes with its evidence. When a test fails, you see the failure, the fix and the pass, kept together. Nothing is quietly overwritten.</p>
+      <h2 class="reveal d1">The first load test failed.</h2>
+      <p class="lede reveal d2">The bearing hit 91 °C against an 80 °C limit. The agent changed spin-up from 40 to 90 seconds and ran the test again. It passed at 64 °C. Both runs stay here.</p>
     </div>
     <div class="glass reveal d2">
       <span class="label">Load test · Drill 7</span>
@@ -407,7 +409,7 @@
         <path class="l2" d="M0 104 C50 94 90 58 140 44 S230 26 280 22 S360 20 400 20"/>
       </svg>
       <div class="runs">
-        <div class="run fail"><span class="r">Run 1 · failed</span><span class="v">71%</span><p>Torque dropped at 6 min. The new bearing ran hot. The crew re-seated it.</p></div>
+        <div class="run fail"><span class="r">Run 1 · failed</span><span class="v">91 °C</span><p>The bearing passed the 80 °C limit at six minutes. The agent slowed spin-up before trying again.</p></div>
         <div class="run pass"><span class="r">Run 2 · passed</span><span class="v">100%</span><p>Full torque for ten minutes. Bearing at 64 °C, under the 80 °C limit.</p></div>
       </div>
     </div>
@@ -418,12 +420,12 @@
   <div class="wrap feat">
     <div>
       <span class="label reveal">Review</span>
-      <h2 class="reveal d1">Every change, with its reason.</h2>
-      <p class="lede reveal d2">Each change the agents make sits beside why they made it, with only what actually changed lit up. Accept it, or send it back with a note and they take another pass.</p>
+      <h2 class="reveal d1">See why the agent changed it.</h2>
+      <p class="lede reveal d2">The work order, crew assignment and drill settings each show the reason for the edit. Accept a change or send it back with a note.</p>
     </div>
     <div class="glass reveal d2">
       <span class="label">kirra/drill-7.conf</span>
-      <p class="why" style="margin-top:12px"><b>Why</b>Run 1 failed on heat; a slower spin-up keeps the new bearing under its limit.</p>
+      <p class="why" style="margin-top:12px"><b>Why</b>The bearing hit 91 °C, above its 80 °C limit. A 90-second spin-up passed at 64 °C.</p>
       <div class="diff" role="img" aria-label="Spin-up time changed from 40 to 90 seconds">
         <div><span class="ln">18</span><span></span>bearing: KR-B7-0412</div>
         <div class="del"><span class="ln">19</span><span>−</span>spin_up: <mark>40</mark>s</div>
@@ -439,8 +441,8 @@
   <div class="wrap feat flip">
     <div>
       <span class="label reveal">Rewind</span>
-      <h2 class="reveal d1">Go back to any point.</h2>
-      <p class="lede reveal d2">Every finished step is a checkpoint. Return to one and the work after it runs again, with whatever you say now. If something already left, a launch or a payment, Steer tells you before you go back.</p>
+      <h2 class="reveal d1">Go back to a finished step.</h2>
+      <p class="lede reveal d2">Pick a checkpoint, change the instruction and run the later steps again. If KR-112 has already fired, the dialog tells you it can't come back.</p>
     </div>
     <div class="glass reveal d2">
       <span class="label">Drill 7 · checkpoints</span>
@@ -460,15 +462,15 @@
 <section class="closing">
   <div class="wrap">
     <span class="label reveal">Kirra Station is waiting</span>
-    <h2 class="reveal d1">Take the wheel.</h2>
-    <p class="lede reveal d2" style="margin-inline:auto">Drill 7 is down and the ore window is closing. Read the plan, steer the crew, and decide on the launch.</p>
+    <h2 class="reveal d1">Your call.</h2>
+    <p class="lede reveal d2" style="margin-inline:auto">Drill 7 is down at Kirra Station. Four robots are ready. Read the plan, change it while they work and decide whether KR-112 fires.</p>
     <div class="ctas reveal d3"><a class="launch big" href="app/">Launch Steer <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="ghost" href="about.html">How it's designed →</a></div>
   </div>
 </section>
 </main>
 
 <footer>
-  <div class="wrap"><span>Steer is a design concept and a playable prototype. Every holding in it is fiction; no model runs and nothing leaves your browser.</span><span>Designed and built by <a href="https://ryanallen.com/">Ryan Allen</a>.</span></div>
+  <div class="wrap"><span>Steer is a playable fiction about sustainable holdings. Nothing is taken from people. No model runs, and nothing leaves your browser.</span><span>Designed and built by <a href="https://ryanallen.com/">Ryan Allen</a>.</span></div>
 </footer>
 
 <script>
@@ -526,13 +528,13 @@ document.querySelectorAll('.reveal, .glass').forEach(el => io.observe(el));
 
 // The fleet: live, ticking while on screen.
 const FLEET = [
-  { id: 'kirra', art: 'mining-station-1200', name: 'Kirra Station', where: '16 Psyche · asteroid belt', now: 'Drill 7 is down. A repair plan is ready, and the ore window closes in 38 minutes.', p: 62, agents: 1840, need: true },
-  { id: 'jezero', art: 'mars-house-640', name: 'Jezero House', where: 'Mars', now: 'Sealing every lock and lowering the masts before the dust storm.', p: 82, agents: 214 },
-  { id: 'halcyon', art: 'space-station-640', name: 'Halcyon Station', where: 'Earth orbit', now: 'Rotating crew: 14 of 40 cabins turned over.', p: 35, agents: 3120 },
-  { id: 'atlas', art: 'robot-workforce-640', name: 'Atlas Works', where: 'Robot crews', now: '2,140 robots on shift, 31 in maintenance bays.', p: 48, agents: 2140 },
-  { id: 'shackleton', art: 'lunar-foundry-640', name: 'Shackleton Foundry', where: 'The Moon · south pole', now: 'Casting hull plates, batch 88 of 120.', p: 73, agents: 4310 },
-  { id: 'tethys', art: 'ocean-farm-640', name: 'Tethys Farms', where: 'Pacific Ocean', now: 'Kelp harvest done; the beds were replanted the same day.', p: 100, agents: 784, done: true },
-  { id: 'helios', name: 'Helios Array', where: 'Inner orbit', now: 'Collecting sunlight no one else uses and beaming 3.1 GW of clean power to Kirra and the Moon.', p: 91, agents: 512 },
+  { id: 'kirra', art: 'mining-station-1200', name: 'Kirra Station', where: '16 Psyche · asteroid belt', now: 'Drill 7 stopped at 03:12. The bearing seized. A repair plan is ready, and the ore window closes in 38 minutes.', p: 62, agents: 1840, need: true },
+  { id: 'jezero', art: 'mars-house-640', name: 'Jezero House', where: 'Mars', now: 'The locks are sealing and the masts are coming down before the dust storm.', p: 82, agents: 214 },
+  { id: 'halcyon', art: 'space-station-640', name: 'Halcyon Station', where: 'Earth orbit', now: 'Crew rotation is under way: 14 of 40 cabins are ready.', p: 35, agents: 3120 },
+  { id: 'atlas', art: 'robot-workforce-640', name: 'Atlas Works', where: 'Robot crews', now: '2,140 robots are on shift. Another 31 are in the maintenance bays.', p: 48, agents: 2140 },
+  { id: 'shackleton', art: 'lunar-foundry-640', name: 'Shackleton Foundry', where: 'The Moon · south pole', now: 'Hull plates are coming off the line: batch 88 of 120.', p: 73, agents: 4310 },
+  { id: 'tethys', art: 'ocean-farm-640', name: 'Tethys Farms', where: 'Pacific Ocean', now: 'The kelp is harvested and the beds are replanted.', p: 100, agents: 784, done: true },
+  { id: 'helios', name: 'Helios Array', where: 'Inner orbit', now: 'The collectors are sending 3.1 GW of solar power to Kirra and the Moon.', p: 91, agents: 512 },
 ];
 const grid = $('fleetGrid');
 grid.innerHTML = FLEET.map((f, i) => {

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How Steer is designed</title>
-<meta name="description" content="The decisions behind Steer, one console for everything an owner's agents run, and the evidence each one rests on.">
+<title>Why Steer works this way</title>
+<meta name="description" content="How Steer lets you edit an agent's plan, change a job in progress, review its work and decide what can't be undone.">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#05070d">
 <link rel="canonical" href="https://ryanallen.com/steer/about.html">
@@ -35,56 +35,56 @@
 <body>
 <main>
   <div class="nav"><a class="back" href="./">← Steer</a><a class="launch" href="app/">Launch Steer</a></div>
-  <h1>How Steer is designed</h1>
-  <p class="lede">When agents run everything you own, from a house on Mars to a mine on an asteroid, the work stops being the hard part. The person in charge becomes the bottleneck. Steer is a working sketch of their console: where one person sets the agents' course, watches them work, corrects them without starting over, and decides what can't be undone. The world is fiction; each choice below rests on what people building and using today's AI agents have found.</p>
+  <h1>Why Steer works this way</h1>
+  <p class="lede">Steer is one console for a fictional house on Mars, station in orbit, asteroid mine, robot crews and solar array. The holdings are sustainable; nothing is taken from people. Agents do the work. You need to know what they're doing, change the job while it runs and approve the things that can't be undone. The Kirra repair lets you try those decisions.</p>
 
-  <h2><span>1</span>The plan is a document you edit before anything is spent</h2>
-  <p>Agents that plan first and then work out of sight leave the person to find out late that the approach was wrong. Devin added interactive planning so a person can change the approach before compute is spent. Steer opens on the agent's proposed plan, already editable: rename a step, move it, drop it, add your own. Nothing runs until you approve it.</p>
-  <p>Beside the plan, the agent shows what it read and what it is assuming, so a wrong assumption is caught before it becomes work. Correct one in a sentence and the assumption is struck through, the step it touches changes, and so does the work order it writes. The plan also carries an estimate of time and cost, and the summary sets the actual beside it.</p>
-  <p class="in-page">In Steer: the Plan column, with move, drop and add, and Approve plan and run; Before you approve, with It read and It assumes; the estimate above the plan.</p>
+  <h2><span>1</span>Edit the plan before the agent starts</h2>
+  <p>If the agent picks the wrong approach, finding out after it works is expensive. Devin's interactive planning lets a person change the approach first. Steer starts with a plan you can edit: rename, move, drop or add a step. The agent waits for your approval.</p>
+  <p>You can also see what the agent read and assumed. If Kirra's spare is the wrong choice, tell it to use the one on Halcyon's tug. The assumption, bearing step and work order change together. The plan gives you a time and cost estimate; the summary shows the actual numbers.</p>
+  <p class="in-page">In Steer: the Plan column, with move, drop and add, and Approve plan and run; Before the work starts, with It read and It assumes; the estimate above the plan.</p>
   <p class="src">Sources: <a href="https://builder.io/blog/devin-vs-cursor">Builder.io on Devin and Cursor</a>, <a href="https://latent.space/reading/async-agents-cognition-openinspect/">Latent Space on asynchronous agents</a>.</p>
 
-  <h2><span>2</span>Never silent</h2>
-  <p>People interrupt an agent when silence looks like a hang. So the current action is always on screen in plain words, under the step it belongs to, with time, cost and context running in the header. Each action lands in the feed with its time, so the record reads like a colleague's notes rather than a log.</p>
+  <h2><span>2</span>Show what the agent is doing</h2>
+  <p>Silence looks like a stuck job. Steer shows the current action under its plan step and puts each action in the feed with a time. The header keeps time, cost and context visible while the agent works.</p>
   <p class="in-page">In Steer: the line under the step that's running, the Activity feed, the meters. Scroll back while it works and the feed stays put, counting the new lines until you jump to them; the browser tab reads "● Needs you" when it waits on you.</p>
   <p class="src">Source: <a href="https://tianpan.co/blog/2026-03-15-designing-the-human-agent-interaction-layer">Tian Pan, designing the human-agent interaction layer</a>.</p>
 
-  <h2><span>3</span>Steer is not stop</h2>
-  <p>A new prompt throws away the plan and the work so far. A steer keeps both: it's queued, the agent reads it at the next step boundary, and only the steps after that change. Pause and Stop are separate controls with separate promises: pause holds everything, stop keeps every finished step. Each says what it keeps before you press it.</p>
-  <p class="in-page">In Steer: send "Keep people out of the shaft" while the crew is on its way, and step 4, Fit the new bearing, changes, marked "Changed by your steer". Nothing already done moves.</p>
+  <h2><span>3</span>Change course without starting over</h2>
+  <p>While four robots head for Shaft 3, tell the agent to keep people out. It reads the instruction before the next step and changes the bearing fit. Finished steps stay finished. Pause holds the current job; Stop ends it and keeps the work already done.</p>
+  <p class="in-page">In Steer: send "Keep people out of the shaft" while the crew is on its way, and step 4, Fit the spare bearing, changes, marked "Changed by your steer". Nothing already done moves.</p>
   <p class="src">Sources: <a href="https://www.copilotkit.ai/learning/what-is-agent-steering">CopilotKit on agent steering</a>, <a href="https://agentic-ai-wiki.vercel.app/playbooks/agent-ux-and-human-interaction/interruption-and-handoff/">interruption, steering and handoff</a>.</p>
 
-  <h2><span>4</span>Ask only where a person can decide</h2>
-  <p>A confirmation on every action feels like oversight and catches little. Steer asks once, for the only action in the job that can't be taken back: firing the ore launch. The card names the commands, what they touch, whether they can be undone, and the evidence so far. It also offers the two other answers people want: review first, or hold it.</p>
+  <h2><span>4</span>Ask before the launch</h2>
+  <p>Confirming every file edit would bury the one decision that matters. KR-112 carries 4,000 t of ore to Halcyon Station on a 211-day trip. Once it fires, it can't be recalled. The approval card shows the command, the load, the checks and what happens if you hold it. You can review the changes first.</p>
   <p class="in-page">In Steer: the ore launch card, with Fire the launch, Review changes first, Hold the launch.</p>
   <p class="src">Sources: <a href="https://dev.to/brennhill/how-to-build-a-good-human-in-the-loop-for-ai-coding-agents-1kan">building a good human-in-the-loop</a>, <a href="https://www.atlassian.com/software/jira/guides/agentic-engineering/human-in-the-loop">Atlassian on approval and review</a>, <a href="https://shop.smashingmagazine.com/2026/02/designing-agentic-ai-practical-ux-patterns/">Smashing on consent patterns</a>.</p>
 
-  <h2><span>5</span>Evidence before the verdict</h2>
-  <p>Agents tend to report "All tasks completed". Steer's summary makes each claim with its proof beside it: which checks pass, that one failed first and how it was fixed, what was launched and what wasn't, how many changes you've accepted.</p>
+  <h2><span>5</span>Put the evidence next to the result</h2>
+  <p>"Done" doesn't tell you whether the drill passed its load test. The summary names the checks, the failed run, the passing run, the launch decision and how many changes you accepted. You can open the underlying record from there.</p>
   <p class="in-page">In Steer: the summary when the run ends, and the Checks tab, where the failing run is kept, not overwritten.</p>
   <p class="src">Sources: <a href="https://dev.to/haaaaaley/show-the-agents-evidence-before-asking-a-human-to-approve-its-diff-25gj">show the agent's evidence first</a>, <a href="https://arxiv.org/pdf/2608.12355">Humans are missing from AI coding agent research</a>.</p>
 
-  <h2><span>6</span>Checks hold the agent</h2>
-  <p>A step isn't done until its checks pass. When the load test fails on heat, the failure is shown in full, the agent goes back and fixes it, and the passing run sits under the failing one. The same idea runs Leaftext's agent harness, where a failed check sends the agent back to work.</p>
+  <h2><span>6</span>Make the failed check visible</h2>
+  <p>The first load test reaches 91 °C against an 80 °C limit. The agent changes spin-up from 40 to 90 seconds and runs it again; the bearing holds at 64 °C. Both results stay in Checks. A step waits for a passing check, as it does in Leaftext's agent harness.</p>
   <p class="in-page">In Steer: step 5, and the two load test runs in Checks.</p>
 
-  <h2><span>7</span>Review by intent, not by file</h2>
-  <p>Review is now the ceiling on how fast work ships. A diff sorted by file makes the reviewer rebuild the agent's reasoning. Steer groups each change under the plan step that made it, puts the agent's reason above the diff, and lets you accept it or send it back with a note, which becomes a new step the agent runs.</p>
+  <h2><span>7</span>Review the reason with the edit</h2>
+  <p>A file name doesn't explain why a line changed. Steer groups edits under the plan step that made them and puts the agent's reason beside the diff. Accept an edit or send it back with a note; the agent turns that note into another step.</p>
   <p class="in-page">In Steer: the Changes tab, with Accept and Send back on each change, a count of what is left to review, and only the changed part of a replaced line marked. J and K move between changes, A accepts, S sends back.</p>
   <p class="src">Sources: <a href="https://latent.space/p/cognition">Latent Space with Cognition</a>, <a href="https://www.cs.utexas.edu/~witchel/378AC/lectures/015_coding_agent_fundamentals-slides.pdf">coding agent fundamentals, UT Austin</a>.</p>
 
-  <h2><span>8</span>Show the change, not only the code</h2>
-  <p>A line in a work order doesn't tell you whether the drill is running. The Preview tab shows Drill 7 before and after, its bearing, heat, crew and output, updated as each step lands, so the result is something you see, not something you imagine.</p>
+  <h2><span>8</span>Show the drill, too</h2>
+  <p>The work order can say the bearing was fitted while the drill is still down. Preview puts Drill 7 at 03:12 beside its current state, including the bearing, heat, crew and output. It updates after each step.</p>
   <p class="in-page">In Steer: the Preview tab, Drill 7 at 03:12 beside Drill 7 now.</p>
 
-  <h2><span>9</span>Every step is a checkpoint, and what can't be undone says so</h2>
-  <p>Checkpoints cover file edits, not side effects. Steer lets you return to after any finished step and run the rest again, and the dialog says plainly when something already left, like a launch, and won't come back.</p>
+  <h2><span>9</span>Let me go back, with a limit</h2>
+  <p>Return to a finished step and the later work runs again with your new instruction. If KR-112 has fired, the dialog says so. A checkpoint can redo the plan; it can't bring a capsule back.</p>
   <p class="in-page">In Steer: Return here on each finished step.</p>
   <p class="src">Source: <a href="https://dev.to/brennhill/how-to-build-a-good-human-in-the-loop-for-ai-coding-agents-1kan">building a good human-in-the-loop</a>.</p>
 
   <hr>
   <footer>
-    <p>Steer is one hand-written HTML file with no framework and no build step: the whole interface, the scripted agent and the app it works on. No model runs and nothing leaves your browser. Light and dark, phone and desktop, keyboard and screen reader.</p>
+    <p>Steer is a playable script in hand-written HTML. There's no framework or build step. No model runs and nothing leaves your browser. It works in light and dark themes, on phone and desktop, with a keyboard and screen reader.</p>
     <p>Designed and built by <a href="https://ryanallen.com/">Ryan Allen</a>. Source on <a href="https://github.com/ryanallen/steer">GitHub</a>.</p>
   </footer>
 </main>

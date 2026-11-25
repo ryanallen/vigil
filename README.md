@@ -1,9 +1,9 @@
 # Steer
 
-One console for everything you own: the house on Mars, the station in orbit, the mine on an asteroid, and the agents and robots that run them. A design concept and a playable prototype.
+Steer is a playable design concept for a house on Mars, a station in orbit, an asteroid mine, robot crews and an orbital solar array. Agents run the work. You see what they're doing, change the job while it runs and decide what can't be undone.
 
-- https://ryanallen.com/steer/ is the launch page: the story, the fleet, and what the console does.
-- https://ryanallen.com/steer/app/ is the console itself, on one job: bringing Drill 7 back at Kirra Station before the ore window closes. Edit the plan, steer the crew mid-job, decide on an ore launch that can't be recalled, and review every change with its proof.
-- https://ryanallen.com/steer/about.html is how it's designed, and why.
+- https://ryanallen.com/steer/ introduces the fleet and the job at Kirra Station.
+- https://ryanallen.com/steer/app/ lets you run that job. Drill 7 has a seized bearing. Four robots leave Bay 2, the first load test fails at 91 °C against an 80 °C limit, and a slower spin-up gets it running at 64 °C. Edit the plan, steer the crew, review the changes and decide whether ore launch KR-112 fires. Its 4,000 t cargo can't be recalled on the 211-day trip to Halcyon Station.
+- https://ryanallen.com/steer/about.html explains the controls and links to the sources behind them.
 
-Every holding in it is fiction. No model runs and nothing leaves the browser. No framework and no build step: each page is one hand-written HTML file, and `media/` holds the pictures.
+Every holding is fiction; nothing is taken from people. No model runs and nothing leaves the browser. There is no framework or build step: each page is hand-written HTML, and `media/` holds the pictures.
