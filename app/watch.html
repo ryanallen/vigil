@@ -33,6 +33,7 @@
     <ol class="wire" aria-live="polite"></ol>
     <div class="panel"></div>
     <nav class="cams" aria-label="Cameras"></nav>
+    <button type="button" class="to-wall"></button>
   </div>
   <div class="reveal" hidden></div>
   <div class="notes" aria-live="polite"></div>
@@ -43,26 +44,44 @@
 import { run } from './watch.js';
 import { mount } from './depthview.js';
 import kirra from './kirra.js';
-if (new URLSearchParams(location.search).has('fast')) kirra.pace = 0.04; // for checking the whole night quickly
+import tethys from './tethys.js';
+import thule from './thule.js';
+import helios from './helios.js';
+import halcyon from './halcyon.js';
+import shackleton from './shackleton.js';
+import jezero from './jezero.js';
+import atlas from './atlas.js';
+import homeWatch from './home.js';
 
-// The wall at Home. Kirra is the watch that's ready; the other places are on the wall, quiet.
+// The wall at Home: each place, where it is, and tonight's line from its story.
 const PLACES = [
   ['Kirra Station', '16 Psyche', 'Survey in progress', kirra],
-  ['Tethys Farms', 'Pacific'], ['Thule Ice', 'Europa'], ['Helios Array', 'Near the Sun'],
-  ['Halcyon Station', 'Earth orbit'], ['Shackleton Foundry', 'The Moon'], ['Jezero House', 'Mars'],
-  ['Atlas Works', 'Ceres'],
+  ['Tethys Farms', 'Pacific', 'one buoy missing', tethys],
+  ['Thule Ice', 'Europa', 'intake blocked', thule],
+  ['Helios Array', 'near the Sun', 'one sector below its usual output', helios],
+  ['Halcyon', '312 aboard', 'camera service', halcyon],
+  ['Shackleton Foundry', 'Moon', 'cooling check', shackleton],
+  ['Jezero House', 'Mars', 'water check', jezero],
+  ['Atlas Works', 'Ceres', 'salt sample', atlas],
+  ['Home', 'Earth', 'storm expected', homeWatch],
 ];
+if (new URLSearchParams(location.search).has('fast')) PLACES.forEach(p => { p[3].pace = 0.04; }); // for checking a whole night quickly
 const home = document.getElementById('home'), watch = document.getElementById('watch');
 document.getElementById('places').innerHTML = PLACES.map(([n, p, s, story], i) =>
   `<li${story ? '' : ' class="quiet"'}><b>${n}</b><span>${p}</span>${s ? `<em>${s}</em>` : ''}${story ? `<button type="button" data-i="${i}">Watch ${n.split(' ')[0]}</button>` : ''}</li>`).join('');
 const hv = mount(home.querySelector('.home-canvas'));
 if (hv) hv.show(new URL('../media/photo-home-earth-1600.webp', import.meta.url).href, new URL('../media/photo-home-earth-depth.webp', import.meta.url).href);
-let started = false;
-document.getElementById('places').addEventListener('click', e => {
-  const b = e.target.closest('[data-i]'); if (!b) return;
-  home.hidden = true; watch.hidden = false;
-  if (!started) { started = true; run(PLACES[b.dataset.i][3], watch, { onWall: () => { watch.hidden = true; home.hidden = false; } }); }
-});
+// One watch runs per page: going back to the wall keeps it waiting where it was; choosing another place starts that one fresh.
+const q = new URLSearchParams(location.search);
+let playing = null;
+const toWall = () => { watch.hidden = true; home.hidden = false; };
+function start(i) {
+  if (playing === null) { playing = i; home.hidden = true; watch.hidden = false; run(PLACES[i][3], watch, { onWall: toWall }); return; }
+  if (playing === i) { home.hidden = true; watch.hidden = false; return; }
+  q.set('play', i); location.search = q.toString();
+}
+document.getElementById('places').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) start(+b.dataset.i); });
+if (q.has('play')) start(+q.get('play'));
 </script>
 </body>
 </html>

@@ -1,12 +1,14 @@
 // The night watch. One live camera fills the screen: a photograph that moves in depth with the pointer and racks focus
 // to what you point at. Pictures and wireless bulletins arrive on the night's clock; some details can only be read by
 // holding focus on them; when the bulletins stop, the last robot goes down one route at a time, each picture arriving
-// a round trip later. Everything said and shown comes from the story passed to run() (see kirra.js); this only plays it.
+// a round trip later. A beat can offer a choice that leads to an ending or to a branch of further timed beats.
+// Everything said and shown comes from the story passed to run() (see kirra.js); this only plays it.
 import { mount as depth } from './depthview.js';
 import { mount as air } from './atmos.js';
 
-const media = (id, w) => new URL(`../media/watch-${id}-${w}.webp`, import.meta.url).href;
-const depthOf = id => new URL(`../media/watch-${id}-depth.webp`, import.meta.url).href;
+let pre = '';   // a story's photos are media/watch-<story>-<ID>; Kirra's, the first, are media/watch-<ID>
+const media = (id, w) => new URL(`../media/watch-${pre}${id}-${w}.webp`, import.meta.url).href;
+const depthOf = id => new URL(`../media/watch-${pre}${id}-depth.webp`, import.meta.url).href;
 const size = () => Math.min(innerWidth, 1600) * Math.min(2, devicePixelRatio || 1) > 1000 ? 1600 : 800;
 const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const hhmm = n => `${String(Math.floor(n / 60) % 24).padStart(2, '0')}:${String(Math.floor(n % 60)).padStart(2, '0')}`;
@@ -16,17 +18,19 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 export function run(S, root, { onWall } = {}) {
   const $ = s => root.querySelector(s);
+  pre = S.media ? S.media + '-' : '';
   const view = depth($('.cam-canvas'));
   if (!view) $('.cam-fallback').hidden = false;
   air($('.atmos')).set('still');
 
-  let night, beat, held, heldSince, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
+  let list, offset = 0, night, beat, held, heldSince, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
   function reset() {
-    night = mins(S.start); beat = 0; held = null; current = null; ff = null;
+    list = S.beats; offset = 0; night = mins(S.start); beat = 0; held = null; current = null; ff = null;
     photoOf = {}; open = new Set(); found = new Set(); waiting = false; mode = 'night'; stop = null;
     $('.wire').innerHTML = ''; $('.notes').innerHTML = ''; $('.panel').innerHTML = ''; root.classList.remove('ended');
     $('.hint').textContent = touch ? S.hint.touch : S.hint.pointer; $('.hint').hidden = false;
-    $('.lag').textContent = S.lagLine;
+    $('.lag').textContent = S.lagLine || '';
+    const w = $('.to-wall'); w.textContent = S.wallLabel || 'Return to the wall'; w.onclick = () => onWall && onWall();
   }
 
   // ---- Cameras -----------------------------------------------------------------
@@ -45,7 +49,7 @@ export function run(S, root, { onWall } = {}) {
     stamp(); drawStrip();
   }
   // The camera's own time: Kirra's clock, a link's length behind Home's.
-  function stamp() { if (current) $('.cam-label').innerHTML = `<i></i>${esc(S.cameras[current].name)} · ${esc(S.place)} · ${hhmm(night - S.lag)}`; }
+  function stamp() { if (current) $('.cam-label').innerHTML = `<i></i>${esc(S.cameras[current].name)} · ${esc(S.place)} · ${hhmm(night - (S.lag || 0))}`; }
   function show(map) {
     for (const [cam, p] of Object.entries(map)) { photoOf[cam] = p; if (cam === current) cut(cam); }
   }
@@ -95,9 +99,12 @@ export function run(S, root, { onWall } = {}) {
     (b.open || []).forEach(id => open.add(id));
     if (b.cut || !current) cut(b.cut || [...open][0]);
     drawStrip();
-    bulletin(b.from, b.say);
+    if (b.say) bulletin(b.from, b.say);
+    if (b.text) $('.lag').textContent = b.text;
+    if (b.choose) { panel(b.note ? `<p class="offer">${esc(b.note)}</p>` : ''); b.choose.forEach(([label, to]) => addControl(label, () => take(to))); }
     if (b.route) offerRoute();
     if (b.leave) addControl(S.route.leave, () => end('surface'));
+    if (b.end) setTimeout(() => end(b.end), (b.hold || 3) * 1000);   // a beat that closes the watch after its picture has been seen
   }
   function panel(html) { $('.panel').innerHTML = html; }
   function addControl(label, fn) {
@@ -107,6 +114,15 @@ export function run(S, root, { onWall } = {}) {
     panel(`<p class="offer">${esc(S.route.note)}</p>`);
     addControl(S.route.offer, () => go(S.route.first));
     addControl(S.route.keep, () => { panel(''); addControl(S.route.offer, () => go(S.route.first)); });
+  }
+
+  // A choice at a beat: an ending, or a branch of timed beats that carries on from the night's clock.
+  function take(to) {
+    panel('');
+    if (to.startsWith('end:')) return end(to.slice(4));
+    const br = S.branches[to.replace(/^branch:/, '')];
+    list = br; beat = 0; mode = 'night';
+    offset = Math.max(0, night - mins(br[0].at));   // a branch chosen late starts now, its beats keeping their spacing
   }
 
   // ---- The descent ------------------------------------------------------------------------
@@ -146,7 +162,11 @@ export function run(S, root, { onWall } = {}) {
       b.onclick = () => {
         root.classList.remove('ended');
         if (act === 'wall') { mode = 'ended'; onWall && onWall(); }
-        else if (act === 'restart') { reset(); play(S.beats[beat++]); }
+        else if (act === 'restart') { reset(); play(list[beat++]); }
+        else if (act.startsWith('branch:') || act.startsWith('beat:')) {   // reopen a choice at its own time
+          const [kind, name] = act.split(':'); mode = 'night';
+          if (kind === 'branch') take(name); else { const b = S.beats.find(b => b.id === name); list = S.beats; offset = 0; beat = S.beats.indexOf(b); night = mins(b.at); play(list[beat++]); }
+        }
         else if (act === 'resume') { mode = 'descent'; arrive(stop && S.route.stops[stop] && !S.route.stops[stop].next ? stop : S.route.first); }
         else if (act === 'route') { mode = 'descent'; stop = null; go(S.route.first); }
       };
@@ -160,9 +180,9 @@ export function run(S, root, { onWall } = {}) {
       const k = Math.min(1, (now - ff.t0) / Math.max(1, ff.dur));
       night = ff.from + (ff.to - ff.from) * (1 - Math.pow(1 - k, 3));
       if (k >= 1) { const d = ff.done; ff = null; d(); }
-    } else if (mode === 'night' && beat < S.beats.length) {
+    } else if (mode === 'night' && beat < list.length) {
       night += dt / S.pace;
-      while (beat < S.beats.length && mins(S.beats[beat].at) <= night) play(S.beats[beat++]);
+      while (mode === 'night' && beat < list.length && mins(list[beat].at) + offset <= night) play(list[beat++]);
     } else if (mode !== 'ended') night += dt / 60; // once the bulletins stop, and between pictures, Home's clock runs at its real pace
     $('.clock').textContent = hhmm(night);
     stamp();
@@ -172,6 +192,6 @@ export function run(S, root, { onWall } = {}) {
 
   reset();
   lastTick = performance.now();
-  play(S.beats[beat++]);
+  play(list[beat++]);
   requestAnimationFrame(tick);
 }

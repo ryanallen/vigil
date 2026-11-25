@@ -88,3 +88,6 @@ html, body { margin: 0; background: #0b0d0c; }
   .watch .choices { left: 22px; right: 22px; bottom: 96px; align-items: stretch; }
 }
 @media (prefers-reduced-motion: reduce) { .watch *, .watch *::before, .watch *::after { animation: none !important; transition: none !important; } }
+
+.to-wall { position: absolute; left: 22px; top: 42px; z-index: 3; padding: 6px 10px; border: 1px solid rgba(233,232,226,.35); border-radius: 3px; background: rgba(11,13,12,.55); color: #e9e8e2; font: 600 12px/1.2 system-ui, sans-serif; cursor: pointer; }
+.to-wall:hover { background: rgba(11,13,12,.8); }
