@@ -7,10 +7,11 @@
 <meta name="description" content="A playable interface for working with an AI agent: edit its plan, watch it work, steer it mid-run, approve what can't be undone, and review its changes with the evidence beside them.">
 <meta name="color-scheme" content="light dark">
 <link rel="canonical" href="https://ryanallen.com/steer/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%232f5bd3%27/%3E%3Cpath d=%27M7 17 17 7M10 7h7v7%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272.4%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <style>
   :root {
     --bg: #f6f5f2; --panel: #ffffff; --sunk: #efede8; --line: #e2dfd8; --line-strong: #cfcbc2;
-    --ink: #1d1c1a; --ink-2: #4a4843; --muted: #6b6962; --faint: #8e8b83;
+    --ink: #1d1c1a; --ink-2: #4a4843; --muted: #5f5d57; --faint: #6f6d66;
     --accent: #2f5bd3; --accent-ink: #ffffff; --accent-soft: #e6ecfb;
     --ok: #1f7a4d; --ok-soft: #e3f2ea; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #b3261e; --bad-soft: #fbe5e3;
     --add: #e6f4ea; --add-ink: #1d5e36; --del: #fbe9e7; --del-ink: #8a2a20;
@@ -21,7 +22,7 @@
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
     --bg: #121315; --panel: #1a1b1e; --sunk: #222327; --line: #2c2d31; --line-strong: #3a3b40;
-    --ink: #ecebe7; --ink-2: #c4c2bc; --muted: #9b9992; --faint: #77756f;
+    --ink: #ecebe7; --ink-2: #c4c2bc; --muted: #a3a19a; --faint: #8f8d86;
     --accent: #7c9cff; --accent-ink: #0e1220; --accent-soft: #1f2741;
     --ok: #5cc28d; --ok-soft: #16281f; --warn: #e3a64a; --warn-soft: #2c2213; --bad: #ff8a80; --bad-soft: #321b19;
     --add: #15281c; --add-ink: #8fd8a8; --del: #2e1a18; --del-ink: #f2a59c;
@@ -29,7 +30,7 @@
   } }
   :root[data-theme="dark"] {
     --bg: #121315; --panel: #1a1b1e; --sunk: #222327; --line: #2c2d31; --line-strong: #3a3b40;
-    --ink: #ecebe7; --ink-2: #c4c2bc; --muted: #9b9992; --faint: #77756f;
+    --ink: #ecebe7; --ink-2: #c4c2bc; --muted: #a3a19a; --faint: #8f8d86;
     --accent: #7c9cff; --accent-ink: #0e1220; --accent-soft: #1f2741;
     --ok: #5cc28d; --ok-soft: #16281f; --warn: #e3a64a; --warn-soft: #2c2213; --bad: #ff8a80; --bad-soft: #321b19;
     --add: #15281c; --add-ink: #8fd8a8; --del: #2e1a18; --del-ink: #f2a59c;
@@ -187,8 +188,9 @@
   .change { margin-bottom: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
   .change[data-d="accepted"] { border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); }
   .change[data-d="sent"] { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
-  .change-head { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--sunk); }
-  .change-head .file { font: 600 12.5px var(--mono); }
+  .change-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--sunk); }
+  .change-head .file { font: 600 12.5px var(--mono); overflow-wrap: anywhere; }
+  .change-head .stat { white-space: nowrap; }
   .change-head .stat { font: 12px var(--mono); color: var(--muted); }
   .change-head .stat .a { color: var(--add-ink); } .change-head .stat .d { color: var(--del-ink); }
   .change-head .spacer { flex: 1; }
@@ -262,17 +264,28 @@
   .demo-note { padding: 8px 20px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; }
   .demo-note a { color: inherit; }
 
+  .m-only { display: none !important; }
   @media (max-width: 860px) {
-    .app { height: auto; min-height: 100%; }
-    .top { flex-wrap: wrap; padding: 12px 14px; gap: 10px; }
+    .m-only { display: inline-flex !important; }
+    .app { height: 100dvh; }
+    .top { flex-wrap: wrap; padding: 10px 14px; gap: 8px 10px; }
     .task { order: 3; flex-basis: 100%; }
+    .task h1 { font-size: 14px; white-space: normal; }
+    .meters { gap: 10px; }
     .meters .lbl { display: none; }
-    .body { grid-template-columns: 1fr; }
-    .side { border-right: 0; border-bottom: 1px solid var(--line); }
-    .composer { position: sticky; bottom: 0; z-index: 5; box-shadow: 0 -6px 18px rgb(0 0 0 / .06); }
-    .pane { padding: 16px 14px 32px; }
+    .status { margin-left: auto; }
+    .body { display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; grid-template-areas: "tabs" "content" "composer"; min-height: 0; }
+    .side, .work { display: contents; }
+    .tabs { grid-area: tabs; padding: 4px 8px 0; }
+    .tabs button { padding: 8px 10px 10px; }
+    #sideScroll, #workScroll { grid-area: content; min-height: 0; }
+    .body[data-tab="plan"] #workScroll, .body:not([data-tab="plan"]) #sideScroll { display: none; }
+    .composer { grid-area: composer; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 18px rgb(0 0 0 / .08); }
+    .pane { padding: 16px 14px 28px; }
     .ask dl { grid-template-columns: 1fr; gap: 2px; }
     .ask dd { margin-bottom: 8px; }
+    .demo-note { display: none; }
+    .compare { grid-template-columns: 1fr; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -309,7 +322,7 @@
         <div class="chips" id="chips"></div>
         <div class="row">
           <label class="sr" for="steer">Steer the agent</label>
-          <textarea id="steer" rows="1" placeholder="Steer the agent. It reads this at the next step."></textarea>
+          <textarea id="steer" rows="1" placeholder="Steer the agent"></textarea>
           <button class="btn primary" id="sendSteer" aria-label="Send">Send</button>
         </div>
         <div class="controls">
@@ -324,6 +337,7 @@
 
     <main class="work">
       <div class="tabs" role="tablist" aria-label="The agent's work">
+        <button role="tab" class="m-only" id="tab-plan" aria-controls="sideScroll" aria-selected="false" tabindex="-1">Plan</button>
         <button role="tab" id="tab-activity" aria-controls="pane-activity" aria-selected="true">Activity</button>
         <button role="tab" id="tab-changes" aria-controls="pane-changes" aria-selected="false" tabindex="-1">Changes <span class="count" id="cChanges">0</span></button>
         <button role="tab" id="tab-checks" aria-controls="pane-checks" aria-selected="false" tabindex="-1">Checks <span class="count" id="cChecks">0</span></button>
@@ -451,7 +465,7 @@ $('steps').addEventListener('click', e => {
   const again = $('steps').querySelector(`button[data-act="${act}"][data-i="${act === 'up' ? i - 1 : act === 'down' ? i + 1 : i}"]`);
   if (again && !again.disabled) again.focus();
 });
-const fitTitle = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
+const fitTitle = t => { t.style.height = 'auto'; if (t.scrollHeight) t.style.height = t.scrollHeight + 'px'; };
 $('steps').addEventListener('input', e => { const t = e.target.closest('.title-edit'); if (t) { S.plan[+t.dataset.i].title = t.value.replace(/\n/g, ' '); fitTitle(t); } });
 $('steps').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.title-edit')) { e.preventDefault(); e.target.blur(); } });
 $('addStep').addEventListener('keydown', e => {
@@ -547,6 +561,7 @@ function startRun() {
   setStatus('run', 'Working');
   feed('you', `<div class="you"><small>You approved the plan</small>${S.plan.filter(p => p.state !== 'skip').length} steps${S.plan.some(p => p.state === 'skip') ? `, ${S.plan.filter(p => p.state === 'skip').length} dropped` : ''}.</div>`);
   renderPlan(); renderChips();
+  if (activeTab() === 'plan') selectTab('activity');
   requestAnimationFrame(clockTick);
   nextStep();
 }
@@ -650,7 +665,7 @@ $('stopBtn').addEventListener('click', () => dialog('Stop the agent?', '<p>It st
 function stopRun() {
   clearTimeout(S.timer); queue = [];
   const step = S.plan[S.cur]; if (step && step.state === 'now') { step.state = 'todo'; step.nowLine = ''; }
-  S.phase = 'stopped'; setStatus('stop', 'Stopped');
+  S.phase = 'stopped'; setStatus('stop', 'Stopped'); $('composer').hidden = true;
   $('pauseBtn').hidden = true; $('stopBtn').hidden = true;
   feed('you', '<div class="you"><small>You stopped the agent</small>Finished steps are kept. Nothing was pushed.</div>');
   renderPlan(); renderChips(); renderSummary();
@@ -744,7 +759,7 @@ $('changes').addEventListener('click', e => {
     S.decisions[i] = 'sent'; S.sending = null; renderChanges();
     const c = S.changes[i];
     feed('you', `<div class="you"><small>You sent back ${esc(c.file)}</small>${esc(note)}</div>`);
-    if (S.phase === 'done' || S.phase === 'stopped') { S.phase = 'run'; setStatus('run', 'Working'); $('pauseBtn').hidden = false; $('stopBtn').hidden = false; $('summarySlot').innerHTML = ''; requestAnimationFrame(clockTick); }
+    if (S.phase === 'done' || S.phase === 'stopped') { $('composer').hidden = false; S.phase = 'run'; setStatus('run', 'Working'); $('pauseBtn').hidden = false; $('stopBtn').hidden = false; $('summarySlot').innerHTML = ''; requestAnimationFrame(clockTick); }
     addOwnStep(`Address your review of ${c.file}`, true);
     const st = S.plan.find(p => p.title === `Address your review of ${c.file}`); st.sub = `"${note}"`;
     renderPlan();
@@ -795,7 +810,7 @@ document.querySelector('.look').addEventListener('click', e => { const b = e.tar
 
 // ---- Finishing -------------------------------------------------------------
 function finish() {
-  S.phase = 'done'; clearTimeout(S.timer);
+  S.phase = 'done'; clearTimeout(S.timer); $('composer').hidden = true;
   setStatus('done', 'Ready for review');
   $('pauseBtn').hidden = true; $('stopBtn').hidden = true;
   renderPlan(); renderChips(); renderSummary();
@@ -840,20 +855,25 @@ function returnTo(i) {
   $('summarySlot').innerHTML = '';
   feed('you', `<div class="you"><small>You returned to a checkpoint</small>Back to after "${esc(S.plan[i].title)}". Later steps run again.</div>`);
   renderChanges(); renderPreview();
-  S.phase = 'run'; setStatus('run', 'Working'); $('pauseBtn').hidden = false; $('stopBtn').hidden = false;
+  S.phase = 'run'; setStatus('run', 'Working'); $('pauseBtn').hidden = false; $('stopBtn').hidden = false; $('composer').hidden = false;
   renderChips(); requestAnimationFrame(clockTick); nextStep();
 }
 
 // ---- Tabs -------------------------------------------------------------------
-const TABS = ['activity', 'changes', 'checks', 'preview'];
+const ALL_TABS = ['plan', 'activity', 'changes', 'checks', 'preview'];
+const narrow = matchMedia('(max-width: 860px)');
+let TABS = narrow.matches ? ALL_TABS : ALL_TABS.slice(1);
 function activeTab() { return TABS.find(t => $('tab-' + t).getAttribute('aria-selected') === 'true'); }
 function selectTab(name, focus) {
-  TABS.forEach(t => {
+  if (name === 'plan' && !narrow.matches) name = 'activity';
+  document.querySelector('.body').dataset.tab = name;
+  ALL_TABS.forEach(t => {
     const on = t === name;
     $('tab-' + t).setAttribute('aria-selected', on); $('tab-' + t).tabIndex = on ? 0 : -1;
-    $('pane-' + t).hidden = !on;
+    if (t !== 'plan') $('pane-' + t).hidden = name === 'plan' ? t !== 'activity' : !on;
   });
   if (name === 'changes') $('cChanges').classList.remove('alert');
+  if (name === 'plan') $('steps').querySelectorAll('.title-edit').forEach(fitTitle);
   if (name === 'preview') renderPreview();
   if (focus) $('tab-' + name).focus();
   $('workScroll').scrollTop = name === 'activity' ? $('workScroll').scrollHeight : 0;
@@ -880,7 +900,9 @@ $('themeBtn').addEventListener('click', () => {
   document.documentElement.dataset.theme = dark ? 'light' : 'dark';
 });
 
+narrow.addEventListener('change', () => { TABS = narrow.matches ? ALL_TABS : ALL_TABS.slice(1); selectTab(activeTab() || 'activity'); });
 renderPlan(); renderChips(); renderPreview(); meters();
+selectTab(narrow.matches ? 'plan' : 'activity');
 </script>
 </body>
 </html>
