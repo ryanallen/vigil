@@ -86,6 +86,32 @@
   .ratio .u { display: block; margin-top: 12px; font: 600 12px var(--mono); letter-spacing: .24em; text-transform: uppercase; color: var(--muted); }
   .ratio .vs { font: 300 clamp(40px, 6vw, 90px)/1 var(--sans); color: var(--faint); padding-bottom: 40px; }
 
+  /* Opening: the title comes into focus */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-copy > * { animation: focus-in 1.6s var(--ease) both; }
+    .hero-copy .label { animation-delay: .15s; } .hero-copy h1 { animation-delay: .3s; animation-duration: 2s; } .hero-copy .tag { animation-delay: .7s; } .hero-copy .ctas { animation-delay: .95s; }
+    .hud { animation: focus-in 1.2s 1.2s var(--ease) both; }
+    .planet { animation: rise 2.6s var(--ease) both; }
+  }
+  @keyframes focus-in { from { opacity: 0; filter: blur(18px); transform: translateY(18px) scale(.98); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(8%) scale(1.04); } }
+
+  /* A station crossing the limb */
+  .orbit { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; overflow: visible; will-change: transform; transform-origin: 50% 100%; }
+  .orbit .trail { fill: none; stroke: url(#trail); stroke-width: 1.2; }
+  .orbit .sat { fill: #fff; filter: url(#glow); }
+  @media (prefers-reduced-motion: reduce) { .orbit { display: none; } }
+
+  /* Cards lean toward the pointer */
+  .fleet { perspective: 1200px; }
+  .sys { transform-style: preserve-3d; }
+  .sys.tilt { transition: transform .12s linear, border-color .4s, box-shadow .4s; }
+
+  /* The statement lights as it passes */
+  .statement .w { transition: color .5s, text-shadow .5s; }
+  .statement .a .w { color: var(--faint); }
+  .statement .a .w.lit { color: var(--ink); text-shadow: 0 0 40px rgb(111 214 255 / .25); }
+
   /* Film frames */
   .frame { position: relative; height: min(88vh, 900px); min-height: 520px; overflow: hidden; isolation: isolate; display: grid; align-items: end; }
   .frame img { position: absolute; inset: -6% 0; width: 100%; height: 112%; object-fit: cover; z-index: -2; will-change: transform; }
@@ -235,6 +261,15 @@
 <main>
 <section class="hero" aria-label="Steer">
   <canvas id="stars" aria-hidden="true"></canvas>
+  <svg class="orbit" id="orbit" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="trail" x1="0" x2="1"><stop offset="0" stop-color="#6fd6ff" stop-opacity="0"/><stop offset=".5" stop-color="#6fd6ff" stop-opacity=".28"/><stop offset="1" stop-color="#6fd6ff" stop-opacity="0"/></linearGradient>
+      <filter id="glow" x="-400%" y="-400%" width="900%" height="900%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <path id="orbitPath" d="M -120 848 A 3054 3054 0 0 1 2040 848"/>
+    </defs>
+    <use href="#orbitPath" class="trail"/>
+    <circle class="sat" r="3.2"><animateMotion dur="54s" repeatCount="indefinite"><mpath href="#orbitPath"/></animateMotion></circle>
+  </svg>
   <img class="planet" id="planet" src="media/hero-planet-1920.webp" srcset="media/hero-planet-960.webp 960w, media/hero-planet-1920.webp 1920w, media/hero-planet-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="" fetchpriority="high">
   <div class="hud tl" aria-hidden="true">Sol system · <b>7 holdings</b><br>Agents online · <b id="hudAgents">12,408</b></div>
   <div class="hud tr" aria-hidden="true">Earth · low orbit<br>Halcyon Station <b>over the Pacific</b></div>
@@ -416,7 +451,7 @@
 </section>
 
 <section class="statement" aria-label="Twelve thousand hands. One wheel.">
-  <p class="reveal"><span class="a">Twelve thousand hands.</span></p>
+  <p class="reveal"><span class="a"><span class="w">Twelve</span> <span class="w">thousand</span> <span class="w">hands.</span></span></p>
   <p class="reveal d1"><span class="b">One wheel.</span></p>
 </section>
 
@@ -470,7 +505,8 @@ new IntersectionObserver(([e]) => { const was = heroOn; heroOn = e.isIntersectin
 
 // The planet sinks as you scroll away.
 const planet = $('planet');
-if (!still) addEventListener('scroll', () => { if (scrollY < innerHeight * 1.2) planet.style.transform = `translateY(${scrollY * .3}px) scale(${1 + scrollY / 4000})`; }, { passive: true });
+if (still) $('orbit').pauseAnimations();
+if (!still) addEventListener('scroll', () => { if (scrollY < innerHeight * 1.2) planet.style.transform = $('orbit').style.transform = `translateY(${scrollY * .3}px) scale(${1 + scrollY / 4000})`; }, { passive: true });
 
 // Film frames drift as they pass.
 const frames = [...document.querySelectorAll('.frame img')];
@@ -519,6 +555,26 @@ setInterval(() => {
     const el = $('sys-' + f.id); el.querySelector('.meter span').style.setProperty('--p', f.p + '%'); el.querySelector('.pc').textContent = f.p + '%';
   });
 }, 1400);
+
+// Cards lean toward the pointer, a few degrees.
+if (!still && matchMedia('(hover: hover)').matches) {
+  grid.addEventListener('pointermove', e => {
+    const card = e.target.closest('.sys'); if (!card) return;
+    const r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+    card.classList.add('tilt');
+    card.style.transform = `rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 8).toFixed(2)}deg) translateZ(0)`;
+  });
+  grid.addEventListener('pointerout', e => { const card = e.target.closest('.sys'); if (card && !card.contains(e.relatedTarget)) { card.style.transform = ''; card.classList.remove('tilt'); } });
+}
+
+// The statement lights word by word as it crosses the middle of the screen.
+const words = [...document.querySelectorAll('.statement .a .w')];
+const lightWords = () => {
+  const r = document.querySelector('.statement').getBoundingClientRect();
+  const p = Math.min(1, Math.max(0, (innerHeight * .8 - r.top) / (r.height * .6)));
+  words.forEach((w, i) => w.classList.toggle('lit', still || p > (i + 1) / (words.length + 1)));
+};
+addEventListener('scroll', lightWords, { passive: true }); lightWords();
 
 // The agents count breathes a little.
 let agents = 12408;
