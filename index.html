@@ -221,7 +221,11 @@
   /* Preview */
   .compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 980px; }
   .compare figure { margin: 0; }
-  .compare figcaption { margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .compare figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .look { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; text-transform: none; letter-spacing: 0; }
+  .look button { border: 0; background: none; padding: 2px 9px; color: var(--muted); font-size: 12px; font-weight: 550; }
+  .look button[aria-pressed="true"] { background: var(--sunk); color: var(--ink); }
+  .look[hidden] { display: none; }
   .phone { border: 1px solid var(--line-strong); border-radius: 22px; padding: 10px; background: var(--sunk); box-shadow: var(--shadow); }
   .tw { --tw-bg: #f7f4ee; --tw-card: #ffffff; --tw-ink: #18221f; --tw-muted: #66706b; --tw-line: #e3ded4; --tw-accent: #0f7b6c;
     border-radius: 14px; overflow: hidden; background: var(--tw-bg); color: var(--tw-ink); font: 13px/1.45 var(--sans); min-height: 360px; transition: background .3s, color .3s; }
@@ -343,7 +347,7 @@
         <section class="pane" id="pane-preview" role="tabpanel" aria-labelledby="tab-preview" hidden>
           <div class="compare">
             <figure><figcaption>Before</figcaption><div class="phone"><div class="tw" id="twBefore"></div></div></figure>
-            <figure><figcaption id="afterCap">After (not built yet)</figcaption><div class="phone"><div class="tw" id="twAfter"></div></div><p class="contrast" id="contrastNote"></p></figure>
+            <figure><figcaption><span id="afterCap">After (not built yet)</span><span class="look" role="group" aria-label="Preview the after page as"><button data-look="light" aria-pressed="true">Light</button><button data-look="dark" aria-pressed="false">Dark</button></span></figcaption><div class="phone"><div class="tw" id="twAfter"></div></div><p class="contrast" id="contrastNote"></p></figure>
           </div>
         </section>
       </div>
@@ -696,7 +700,7 @@ function resolveApproval(answer) {
     step.state = 'now';
   } else {
     feed('you', '<div class="you"><small>You\'ll push it yourself</small>The branch stays on your machine with every change committed.</div>');
-    step.state = 'skip'; step.sub = 'Left for you'; queue = [];
+    step.state = 'skip'; step.declined = true; step.sub = 'Left for you'; queue = [];
   }
   pump();
 }
@@ -777,13 +781,17 @@ function renderPreview() {
   const a = $('twAfter');
   a.innerHTML = tw(true);
   const choice = S.twChoice || (S.followSystem ? 'system' : 'light');
-  const dark = has('tokens') && (choice === 'dark' || (choice === 'system' && matchMedia('(prefers-color-scheme: dark)').matches) || (!has('toggle') && false));
+  const look = document.querySelector('.look');
+  look.hidden = !has('tokens');
+  look.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.look === (S.look || 'light')));
+  const dark = has('tokens') && (has('toggle') ? (choice === 'dark' || (choice === 'system' && S.look === 'dark')) : S.look === 'dark');
   a.toggleAttribute('data-dark', !!dark);
   a.dataset.muted = S.muted;
-  $('afterCap').textContent = !has('tokens') ? 'After (not built yet)' : has('toggle') ? 'After · try the Appearance choice' : 'After · dark values, no switch yet';
+  $('afterCap').textContent = !has('tokens') ? 'After (not built yet)' : has('toggle') ? 'After · try Appearance' : 'After · no switch yet';
   $('contrastNote').textContent = dark ? (S.muted === 'old' ? 'Secondary text on cards: 3.6:1, under the 4.5:1 required.' : 'Secondary text on cards: 6.1:1.') : '';
 }
-$('twAfter').addEventListener('click', e => { const b = e.target.closest('button[data-tw]'); if (!b) return; S.twChoice = b.dataset.tw; renderPreview(); });
+$('twAfter').addEventListener('click', e => { const b = e.target.closest('button[data-tw]'); if (!b) return; S.twChoice = b.dataset.tw; if (b.dataset.tw !== 'system') S.look = b.dataset.tw; renderPreview(); });
+document.querySelector('.look').addEventListener('click', e => { const b = e.target.closest('button[data-look]'); if (!b) return; S.look = b.dataset.look; if (S.twChoice && S.twChoice !== 'system') S.twChoice = S.look; renderPreview(); });
 
 // ---- Finishing -------------------------------------------------------------
 function finish() {
@@ -825,7 +833,7 @@ function confirmReturn(i) {
 }
 function returnTo(i) {
   const keepIds = S.plan.slice(0, i + 1).map(p => p.id);
-  S.plan.slice(i + 1).forEach(p => { if (p.state === 'done' || p.state === 'now') p.state = 'todo'; });
+  S.plan.slice(i + 1).forEach(p => { if (p.state === 'done' || p.state === 'now' || p.declined) { p.state = 'todo'; if (p.declined) { p.declined = false; p.sub = PLAN.find(x => x.id === p.id).sub; } } });
   S.changes = S.changes.filter(c => keepIds.includes(c.step));
   S.decisions = {}; S.checkpoints = S.checkpoints.filter(id => keepIds.includes(id));
   if (!S.changes.some(c => c.key === 'contrast')) S.muted = 'old';
