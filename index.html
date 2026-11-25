@@ -89,6 +89,10 @@
   .step[data-s="now"] .dot { border-color: var(--accent); color: var(--accent); }
   .step[data-s="now"] .dot::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid var(--accent); opacity: .35; animation: pulse 1.4s ease-in-out infinite; }
   .step[data-s="done"] .dot { border-color: var(--ok); background: var(--ok); color: var(--panel); }
+  .step[data-s="done"] .dot svg { width: 14px; height: 14px; }
+  .step[data-fresh] .dot path { stroke-dasharray: 24; animation: draw .45s var(--ease) both; }
+  @keyframes draw { from { stroke-dashoffset: 24; } }
+  .step[data-s="done"]:not(:last-child) .dot::after { background: var(--ok); opacity: .45; }
   .step[data-s="wait"] { background: var(--warn-soft); } .step[data-s="wait"] .dot { border-color: var(--warn); color: var(--warn); }
   .step[data-s="skip"] .title { color: var(--faint); text-decoration: line-through; }
   .step[data-s="skip"] .dot { border-style: dashed; }
@@ -159,6 +163,10 @@
   .feed .msg { min-width: 0; }
   .feed .msg code { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); overflow-wrap: anywhere; }
   .feed .say { color: var(--ink); }
+  .open-change { padding: 0; border: 0; background: none; color: var(--accent); text-align: left; }
+  .open-change code { color: inherit !important; text-decoration: underline; text-underline-offset: 2px; }
+  .change.flash { animation: flash 1.4s var(--ease); }
+  @keyframes flash { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: 0 0 0 3px transparent; } }
   .feed .step-head { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-weight: 600; }
   .feed .step-head:first-child { margin-top: 0; border-top: 0; padding-top: 0; }
   .feed .you { padding: 8px 12px; border-radius: 10px; background: var(--accent-soft); color: var(--ink); }
@@ -219,7 +227,12 @@
   .badge.pass { background: var(--ok-soft); color: var(--ok); } .badge.fail { background: var(--bad-soft); color: var(--bad); } .badge.run { background: var(--accent-soft); color: var(--accent); }
   .check .name { font-weight: 600; }
   .check .meta { margin-left: auto; color: var(--faint); font-size: 12px; }
-  .check pre { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--line); font: 12.5px/1.55 var(--mono); white-space: pre-wrap; color: var(--ink-2); }
+  .check pre { margin: 0; padding: 4px 14px 12px; font: 12.5px/1.55 var(--mono); white-space: pre-wrap; color: var(--ink-2); }
+  .run-out { border-top: 1px solid var(--line); }
+  .run-label { padding: 8px 14px 0; color: var(--muted); font-size: 11.5px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+  .runs { list-style: none; margin: 0; padding: 10px 14px; border-top: 1px solid var(--line); display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
+  .runs li { display: flex; align-items: center; gap: 8px; }
+  .runs .badge { min-width: 56px; text-align: center; }
 
   /* Preview */
   .compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 980px; }
@@ -303,9 +316,9 @@
       <p>Tidewater, a surf forecast web app · branch <code>dark-theme</code></p>
     </div>
     <div class="meters" aria-live="off">
-      <span><span class="lbl">Time </span><b id="mTime">0:00</b></span>
-      <span><span class="lbl">Cost </span><b id="mCost">$0.00</b></span>
-      <span title="Context used" style="display:inline-flex;align-items:center;gap:6px"><svg class="ring" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="8"/><circle class="fill" id="mRing" cx="10" cy="10" r="8" stroke-dasharray="0 51"/></svg><b id="mCtx">0%</b><span class="lbl"> context</span></span>
+      <span title="How long the agent has been working"><span class="lbl">Time </span><b id="mTime">0:00</b></span>
+      <span title="What this run has cost so far, at the model's list price"><span class="lbl">Cost </span><b id="mCost">$0.00</b></span>
+      <span title="How much of the model's context window this run fills; near full, it starts to lose early detail" style="display:inline-flex;align-items:center;gap:6px"><svg class="ring" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="8"/><circle class="fill" id="mRing" cx="10" cy="10" r="8" stroke-dasharray="0 51"/></svg><b id="mCtx">0%</b><span class="lbl"> context</span></span>
     </div>
     <span class="status" id="status" data-s="plan" role="status"><i></i><span id="statusText">Planning</span></span>
     <a class="btn quiet how" href="about.html">How it's designed</a>
@@ -452,7 +465,8 @@ function renderPlan() {
     const now = p.state === 'now' && p.nowLine ? `<div class="now-line">${esc(p.nowLine)}</div>` : '';
     const tag = !p.risky || p.state === 'skip' ? '' : p.state === 'done' ? `<span class="tag steer">${S.pushed ? 'You approved it' : 'Left for you'}</span>` : `<span class="tag">Asks you before it runs</span>`;
     const steer = p.steered ? `<span class="tag steer">Changed by your steer</span>` : '';
-    return `<li class="step" data-s="${p.state}"><span class="dot" aria-hidden="true">${mark}</span><div>${title}<div class="sub">${esc(p.sub || '')}</div>${now}${tag}${steer}</div>${tools}</li>`;
+    const fresh = p.state === 'done' && !p.drawn; if (p.state === 'done') p.drawn = true; else p.drawn = false;
+    return `<li class="step" data-s="${p.state}"${fresh ? ' data-fresh' : ''}><span class="dot" aria-hidden="true">${mark}</span><div>${title}<div class="sub">${esc(p.sub || '')}</div>${now}${tag}${steer}</div>${tools}</li>`;
   }).join('');
   $('steps').querySelectorAll('.title-edit').forEach(fitTitle);
 }
@@ -727,7 +741,7 @@ function resolveApproval(answer) {
 function addChange(key) {
   const c = { key, ...CHANGES[key] };
   S.changes.push(c);
-  feed('edit', `Changed <code>${esc(c.file)}</code> <span style="color:var(--muted)">${diffStat(c)}</span>`);
+  feed('edit', `<button class="open-change" data-open="${S.changes.length - 1}">Changed <code>${esc(c.file)}</code></button> <span style="color:var(--muted)">${diffStat(c)}</span>`);
   renderChanges();
   if (key !== 'tokens' || true) renderPreview();
 }
@@ -742,7 +756,7 @@ function renderChanges() {
     return `<section class="group"><h3>${esc(step ? step.title : stepId)} <span class="n">${list.length} change${list.length > 1 ? 's' : ''}</span></h3>${list.map(([c, i]) => {
       const d = S.decisions[i];
       const st = diffStat(c);
-      return `<article class="change" data-d="${d || ''}">
+      return `<article class="change" id="change-${i}" data-d="${d || ''}">
         <div class="change-head"><span class="file">${esc(c.file)}</span><span class="stat"><span class="a">${st.split(' ')[0]}</span> <span class="d">${st.split(' ')[1]}</span></span><span class="spacer"></span>
           ${d ? `<span class="verdict ${d}">${d === 'accepted' ? 'Accepted' : 'Sent back'}</span><button class="btn quiet" data-undo="${i}">Undo</button>`
             : `<div class="decision"><button class="btn" data-send="${i}">Send back</button><button class="btn primary" data-accept="${i}">Accept</button></div>`}</div>
@@ -770,16 +784,33 @@ $('changes').addEventListener('click', e => {
   }
 });
 
+$('feed').addEventListener('click', e => {
+  const b = e.target.closest('[data-open]'); if (!b) return;
+  selectTab('changes');
+  const el = document.getElementById('change-' + b.dataset.open);
+  if (el) { el.scrollIntoView({ block: 'start' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+});
+
 // ---- Checks ------------------------------------------------------------------
 function addCheck(name, state, cmd, out) {
-  S.checks.push({ name, state, cmd, out });
-  const n = S.checks.length;
-  const latest = new Map(); S.checks.forEach(c => latest.set(c.name, c.state));
-  const failing = [...latest.values()].filter(s => s === 'fail').length;
-  $('cChecks').textContent = failing ? failing + ' failing' : latest.size + ' passing';
+  S.checks.push({ name, state, cmd, out, at: stamp() });
+  renderChecks();
+}
+function renderChecks() {
+  const groups = new Map();
+  S.checks.forEach(c => { if (!groups.has(c.name)) groups.set(c.name, []); groups.get(c.name).push(c); });
+  const failing = [...groups.values()].filter(runs => runs[runs.length - 1].state === 'fail').length;
+  $('cChecks').textContent = !groups.size ? '0' : failing ? failing + ' failing' : groups.size + ' passing';
   $('cChecks').classList.toggle('alert', failing > 0);
-  $('checksEmpty').hidden = true;
-  $('checks').insertAdjacentHTML('beforeend', `<li><details class="check" ${state === 'fail' ? 'open' : ''}><summary><span class="badge ${state}">${state === 'pass' ? 'Passed' : 'Failed'}</span><span class="name">${esc(name)}</span><span class="meta"><code>${esc(cmd)}</code> · run ${n}</span></summary><pre>${esc(out)}</pre></details></li>`);
+  $('checksEmpty').hidden = groups.size > 0;
+  $('checks').innerHTML = [...groups].map(([name, runs]) => {
+    const last = runs[runs.length - 1];
+    const word = r => r.state === 'pass' ? 'Passed' : 'Failed';
+    const history = runs.length > 1 ? '<ol class="runs">' + runs.map((r, k) =>
+      '<li><span class="badge ' + r.state + '">' + word(r) + '</span>Run ' + (k + 1) + ' at ' + r.at + (r.state === 'fail' && runs[k + 1] ? ' · the agent fixed it and ran it again' : '') + '</li>').join('') + '</ol>' : '';
+    const outs = runs.slice().reverse().map((r, k) => '<div class="run-out"><div class="run-label">Run ' + (runs.length - k) + (k === 0 && runs.length > 1 ? ', latest' : '') + '</div><pre>' + esc(r.out) + '</pre></div>').join('');
+    return '<li><details class="check"' + (runs.some(r => r.state === 'fail') ? ' open' : '') + '><summary><span class="badge ' + last.state + '">' + word(last) + '</span><span class="name">' + esc(name) + '</span><span class="meta"><code>' + esc(last.cmd) + '</code> · ' + runs.length + ' run' + (runs.length > 1 ? 's' : '') + '</span></summary>' + history + outs + '</details></li>';
+  }).join('');
 }
 
 // ---- Preview: the real settings page, before and after ---------------------
