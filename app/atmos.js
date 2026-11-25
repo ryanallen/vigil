@@ -11,7 +11,7 @@ export function mount(canvas) {
   let W = 0, H = 0, state = 'seized', since = performance.now(), raf = 0, visible = true, last = 0;
   const motes = [], puffs = [];
   // One soft puff and one light glow, drawn once and stamped many times: far cheaper than a gradient per puff.
-  const sprite = (inner, outer) => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); const rg = x.createRadialGradient(64, 64, 0, 64, 64, 64); rg.addColorStop(0, inner); rg.addColorStop(0.45, outer); rg.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = rg; x.fillRect(0, 0, 128, 128); return c; };
+  const sprite = (inner, outer) => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const rg = x.createRadialGradient(128, 128, 0, 128, 128, 128); rg.addColorStop(0, inner); rg.addColorStop(0.45, outer); rg.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = rg; x.fillRect(0, 0, 256, 256); return c; };
   const DUST = sprite('rgba(150,146,140,1)', 'rgba(150,146,140,.35)'), GLOW = sprite('rgba(255,236,200,1)', 'rgba(255,236,200,.25)');
   const rnd = (a, b) => a + Math.random() * (b - a);
 
