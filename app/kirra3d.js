@@ -8,6 +8,7 @@ const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const GLOW = { seized: 0xff3b4f, hot: 0xff3b4f, crew: 0xffb347, out: 0x000000, fitted: 0xffb347, running: 0x5cf0b0 };
 
 let renderer, scene, camera, controls, model, rotor, bearing, robots = [], lamps = [], state = 'seized', spin = 0;
+const facing = [];
 let host, running = false, visible = false, last = 0;
 const homes = [], dest = [], t0 = performance.now();
 
@@ -26,12 +27,12 @@ export async function mount(el) {
   scene.background = new THREE.Color(0x05070d);
   scene.fog = new THREE.FogExp2(0x070a12, 0.012);
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 400);
-  camera.position.set(30, 20, 40);
+  camera.position.set(19, 11, 25);
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(-3, 5, -1);
+  controls.target.set(0, 4.5, 1);
   controls.enableDamping = true;
   controls.enablePan = false;
-  controls.minDistance = 16; controls.maxDistance = 60;
+  controls.minDistance = 12; controls.maxDistance = 48;
   controls.maxPolarAngle = Math.PI * 0.47; controls.minPolarAngle = Math.PI * 0.18;
   controls.minAzimuthAngle = -0.35; controls.maxAzimuthAngle = 1.35;
   controls.autoRotate = !still; controls.autoRotateSpeed = 0.35;
@@ -57,8 +58,8 @@ export async function mount(el) {
   bearing.material = bearing.material.clone();
   for (let i = 1; i <= 4; i++) {
     const r = model.getObjectByName('Robot' + i); robots.push(r); homes.push(r.position.clone());
-    const a = (i - 1) / 4 * Math.PI * 2 + Math.PI / 4;
-    dest.push(new THREE.Vector3(Math.cos(a) * 5.6, r.position.y, Math.sin(a) * 5.6));
+    const a = Math.PI * 0.12 + (i - 1) * 0.42;
+    dest.push(new THREE.Vector3(Math.cos(a) * 7.2, 0, Math.sin(a) * 7.2));
     const l = model.getObjectByName('Light' + i);
     const p = new THREE.PointLight(0xffb070, 140, 34, 1.5); p.position.copy(l.position); scene.add(p); lamps.push(p);
   }
@@ -66,10 +67,60 @@ export async function mount(el) {
   const fill = new THREE.PointLight(0x4f8fff, 40, 50, 1.4); fill.position.set(14, 10, -12); scene.add(fill);
   bearing.userData.light = new THREE.PointLight(0xff3b4f, 90, 18, 1.6); bearing.userData.light.position.set(0, 10.2, 0); scene.add(bearing.userData.light);
 
+  // Codex's rock and ground on the shaft, and the machines built from Codex's sheets (source/blender/sheets.py).
+  dress().then(() => { faceCamera(); draw(); });
+
   new ResizeObserver(resize).observe(el); resize();
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) loop(); }).observe(el);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) loop(); });
   set(state);
+}
+
+const media = n => new URL('../media/3d/' + n, import.meta.url).href;
+function texture(name, repeat) {
+  const t = new THREE.TextureLoader().load(media(name), draw);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+const hidden = new THREE.MeshBasicMaterial({ visible: false });
+function hide(obj) { obj.traverse(o => { if (o.isMesh) o.material = hidden; }); }
+function shadows(obj) { obj.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } }); return obj; }
+
+async function dress() {
+  const wall = model.getObjectByName('Wall'), floor = model.getObjectByName('Floor');
+  wall.material = new THREE.MeshStandardMaterial({ map: texture('tex-asteroid-rock.webp', [10, 3]), color: 0x8a90a0, roughness: 0.9, metalness: 0.3 });
+  floor.material = new THREE.MeshStandardMaterial({ map: texture('tex-ground-regolith.webp', [9, 9]), color: 0x6f7380, roughness: 0.95, metalness: 0.1 });
+  const plate = new THREE.MeshStandardMaterial({ map: texture('tex-hull-panels.webp', [1, 2]), color: 0x8c9cb4, roughness: 0.45, metalness: 0.7 });
+  model.traverse(o => { if (o.isMesh && /^(Leg|Brace|Tower|Bay2$)/.test(o.name)) o.material = plate; });
+
+  const loader = new GLTFLoader();
+  const [robot, truck, ring, head] = await Promise.all(['maint-robot', 'haul-truck', 'bearing', 'drill-head']
+    .map(n => loader.loadAsync(media(n + '.glb')).then(g => shadows(g.scene))));
+
+  // Each box robot keeps its place and its walk; its look is the model's.
+  // The box stand-ins carry their offset in their mesh, so each robot becomes its own group where its box stood.
+  robots.forEach((r, i) => {
+    const c = new THREE.Box3().setFromObject(r).getCenter(new THREE.Vector3());
+    hide(r);
+    const g = new THREE.Group(); g.position.set(c.x, 0, c.z); scene.add(g);
+    const m = robot.clone(); m.scale.setScalar(1.6); g.add(m); facing.push(m);
+    robots[i] = g; homes[i] = g.position.clone();
+  });
+
+  // The bearing ring lies flat round the rotor; the glow inside it still shows the job's state.
+  const rg = ring.clone(); rg.rotation.x = -Math.PI / 2; rg.position.set(0, 10.2 - model.getObjectByName('Rotor').position.y, 2.2);
+  rotor.add(rg);
+  bearing.scale.set(0.85, 0.5, 0.85);
+  hide(model.getObjectByName('Race'));
+
+  // The drill head faces down at the bottom of the rotor.
+  const hd = model.getObjectByName('Head'); hide(hd);
+  const h2 = head.clone(); h2.rotation.x = Math.PI / 2; h2.position.set(0, 1.6 - rotor.position.y + 0.6, -3.0);
+  rotor.add(h2);
+
+  // Two haulers waiting on the floor by the ramp.
+  [[13, 6, -2.2], [-3, 15, -1.1]].forEach(([x, z, a]) => { const t = truck.clone(); t.position.set(x, 0, z); scene.add(t); facing.push(t); });
 }
 
 function resize() {
@@ -110,7 +161,7 @@ function tick(now) {
       const step = Math.min(dist, dt * 4);
       r.position.addScaledVector(d.normalize(), still ? dist : step);
       r.rotation.y = Math.atan2(d.x, d.z) + Math.PI;
-      r.position.y = homes[i].y + (still ? 0 : Math.abs(Math.sin(now / 120 + i)) * 0.12);
+      r.position.y = still ? 0 : Math.abs(Math.sin(now / 120 + i)) * 0.08;
     } else if (atDrill) {
       r.lookAt(0, r.position.y, 0); r.rotateY(Math.PI);
     }
@@ -125,8 +176,21 @@ function tick(now) {
   if (az > 1.2) controls.autoRotateSpeed = Math.abs(controls.autoRotateSpeed);
   if (az < -0.2) controls.autoRotateSpeed = -Math.abs(controls.autoRotateSpeed);
   controls.update();
+  faceCamera();
   draw();
   requestAnimationFrame(tick);
 }
 
+// Models made from one front painting turn on their vertical axis to face the camera (the Mani temple's offerings
+// do the same), so the painted front is what's seen, with its depth and the scene's light on it.
+const wp = new THREE.Vector3(), pq = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+function faceCamera() {
+  for (const o of facing) {
+    o.getWorldPosition(wp);
+    const yaw = Math.atan2(camera.position.x - wp.x, camera.position.z - wp.z);
+    o.parent.getWorldQuaternion(pq);
+    const parentYaw = new THREE.Euler().setFromQuaternion(pq, 'YXZ').y;
+    o.rotation.y = yaw - parentYaw;
+  }
+}
 function draw() { if (renderer) renderer.render(scene, camera); }
