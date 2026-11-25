@@ -454,6 +454,14 @@
   .payoff-line { position: absolute; z-index: 1; left: 18px; right: 18px; bottom: 38px; margin: 0; font: 800 clamp(22px, 3.2vw, 38px)/1.05 var(--sans); letter-spacing: -.03em; color: #fff; text-shadow: 0 2px 30px rgb(0 0 0 / .7); }
   @keyframes payoff-in { from { opacity: 0; transform: scale(.97); filter: blur(10px) brightness(2); } }
   @media (prefers-reduced-motion: reduce) { .payoff { animation: none; } }
+  .heat { margin: 0; padding: 12px 14px 4px; border-top: 1px solid var(--line); }
+  .heat svg { display: block; width: 100%; max-width: 640px; height: auto; overflow: visible; }
+  .heat .h { fill: none; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+  .heat .h.fail { stroke: var(--bad); filter: drop-shadow(0 0 4px var(--bad)); } .heat .h.pass { stroke: var(--ok); filter: drop-shadow(0 0 4px var(--ok)); }
+  .heat .h-end.fail { fill: var(--bad); } .heat .h-end.pass { fill: var(--ok); }
+  .heat .h-lab { font: 600 10px var(--mono); } .heat .h-lab.fail { fill: var(--bad); } .heat .h-lab.pass { fill: var(--ok); }
+  .heat .h-lim { stroke: var(--warn); stroke-dasharray: 4 5; } .heat .h-grid { stroke: var(--line-strong); }
+  .heat .h-ax { fill: var(--muted); font: 10px var(--mono); }
   .cam .cam-r { margin-left: auto; } .cam .cam-r b { color: var(--warn); }
   .step[data-s="now"] { box-shadow: inset 2px 0 0 var(--accent); }
   .feed .step-head { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
@@ -1075,6 +1083,24 @@ function addCheck(name, state, cmd, out) {
   S.checks.push({ name, state, cmd, out, at: stamp() });
   renderChecks();
 }
+// Minutes and °C pairs from a run's output, starting cold at 20 °C.
+function heatPoints(out) {
+  const pts = [[0, 20]];
+  for (const m of out.matchAll(/^(\d\d):(\d\d)\s+bearing (\d+) °C/gm)) pts.push([+m[1] + m[2] / 60, +m[3]]);
+  return pts;
+}
+function heatCurve(runs) {
+  const sets = runs.map(r => ({ r, pts: heatPoints(r.out) })).filter(s => s.pts.length > 1);
+  if (!sets.length) return '';
+  const X = m => 36 + m / 10 * 344, Y = t => 104 - (t - 20) / 80 * 86;
+  const path = pts => pts.map(([m, t], i) => (i ? 'L' : 'M') + X(m).toFixed(1) + ' ' + Y(t).toFixed(1)).join(' ');
+  const lines = sets.map(({ r, pts }, k) => `<path class="h ${r.state}" d="${path(pts)}"/><circle class="h-end ${r.state}" cx="${X(pts[pts.length - 1][0]).toFixed(1)}" cy="${Y(pts[pts.length - 1][1]).toFixed(1)}" r="3.5"/><text class="h-lab ${r.state}" x="${(X(pts[pts.length - 1][0]) + 7).toFixed(1)}" y="${(Y(pts[pts.length - 1][1]) + 4).toFixed(1)}">Run ${k + 1} · ${pts[pts.length - 1][1]}°</text>`).join('');
+  const desc = sets.map(({ r, pts }, k) => `run ${k + 1} ${r.state === 'pass' ? 'passed' : 'failed'} at ${pts[pts.length - 1][1]} °C`).join(', ');
+  return `<figure class="heat"><svg viewBox="0 0 440 124" role="img" aria-label="Bearing heat over ten minutes against the 80 °C limit: ${desc}">
+    <line class="h-grid" x1="36" x2="380" y1="${Y(20)}" y2="${Y(20)}"/><line class="h-lim" x1="36" x2="380" y1="${Y(80).toFixed(1)}" y2="${Y(80).toFixed(1)}"/>
+    <text class="h-ax" x="30" y="${(Y(80) + 3).toFixed(1)}" text-anchor="end">80°</text><text class="h-ax" x="30" y="${(Y(20) + 3).toFixed(1)}" text-anchor="end">20°</text>
+    <text class="h-ax" x="36" y="120">0 min</text><text class="h-ax" x="380" y="120" text-anchor="end">10 min</text>${lines}</svg></figure>`;
+}
 function renderChecks() {
   const groups = new Map();
   S.checks.forEach(c => { if (!groups.has(c.name)) groups.set(c.name, []); groups.get(c.name).push(c); });
@@ -1087,8 +1113,9 @@ function renderChecks() {
     const word = r => r.state === 'pass' ? 'Passed' : 'Failed';
     const history = runs.length > 1 ? '<ol class="runs">' + runs.map((r, k) =>
       '<li><span class="badge ' + r.state + '">' + word(r) + '</span>Run ' + (k + 1) + ' at ' + r.at + (r.state === 'fail' && runs[k + 1] ? ' · the agent fixed it and ran it again' : '') + '</li>').join('') + '</ol>' : '';
+    const curve = heatCurve(runs);
     const outs = runs.slice().reverse().map((r, k) => '<div class="run-out"><div class="run-label">Run ' + (runs.length - k) + (k === 0 && runs.length > 1 ? ', latest' : '') + '</div><pre>' + esc(r.out) + '</pre></div>').join('');
-    return '<li><details class="check"' + (runs.some(r => r.state === 'fail') ? ' open' : '') + '><summary><span class="badge ' + last.state + '">' + word(last) + '</span><span class="name">' + esc(name) + '</span><span class="meta"><code>' + esc(last.cmd) + '</code> · ' + runs.length + ' run' + (runs.length > 1 ? 's' : '') + '</span></summary>' + history + outs + '</details></li>';
+    return '<li><details class="check"' + (runs.some(r => r.state === 'fail') ? ' open' : '') + '><summary><span class="badge ' + last.state + '">' + word(last) + '</span><span class="name">' + esc(name) + '</span><span class="meta"><code>' + esc(last.cmd) + '</code> · ' + runs.length + ' run' + (runs.length > 1 ? 's' : '') + '</span></summary>' + history + curve + outs + '</details></li>';
   }).join('');
 }
 
