@@ -68,6 +68,10 @@
   .night .aside .text { margin: 0; font-size: clamp(19px, 2vw, 25px); }
   .photo { display: block; margin: 0; background: #c5c7c0; }
   .photo img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+  .hero-photo, .photo { position: relative; overflow: hidden; }
+  .dv { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+  .dv.on { opacity: 1; }
+  .hero-photo figcaption, .photo figcaption { position: relative; z-index: 1; }
   .photo figcaption { max-width: 1260px; margin: 0 auto; padding: 12px 32px; font: 550 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--quiet); }
   .photo-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; background: var(--paper-2); }
   .photo-pair .photo img { height: 100%; }
@@ -175,7 +179,7 @@
 </section>
 
 <div class="photo-pair">
-  <figure class="photo"><img src="media/photo-home-earth-800.webp" srcset="media/photo-home-earth-800.webp 800w, media/photo-home-earth-1600.webp 1600w" sizes="(max-width: 620px) 100vw, 50vw" width="1600" height="900" alt="A single small house far off in an empty landscape before dawn, one window lit." loading="lazy" decoding="async"><figcaption>HOME · EARTH · 03:12</figcaption></figure>
+  <figure class="photo"><img src="media/photo-the-watch-desk-800.webp" srcset="media/photo-the-watch-desk-800.webp 800w, media/photo-the-watch-desk-1600.webp 1600w" sizes="(max-width: 620px) 100vw, 50vw" width="1600" height="900" alt="A plain desk by a dark window at 03:12, one screen lit, the chair pushed back." loading="lazy" decoding="async"><figcaption>THE WATCH · 03:12</figcaption></figure>
   <figure class="photo"><img src="media/photo-kirra-pit-800.webp" srcset="media/photo-kirra-pit-800.webp 800w, media/photo-kirra-pit-1600.webp 1600w" sizes="(max-width: 620px) 100vw, 50vw" width="1600" height="900" alt="A working mine cut into dark asteroid rock, seen from a distance." loading="lazy" decoding="async"><figcaption>KIRRA STATION · 16 PSYCHE</figcaption></figure>
 </div>
 
@@ -228,8 +232,8 @@ const FLEET = [
   { id: 'helios', photo: 'helios-array', name: 'Helios Array', where: 'near the Sun', now: 'Power steady' },
   { id: 'jezero', photo: 'jezero-house', name: 'Jezero House', where: 'Mars', now: 'Storm seals closing' },
   { id: 'kirra', photo: 'kirra-pit', name: 'Kirra Station', where: '16 Psyche', now: 'Drill 7 stopped', need: true },
-  { id: 'atlas', name: 'Atlas Works', where: 'Ceres', now: '410,000 robots working' },
-  { id: 'thule', name: 'Thule Ice', where: 'Europa', now: 'Water convoy en route' },
+  { id: 'atlas', photo: 'atlas-works', name: 'Atlas Works', where: 'Ceres', now: '410,000 robots working' },
+  { id: 'thule', photo: 'thule-ice', name: 'Thule Ice', where: 'Europa', now: 'Water convoy en route' },
 ];
 const grid = document.getElementById('fleetGrid');
 grid.innerHTML = FLEET.map(f => {
@@ -241,6 +245,23 @@ if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
   const io = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 }
+</script>
+<script type="module">
+// Each big photo becomes a 3D photo when it comes into view: depth parallax with the pointer and focus that racks to
+// what you point at. The plain image stays underneath for first paint and as the fallback.
+const big = [...document.querySelectorAll('.hero-photo, main .photo')].filter(f => !f.closest('.sys'));
+const io = new IntersectionObserver(es => es.forEach(async e => {
+  if (!e.isIntersecting) return; io.unobserve(e.target);
+  const img = e.target.querySelector('img'); if (!img) return;
+  const m = img.src.match(/media\/(photo-[a-z0-9-]+?)-(800|1600)\.webp/); if (!m) return;
+  const { mount } = await import('./app/depthview.js');
+  const c = document.createElement('canvas'); c.className = 'dv'; c.setAttribute('aria-hidden', 'true');
+  img.after(c);
+  const v = mount(c); if (!v) { c.remove(); return; }
+  await v.show('media/' + m[1] + '-1600.webp', 'media/' + m[1] + '-depth.webp');
+  c.classList.add('on');
+}), { rootMargin: '200px' });
+big.forEach(f => io.observe(f));
 </script>
 </body>
 </html>
