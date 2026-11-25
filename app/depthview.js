@@ -1,5 +1,6 @@
 // A photograph that behaves like a 3D space: its depth map shifts near parts more than far ones as the camera moves,
-// and focus follows the depth under the pointer, so what you point at racks sharp and the rest falls soft.
+// and focus follows the depth under the pointer, so what you point at racks sharp and the rest falls soft: the
+// tilt-shift miniature look, made live from sharp photographs.
 // No models, no library: one WebGL2 pass. Idle, the camera drifts and the focus wanders on its own.
 // mount(canvas) → { show(colourUrl, depthUrl) } or null when WebGL2 isn't there.
 
@@ -12,7 +13,7 @@ precision highp float;
 in vec2 uv; out vec4 o;
 uniform sampler2D c0, d0, c1, d1;
 uniform vec2 cam, scale, fpt;
-uniform float mixv, pull, strength;
+uniform float mixv, pull, strength, band, tilt;
 // Steep parallax: step along the camera's offset until the ray meets the depth surface, so near edges cover what's
 // behind them instead of smearing.
 vec2 march(sampler2D d, vec2 q) {
@@ -26,12 +27,24 @@ vec2 march(sampler2D d, vec2 q) {
   }
   return s;
 }
+// The miniature look, done here rather than in the photograph: a band of sharpness across the depth under the pointer,
+// and a band across the screen at the pointer's height; past either, the picture goes soft, more the further it is.
+// The photos themselves are sharp front to back, so focus can rack to anything, near rocks included.
 vec3 shade(sampler2D c, sampler2D d, vec2 q) {
   vec2 s = march(d, q);
   float depth = texture(d, s).r;
   float focus = texture(d, (fpt - 0.5) * scale + 0.5).r;
-  float lod = clamp(abs(depth - focus) * 6.0 - 0.3, 0.0, 2.6) + pull;
-  return textureLod(c, s, lod).rgb;
+  float byDepth = max(0.0, abs(depth - focus) - band) * 7.0;
+  float byScreen = smoothstep(0.12, 0.55, abs(uv.y - fpt.y)) * 2.2;
+  float lod = clamp(max(byDepth, byScreen) * tilt, 0.0, 3.4) + pull;
+  // A small disc of taps at that level, so deep blur reads as a lens and not as blocky mip squares.
+  vec2 px = exp2(lod) / vec2(textureSize(c, 0));
+  vec3 col = textureLod(c, s, lod).rgb * 0.36;
+  col += textureLod(c, s + px * vec2( 0.9,  0.3), lod).rgb * 0.16;
+  col += textureLod(c, s + px * vec2(-0.3,  0.9), lod).rgb * 0.16;
+  col += textureLod(c, s + px * vec2(-0.9, -0.3), lod).rgb * 0.16;
+  col += textureLod(c, s + px * vec2( 0.3, -0.9), lod).rgb * 0.16;
+  return col;
 }
 void main() {
   vec2 q = (uv - 0.5) * scale + 0.5;
@@ -98,6 +111,8 @@ export function mount(canvas) {
     gl.uniform2f(U('cam'), cam[0] * 0.022, cam[1] * 0.014);
     gl.uniform2f(U('fpt'), fp[0], fp[1]);
     gl.uniform1f(U('strength'), 1.0);
+    gl.uniform1f(U('band'), 0.06);
+    gl.uniform1f(U('tilt'), 1.0);
     gl.uniform1f(U('mixv'), mix);
     gl.uniform1f(U('pull'), pull);
     [a.c, a.d, b.c, b.d].forEach((x, i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, x); });
