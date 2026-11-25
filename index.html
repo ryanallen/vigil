@@ -137,7 +137,6 @@
   .sys::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(3 5 11 / .25), rgb(3 5 11 / .55) 45%, rgb(3 5 11 / .92)); }
   .sys:hover::before { opacity: .8; transform: scale(1.05); }
   .sys.need::after { background: linear-gradient(180deg, rgb(40 22 4 / .2), rgb(20 12 3 / .6) 45%, rgb(14 8 2 / .94)); }
-  #sys-helios::before { opacity: .95; background: radial-gradient(circle at 82% 22%, #fff 0 3%, #ffe6a8 5%, rgb(255 179 71 / .55) 12%, rgb(255 120 40 / .12) 30%, transparent 46%), repeating-conic-gradient(from 200deg at 82% 22%, rgb(255 214 140 / .22) 0 1.2deg, transparent 1.2deg 9deg), radial-gradient(ellipse 120% 60% at 82% 22%, transparent 32%, rgb(255 200 120 / .35) 33%, transparent 34.5%), linear-gradient(160deg, #1a1206, #05070d 70%); }
   @media (min-width: 1100px) { .fleet { grid-template-columns: repeat(3, 1fr); grid-auto-flow: dense; } #sys-kirra, #sys-helios { grid-column: span 2; } #sys-kirra { min-height: 340px; } #sys-kirra h3 { font-size: 34px; } }
   .fleet { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
   .sys { min-height: 300px; align-content: end; }
@@ -535,7 +534,7 @@ const FLEET = [
   { id: 'atlas', art: 'robot-workforce-640', name: 'Atlas Works', where: 'Robot crews', now: '2,140 robots are on shift. Another 31 are in the maintenance bays.', p: 48, agents: 2140 },
   { id: 'shackleton', art: 'lunar-foundry-640', name: 'Shackleton Foundry', where: 'The Moon · south pole', now: 'Hull plates are coming off the line: batch 88 of 120.', p: 73, agents: 4310 },
   { id: 'tethys', art: 'ocean-farm-640', name: 'Tethys Farms', where: 'Pacific Ocean', now: 'The kelp is harvested and the beds are replanted.', p: 100, agents: 784, done: true },
-  { id: 'helios', name: 'Helios Array', where: 'Inner orbit', now: 'The collectors are sending 3.1 GW of solar power to Kirra and the Moon.', p: 91, agents: 512 },
+  { id: 'helios', art: 'helios-array-1200', name: 'Helios Array', where: 'Inner orbit', now: 'The collectors are sending 3.1 GW of solar power to Kirra and the Moon.', p: 91, agents: 512 },
 ];
 const grid = $('fleetGrid');
 grid.innerHTML = FLEET.map((f, i) => {

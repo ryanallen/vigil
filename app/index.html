@@ -1186,7 +1186,7 @@ function payoff() {
   const t = S.draft ? '3,600' : '4,000';
   return S.pushed
     ? `<figure class="cam payoff"><img src="../media/ore-launch-960.webp" srcset="../media/ore-launch-960.webp 960w, ../media/ore-launch-1920.webp 1920w" sizes="(max-width: 860px) 100vw, 860px" width="1920" height="1080" alt="The mass driver at Kirra fires ore capsule KR-112 toward a distant Earth, a streak of light."><figcaption><span class="rec ok"><i></i>Away</span><span>KR-112 · ${t} t · Halcyon catches it in 211 days</span></figcaption><p class="payoff-line">Drill 7 is running. KR-112 is gone.</p></figure>`
-    : `<figure class="cam payoff"><img src="../media/mining-station-800.webp" srcset="../media/mining-station-800.webp 800w, ../media/mining-station-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="Kirra Station's pit with the drills running and haul trucks on the ramps."><figcaption><span class="rec ok"><i></i>Live</span><span>Drill 7 · running · ${t} t held on the driver</span></figcaption><p class="payoff-line">Drill 7 is running. You held the launch.</p></figure>`;
+    : `<figure class="cam payoff"><img src="../media/drill-running-960.webp" srcset="../media/drill-running-960.webp 960w, ../media/drill-running-1920.webp 1920w" sizes="(max-width: 860px) 100vw, 860px" width="1920" height="1080" alt="Drill 7 running again at full power, blue-white light on its head, sparks and ore spraying onto the conveyor."><figcaption><span class="rec ok"><i></i>Live</span><span>Drill 7 · running · ${t} t held on the driver</span></figcaption><p class="payoff-line">Drill 7 is running. You held the launch.</p></figure>`;
 }
 function renderSummary() {
   const done = S.plan.filter(p => p.state === 'done');
