@@ -66,6 +66,7 @@
   .status[data-s="done"] { background: var(--ok-soft); color: var(--ok); } .status[data-s="done"] i { background: var(--ok); }
   .status[data-s="stop"] { background: var(--bad-soft); color: var(--bad); } .status[data-s="stop"] i { background: var(--bad); }
   @keyframes pulse { 50% { opacity: .35; } }
+  .how { text-decoration: none; color: var(--ink-2); }
   .icon-btn { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink-2); }
   .icon-btn svg { width: 16px; height: 16px; }
 
@@ -274,6 +275,7 @@
     .meters { gap: 10px; }
     .meters .lbl { display: none; }
     .status { margin-left: auto; }
+    .how { order: 4; height: auto; padding: 0; font-size: 12.5px; text-decoration: underline; text-underline-offset: 2px; }
     .body { display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; grid-template-areas: "tabs" "content" "composer"; min-height: 0; }
     .side, .work { display: contents; }
     .tabs { grid-area: tabs; padding: 4px 8px 0; }
@@ -306,6 +308,7 @@
       <span title="Context used" style="display:inline-flex;align-items:center;gap:6px"><svg class="ring" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="8"/><circle class="fill" id="mRing" cx="10" cy="10" r="8" stroke-dasharray="0 51"/></svg><b id="mCtx">0%</b><span class="lbl"> context</span></span>
     </div>
     <span class="status" id="status" data-s="plan" role="status"><i></i><span id="statusText">Planning</span></span>
+    <a class="btn quiet how" href="about.html">How it's designed</a>
     <button class="icon-btn" id="themeBtn" aria-label="Switch light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
   </header>
 

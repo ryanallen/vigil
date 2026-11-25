@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Steer is designed</title>
+<meta name="description" content="The decisions behind Steer, an interface for watching, steering and reviewing an AI agent's work, and the evidence each one rests on.">
+<meta name="color-scheme" content="light dark">
+<link rel="canonical" href="https://ryanallen.com/steer/about.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%232f5bd3%27/%3E%3Cpath d=%27M7 17 17 7M10 7h7v7%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272.4%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<style>
+  :root { --bg: #f6f5f2; --ink: #1d1c1a; --ink-2: #4a4843; --muted: #5f5d57; --line: #e2dfd8; --accent: #2f5bd3; --sunk: #efede8;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #121315; --ink: #ecebe7; --ink-2: #c4c2bc; --muted: #a3a19a; --line: #2c2d31; --accent: #7c9cff; --sunk: #222327; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.65 var(--sans); -webkit-font-smoothing: antialiased; }
+  main { max-width: 700px; margin: 0 auto; padding: 56px 22px 96px; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; text-decoration: none; }
+  h1 { margin: 28px 0 10px; font-size: 34px; line-height: 1.15; letter-spacing: -.02em; }
+  .lede { margin: 0 0 40px; color: var(--ink-2); font-size: 19px; }
+  h2 { margin: 48px 0 6px; font-size: 21px; letter-spacing: -.01em; }
+  h2 span { color: var(--muted); font-weight: 500; margin-right: 8px; font-variant-numeric: tabular-nums; }
+  p { margin: 0 0 14px; }
+  .in-page { margin: 10px 0 0; padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--sunk); border-radius: 0 8px 8px 0; color: var(--ink-2); font-size: 15px; }
+  .src { color: var(--muted); font-size: 14px; }
+  hr { margin: 56px 0 28px; border: 0; border-top: 1px solid var(--line); }
+  footer { color: var(--muted); font-size: 14px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">← Back to Steer</a>
+  <h1>How Steer is designed</h1>
+  <p class="lede">An agent that can change your code in a minute makes the person reviewing it the bottleneck. Steer is a working sketch of the other half of that job: the interface where a person sets an agent's course, watches it work, corrects it without starting over, and decides what ships. Each choice below rests on what people building and using these tools have found.</p>
+
+  <h2><span>1</span>The plan is a document you edit before anything is spent</h2>
+  <p>Agents that plan first and then work out of sight leave the person to find out late that the approach was wrong. Devin added interactive planning so a person can change the approach before compute is spent. Steer opens on the agent's proposed plan, already editable: rename a step, move it, drop it, add your own. Nothing runs until you approve it.</p>
+  <p class="in-page">In Steer: the Plan column, with move, drop and add, and Approve plan and run.</p>
+  <p class="src">Sources: <a href="https://builder.io/blog/devin-vs-cursor">Builder.io on Devin and Cursor</a>, <a href="https://latent.space/reading/async-agents-cognition-openinspect/">Latent Space on asynchronous agents</a>.</p>
+
+  <h2><span>2</span>Never silent</h2>
+  <p>People interrupt an agent when silence looks like a hang. So the current action is always on screen in plain words, under the step it belongs to, with time, cost and context running in the header. Each action lands in the feed with its time, so the record reads like a colleague's notes rather than a log.</p>
+  <p class="in-page">In Steer: the line under the step that's running, the Activity feed, the meters.</p>
+  <p class="src">Source: <a href="https://tianpan.co/blog/2026-03-15-designing-the-human-agent-interaction-layer">Tian Pan, designing the human-agent interaction layer</a>.</p>
+
+  <h2><span>3</span>Steer is not stop</h2>
+  <p>A new prompt throws away the plan and the work so far. A steer keeps both: it's queued, the agent reads it at the next step boundary, and only the steps after that change. Pause and Stop are separate controls with separate promises: pause holds everything, stop keeps every finished step. Each says what it keeps before you press it.</p>
+  <p class="in-page">In Steer: send "Follow the system setting by default" while it's on step 2, and step 4 changes, marked "Changed by your steer". Nothing already done moves.</p>
+  <p class="src">Sources: <a href="https://www.copilotkit.ai/learning/what-is-agent-steering">CopilotKit on agent steering</a>, <a href="https://agentic-ai-wiki.vercel.app/playbooks/agent-ux-and-human-interaction/interruption-and-handoff/">interruption, steering and handoff</a>.</p>
+
+  <h2><span>4</span>Ask only where a person can decide</h2>
+  <p>A confirmation on every action feels like oversight and catches little. Steer asks once, for the only action in the run that leaves the machine. The card names the commands, what they touch, whether they can be undone, and the evidence so far. It also offers the two other answers people want: review first, or do it myself.</p>
+  <p class="in-page">In Steer: the push and pull request card, with Push and open PR, Review changes first, I'll do it myself.</p>
+  <p class="src">Sources: <a href="https://dev.to/brennhill/how-to-build-a-good-human-in-the-loop-for-ai-coding-agents-1kan">building a good human-in-the-loop</a>, <a href="https://www.atlassian.com/software/jira/guides/agentic-engineering/human-in-the-loop">Atlassian on approval and review</a>, <a href="https://shop.smashingmagazine.com/2026/02/designing-agentic-ai-practical-ux-patterns/">Smashing on consent patterns</a>.</p>
+
+  <h2><span>5</span>Evidence before the verdict</h2>
+  <p>Agents tend to report "All tasks completed". Steer's summary makes each claim with its proof beside it: which checks pass, that one failed first and how it was fixed, what was pushed and what wasn't, how many changes you've accepted.</p>
+  <p class="in-page">In Steer: the summary when the run ends, and the Checks tab, where the failing run is kept, not overwritten.</p>
+  <p class="src">Sources: <a href="https://dev.to/haaaaaley/show-the-agents-evidence-before-asking-a-human-to-approve-its-diff-25gj">show the agent's evidence first</a>, <a href="https://arxiv.org/pdf/2608.12355">Humans are missing from AI coding agent research</a>.</p>
+
+  <h2><span>6</span>Checks hold the agent</h2>
+  <p>A turn that changed files isn't done until the project's checks pass. When the contrast check fails, the failure is shown in full, the agent goes back and fixes it, and the passing run sits under the failing one. The same idea runs Leaftext's agent harness, where a failed check sends the agent back to work.</p>
+  <p class="in-page">In Steer: step 5, and the two contrast runs in Checks.</p>
+
+  <h2><span>7</span>Review by intent, not by file</h2>
+  <p>Review is now the ceiling on how fast work ships. A diff sorted by file makes the reviewer rebuild the agent's reasoning. Steer groups each change under the plan step that made it, puts the agent's reason above the diff, and lets you accept it or send it back with a note, which becomes a new step the agent runs.</p>
+  <p class="in-page">In Steer: the Changes tab, with Accept and Send back on each change.</p>
+  <p class="src">Sources: <a href="https://latent.space/p/cognition">Latent Space with Cognition</a>, <a href="https://www.cs.utexas.edu/~witchel/378AC/lectures/015_coding_agent_fundamentals-slides.pdf">coding agent fundamentals, UT Austin</a>.</p>
+
+  <h2><span>8</span>Show the change, not only the code</h2>
+  <p>A diff of color values doesn't tell you whether the page looks right. The Preview tab renders the settings page before and after, and the Appearance switch in it works, so the result is something you use, not something you imagine.</p>
+  <p class="in-page">In Steer: the Preview tab, with Light and Dark.</p>
+
+  <h2><span>9</span>Every step is a checkpoint, and what can't be undone says so</h2>
+  <p>Checkpoints cover file edits, not side effects. Steer lets you return to after any finished step and run the rest again, and the dialog says plainly when something already left the machine and won't come back.</p>
+  <p class="in-page">In Steer: Return here on each finished step.</p>
+  <p class="src">Source: <a href="https://dev.to/brennhill/how-to-build-a-good-human-in-the-loop-for-ai-coding-agents-1kan">building a good human-in-the-loop</a>.</p>
+
+  <hr>
+  <footer>
+    <p>Steer is one hand-written HTML file with no framework and no build step: the whole interface, the scripted agent and the app it works on. No model runs and nothing leaves your browser. Light and dark, phone and desktop, keyboard and screen reader.</p>
+    <p>Designed and built by <a href="https://ryanallen.com/">Ryan Allen</a>. Source on <a href="https://github.com/ryanallen/steer">GitHub</a>.</p>
+  </footer>
+</main>
+</body>
+</html>
