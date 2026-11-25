@@ -206,7 +206,7 @@
 
   /* Closing */
   .closing { position: relative; padding: clamp(140px, 24vh, 280px) 0 clamp(120px, 18vh, 200px); text-align: center; overflow: hidden; isolation: isolate; }
-  .closing::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, var(--void), rgb(3 5 11 / .1) 35%, rgb(3 5 11 / .2) 80%, var(--void)), url(media/closing-horizon-1920.webp) center 70% / cover; }
+  .closing::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, var(--void), rgb(3 5 11 / .1) 35%, rgb(3 5 11 / .2) 80%, var(--void)), image-set(url(media/closing-horizon-1920.webp) 1x, url(media/closing-horizon-2880.webp) 2x) center 70% / cover; }
   .closing h2 { font-size: clamp(56px, 10vw, 160px); }
   .closing .ctas { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 24px; margin-top: 44px; }
   footer { padding: 34px 0 44px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13.5px; }
@@ -234,7 +234,7 @@
 <main>
 <section class="hero" aria-label="Steer">
   <canvas id="stars" aria-hidden="true"></canvas>
-  <img class="planet" id="planet" src="media/hero-planet-1920.webp" srcset="media/hero-planet-960.webp 960w, media/hero-planet-1920.webp 1920w" sizes="100vw" width="1920" height="1080" alt="" fetchpriority="high">
+  <img class="planet" id="planet" src="media/hero-planet-1920.webp" srcset="media/hero-planet-960.webp 960w, media/hero-planet-1920.webp 1920w, media/hero-planet-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="" fetchpriority="high">
   <div class="hud tl" aria-hidden="true">Sol system · <b>7 holdings</b><br>Agents online · <b id="hudAgents">12,408</b></div>
   <div class="hud tr" aria-hidden="true">Earth · low orbit<br>Halcyon Station <b>over the Pacific</b></div>
   <div class="hud bl" aria-hidden="true"><span class="dot"></span>Kirra Station · <b>needs you</b></div>
@@ -261,7 +261,7 @@
 </section>
 
 <section class="frame" aria-label="A person seen from behind in a dark room, facing a wall of screens that show many places at once.">
-  <img src="media/the-owner-1920.webp" srcset="media/the-owner-960.webp 960w, media/the-owner-1920.webp 1920w" sizes="100vw" width="1920" height="1080" alt="A person seen from behind in a dark room, facing a wall of screens that show many places at once." loading="lazy" decoding="async">
+  <img src="media/the-owner-1920.webp" srcset="media/the-owner-960.webp 960w, media/the-owner-1920.webp 1920w, media/the-owner-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="A person seen from behind in a dark room, facing a wall of screens that show many places at once." loading="lazy" decoding="async">
   <div class="wrap"><span class="label reveal">The owner</span><p class="reveal d1">You can’t watch it all.<br><span>So Steer watches for you.</span></p></div>
 </section>
 
@@ -284,7 +284,7 @@
 </section>
 
 <section class="frame" aria-label="Maintenance robots repairing a giant drill bearing in low gravity, sparks flying under work lights.">
-  <img src="media/maintenance-robots-1920.webp" srcset="media/maintenance-robots-900.webp 900w, media/maintenance-robots-1920.webp 1920w" sizes="100vw" width="1920" height="1080" alt="Maintenance robots repairing a giant drill bearing in low gravity, sparks flying under work lights." loading="lazy" decoding="async">
+  <img src="media/maintenance-robots-1920.webp" srcset="media/maintenance-robots-900.webp 900w, media/maintenance-robots-1920.webp 1920w, media/maintenance-robots-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="Maintenance robots repairing a giant drill bearing in low gravity, sparks flying under work lights." loading="lazy" decoding="async">
   <div class="wrap"><span class="label reveal">Kirra Station · 03:12</span><p class="reveal d1">Drill 7 is down.<br><span>Four robots are on their way.</span></p></div>
 </section>
 
@@ -330,7 +330,7 @@
 </section>
 
 <section class="frame" aria-label="A mass driver firing an ore capsule off an asteroid toward a distant blue Earth.">
-  <img src="media/ore-launch-1920.webp" srcset="media/ore-launch-960.webp 960w, media/ore-launch-1920.webp 1920w" sizes="100vw" width="1920" height="1080" alt="A mass driver firing an ore capsule off an asteroid toward a distant blue Earth." loading="lazy" decoding="async">
+  <img src="media/ore-launch-1920.webp" srcset="media/ore-launch-960.webp 960w, media/ore-launch-1920.webp 1920w, media/ore-launch-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="A mass driver firing an ore capsule off an asteroid toward a distant blue Earth." loading="lazy" decoding="async">
   <div class="wrap"><span class="label reveal">Ore launch KR-112</span><p class="reveal d1">4,000 tonnes.&nbsp;211&nbsp;days.<br><span>One yes, and it can’t come back.</span></p></div>
 </section>
 
