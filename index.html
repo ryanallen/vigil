@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Steer: The Quiet Hours</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%23202626%27/%3E%3Cpath d=%27M7 17 17 7M10 7h7v7%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272.4%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <meta name="description" content="Three hundred and eighty billion agents say everything is fine. One of them is wrong. Take the watch before an ore launch that can't be called back.">
 <meta name="theme-color" content="#e9e8e2">
 <link rel="canonical" href="https://ryanallen.com/steer/">
@@ -25,10 +26,10 @@
     --paper-2: #f2f1eb;
     --ink: #202626;
     --soft: #4e5857;
-    --quiet: #697472;
+    --quiet: #58625f;
     --line: #c9cec9;
-    --green: #55745e;
-    --amber: #ae6d32;
+    --green: #4a6553;
+    --amber: #8a5426;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, Menlo, monospace;
   }
@@ -66,15 +67,14 @@
   .night .grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 50px; align-items: end; }
   .night .aside { padding: 0 0 10px 35px; border-left: 1px solid var(--line); }
   .night .aside .text { margin: 0; font-size: clamp(19px, 2vw, 25px); }
-  .photo { display: block; margin: 0; background: #c5c7c0; }
-  .photo img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
+  .photo { display: block; margin: 0; }
+  .photo img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: #c5c7c0; }
   .hero-photo, .photo { position: relative; overflow: hidden; }
-  .dv { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+  .dv { position: absolute; opacity: 0; transition: opacity 1.2s ease; }
   .dv.on { opacity: 1; }
   .hero-photo figcaption, .photo figcaption { position: relative; z-index: 1; }
   .photo figcaption { max-width: 1260px; margin: 0 auto; padding: 12px 32px; font: 550 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--quiet); }
   .photo-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; background: var(--paper-2); }
-  .photo-pair .photo img { height: 100%; }
   .photo-pair .photo figcaption { padding-left: 15px; }
 
   .fleet-section { padding: clamp(90px, 11vw, 145px) 0; }
@@ -256,9 +256,12 @@ const io = new IntersectionObserver(es => es.forEach(async e => {
   const m = img.src.match(/media\/(photo-[a-z0-9-]+?)-(800|1600)\.webp/); if (!m) return;
   const { mount } = await import('./app/depthview.js');
   const c = document.createElement('canvas'); c.className = 'dv'; c.setAttribute('aria-hidden', 'true');
-  img.after(c);
+  // The canvas covers the photo alone, never its caption.
+  const fit = () => Object.assign(c.style, { left: img.offsetLeft + 'px', top: img.offsetTop + 'px', width: img.offsetWidth + 'px', height: img.offsetHeight + 'px' });
+  img.after(c); fit(); new ResizeObserver(fit).observe(img);
   const v = mount(c); if (!v) { c.remove(); return; }
-  await v.show('media/' + m[1] + '-1600.webp', 'media/' + m[1] + '-depth.webp');
+  const size = img.offsetWidth * Math.min(2, devicePixelRatio || 1) > 1000 ? 1600 : 800;
+  await v.show('media/' + m[1] + '-' + size + '.webp', 'media/' + m[1] + '-depth.webp');
   c.classList.add('on');
 }), { rootMargin: '200px' });
 big.forEach(f => io.observe(f));

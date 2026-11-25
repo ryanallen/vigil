@@ -17,7 +17,7 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="author" content="Ryan Allen">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%232f5bd3%27/%3E%3Cpath d=%27M7 17 17 7M10 7h7v7%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272.4%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%23202626%27/%3E%3Cpath d=%27M7 17 17 7M10 7h7v7%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272.4%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <style>
   :root {
     --bg: #f6f5f2; --panel: #ffffff; --sunk: #efede8; --line: #e2dfd8; --line-strong: #cfcbc2;
@@ -1405,7 +1405,7 @@ const SHAFT = { seized: 'shaft-01-seized', crew: 'shaft-02-crew-coming', out: 's
 let atmos, depthView, depthTried = false;
 function showFrame(st) {
   if (!depthTried) { depthTried = true; import('./depthview.js').then(m => { depthView = m.mount($('depthCanvas')); if (depthView) { $('view3d').classList.add('has-depth'); showFrame(S.view3d || st); } }); }
-  if (depthView) { const n = SHAFT[st] || SHAFT.seized; depthView.show('../media/' + n + '-1600.webp', '../media/' + n + '-depth.webp'); }
+  if (depthView) { const n = SHAFT[st] || SHAFT.seized; depthView.show('../media/' + n + (Math.min(innerWidth, 980) * Math.min(2, devicePixelRatio || 1) > 1000 ? '-1600' : '-800') + '.webp', '../media/' + n + '-depth.webp'); }
   if (!atmos && $('atmos')) import('./atmos.js').then(m => { atmos = m.mount($('atmos')); atmos.set(st); });
   if (atmos) atmos.set(st);
   const name = SHAFT[st] || SHAFT.seized, box = $('frames');
