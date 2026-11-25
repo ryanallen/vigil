@@ -25,7 +25,7 @@ export async function mount(el) {
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x05070d);
-  scene.fog = new THREE.FogExp2(0x070a12, 0.012);
+  scene.fog = new THREE.FogExp2(0x070a12, 0.006);
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 400);
   camera.position.set(19, 11, 25);
   controls = new OrbitControls(camera, renderer.domElement);
@@ -87,12 +87,30 @@ const hidden = new THREE.MeshBasicMaterial({ visible: false });
 function hide(obj) { obj.traverse(o => { if (o.isMesh) o.material = hidden; }); }
 function shadows(obj) { obj.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } }); return obj; }
 
+// A radial fade, so the pad's edge sinks into the regolith instead of a hard disc.
+function padFade() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), r = g.createRadialGradient(64, 64, 30, 64, 64, 64);
+  r.addColorStop(0, '#fff'); r.addColorStop(1, '#000'); g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
 async function dress() {
   const wall = model.getObjectByName('Wall'), floor = model.getObjectByName('Floor');
   wall.material = new THREE.MeshStandardMaterial({ map: texture('tex-asteroid-rock.webp', [10, 3]), color: 0x8a90a0, roughness: 0.9, metalness: 0.3 });
   floor.material = new THREE.MeshStandardMaterial({ map: texture('tex-ground-regolith.webp', [9, 9]), color: 0x6f7380, roughness: 0.95, metalness: 0.1 });
-  const plate = new THREE.MeshStandardMaterial({ map: texture('tex-hull-panels.webp', [1, 2]), color: 0x8c9cb4, roughness: 0.45, metalness: 0.7 });
-  model.traverse(o => { if (o.isMesh && /^(Leg|Brace|Tower|Bay2$)/.test(o.name)) o.material = plate; });
+  const steel = new THREE.MeshStandardMaterial({ map: texture('tex-drill-steel.webp', [1, 3]), roughness: 0.42, metalness: 0.8 });
+  const hazard = new THREE.MeshStandardMaterial({ map: texture('tex-hazard-yellow.webp', [1, 1]), roughness: 0.55, metalness: 0.3 });
+  const hull = new THREE.MeshStandardMaterial({ map: texture('tex-hull-panels.webp', [2, 1]), color: 0x9aa6b8, roughness: 0.5, metalness: 0.6 });
+  model.traverse(o => {
+    if (!o.isMesh) return;
+    if (/^(Leg|Brace|Tower|Gantry)/.test(o.name)) o.material = steel;
+    else if (/^(Foot|Stripe|Bay2Stripe)/.test(o.name)) o.material = hazard;
+    else if (/^(Motor|Bay2$)/.test(o.name)) o.material = hull;
+  });
+  // A poured pad under the rig, and Psyche's sky over the open shaft.
+  const pad = new THREE.Mesh(new THREE.CircleGeometry(9, 48), new THREE.MeshStandardMaterial({ map: texture('tex-concrete-pad.webp', [3, 3]), color: 0x5c606a, roughness: 0.95, transparent: true, alphaMap: padFade() }));
+  pad.rotation.x = -Math.PI / 2; pad.position.y = 0.02; pad.receiveShadow = true; scene.add(pad);
+  new THREE.TextureLoader().load(media('sky-psyche.webp'), t => { t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace; scene.background = t; scene.backgroundIntensity = 0.9; draw(); });
 
   const loader = new GLTFLoader();
   const [robot, truck, ring, head] = await Promise.all(['maint-robot', 'haul-truck', 'bearing', 'drill-head']
