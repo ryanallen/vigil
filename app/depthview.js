@@ -13,7 +13,8 @@ precision highp float;
 in vec2 uv; out vec4 o;
 uniform sampler2D c0, d0, c1, d1;
 uniform vec2 cam, scale, fpt;
-uniform float mixv, pull, strength, band, tilt;
+uniform float mixv, pull, strength, band, tilt, spinOn, spinPitch, spinPhase;
+uniform vec4 spin;
 // Steep parallax: step along the camera's offset until the ray meets the depth surface, so near edges cover what's
 // behind them instead of smearing.
 vec2 march(sampler2D d, vec2 q) {
@@ -37,6 +38,13 @@ vec3 shade(sampler2D c, sampler2D d, vec2 q) {
   float byDepth = max(0.0, abs(depth - focus) - band) * 7.0;
   float byScreen = smoothstep(0.12, 0.55, abs(uv.y - fpt.y)) * 2.2;
   float lod = clamp(max(byDepth, byScreen) * tilt, 0.0, 3.4) + pull;
+  // A turning part: inside its box the picture scrolls along the part by its thread pitch, so a helix turns. The
+  // scroll fades out at the box's edges, where the part meets what holds it.
+  if (spinOn > 0.0 && s.x > spin.x && s.x < spin.z && s.y > spin.y && s.y < spin.w) {
+    float m = smoothstep(spin.x, spin.x + 0.008, s.x) * smoothstep(spin.z, spin.z - 0.008, s.x)
+            * smoothstep(spin.y, spin.y + spinPitch, s.y) * smoothstep(spin.w, spin.w - 0.01, s.y) * spinOn;
+    s.y -= mod(spinPhase, spinPitch) * m;
+  }
   // A small disc of taps at that level, so deep blur reads as a lens and not as blocky mip squares.
   vec2 px = exp2(lod) / vec2(textureSize(c, 0));
   vec3 col = textureLod(c, s, lod).rgb * 0.36;
@@ -85,6 +93,7 @@ export function mount(canvas) {
   let a = { c: black, d: flat }, b = a, mix = 1, fadeAt = 0, aspect = 16 / 9;
   let cam = [0, 0], camGoal = null, fp = [0.5, 0.6], fpGoal = null, pull = 0;
   let visible = true, raf = 0, t0 = performance.now(), last = 0;
+  let spinCfg = null, spinBox = null, spinOn = 0, spinPhase = 0;
 
   const resize = () => {
     const r = Math.min(2, devicePixelRatio || 1), w = Math.round(canvas.clientWidth * r), h = Math.round(canvas.clientHeight * r);
@@ -111,13 +120,24 @@ export function mount(canvas) {
     gl.uniform2f(U('cam'), cam[0] * 0.022, cam[1] * 0.014);
     gl.uniform2f(U('fpt'), fp[0], fp[1]);
     gl.uniform1f(U('strength'), 1.0);
+    // Spin up over about three seconds, coast down over five.
+    const sg = spinCfg ? 1 : 0;
+    spinOn += (sg - spinOn) * (1 - Math.exp(-dt * (sg ? 0.9 : 0.5)));
+    if (spinOn < 0.002 && !spinCfg) spinOn = 0;
+    if (spinBox) {
+      spinPhase += spinBox.speed * spinOn * dt;
+      gl.uniform4f(U('spin'), ...spinBox.box);
+      gl.uniform1f(U('spinPitch'), spinBox.pitch);
+      gl.uniform1f(U('spinPhase'), spinPhase);
+    }
+    gl.uniform1f(U('spinOn'), still ? 0 : spinOn);
     gl.uniform1f(U('band'), 0.06);
     gl.uniform1f(U('tilt'), 1.0);
     gl.uniform1f(U('mixv'), mix);
     gl.uniform1f(U('pull'), pull);
     [a.c, a.d, b.c, b.d].forEach((x, i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, x); });
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    if (!still || mix < 1 || pull > 0 || camGoal) raf = requestAnimationFrame(frame);
+    if (!still || mix < 1 || pull > 0 || camGoal || spinOn > 0) raf = requestAnimationFrame(frame);
   };
   const kick = () => { if (!raf) { last = 0; raf = requestAnimationFrame(frame); } };
 
@@ -141,6 +161,9 @@ export function mount(canvas) {
 
   let want = '';
   return {
+    // spin({ box: [x0, y0, x1, y1] in the photo's 0–1 space, pitch, speed }) turns a part; spin(null) lets it coast to a stop.
+    spin(cfg) { spinCfg = cfg; if (cfg) spinBox = cfg; kick(); },
+    camera() { return cam; },
     async show(colour, depth) {
       const key = colour + '|' + depth; if (key === want) return; want = key;
       const [ci, di] = await Promise.all([load(colour), load(depth)]);
