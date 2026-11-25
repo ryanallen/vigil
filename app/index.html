@@ -441,12 +441,19 @@
     .cam figcaption > span:nth-child(2) { display: none; }
   }
   @media (max-width: 400px) { .meters .ring, .meters #mCtx { display: none; } }
+  @media (max-width: 430px) { #themeBtn { display: none; } .status { font-size: 10px; } }
   .cam { position: relative; margin: 0 0 22px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: 0 30px 80px -30px rgb(47 140 255 / .45); aspect-ratio: 16 / 7; background: #000; }
   .cam img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 30% 60%; }
   .cam::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(0 0 0 / .75)), repeating-linear-gradient(0deg, rgb(0 0 0 / .08) 0 1px, transparent 1px 3px); pointer-events: none; }
   .cam figcaption { position: absolute; z-index: 1; left: 14px; right: 14px; bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font: 600 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #dfe7ff; }
   .cam .rec { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 4px; background: rgb(255 84 104 / .85); color: #fff; }
   .cam .rec i { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1.2s ease-in-out infinite; }
+  .cam .rec.ok { background: rgb(92 240 176 / .9); color: #03140d; } .cam .rec.ok i { background: #03140d; }
+  .payoff { max-width: 860px; aspect-ratio: 16 / 8; animation: payoff-in 1.4s var(--ease) both; }
+  .payoff img { object-position: 60% 45%; }
+  .payoff-line { position: absolute; z-index: 1; left: 18px; right: 18px; bottom: 38px; margin: 0; font: 800 clamp(22px, 3.2vw, 38px)/1.05 var(--sans); letter-spacing: -.03em; color: #fff; text-shadow: 0 2px 30px rgb(0 0 0 / .7); }
+  @keyframes payoff-in { from { opacity: 0; transform: scale(.97); filter: blur(10px) brightness(2); } }
+  @media (prefers-reduced-motion: reduce) { .payoff { animation: none; } }
   .cam .cam-r { margin-left: auto; } .cam .cam-r b { color: var(--warn); }
   .step[data-s="now"] { box-shadow: inset 2px 0 0 var(--accent); }
   .feed .step-head { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
@@ -1121,7 +1128,14 @@ function finish() {
   $('pauseBtn').hidden = true; $('stopBtn').hidden = true;
   renderPlan(); renderChips(); renderSummary();
   feed('say', '<span class="say">Finished. The summary above lists what changed and the proof for each claim.</span>');
+  S.unseen = 0; showLatest();
   $('workScroll').scrollTop = 0;
+}
+function payoff() {
+  const t = S.draft ? '3,600' : '4,000';
+  return S.pushed
+    ? `<figure class="cam payoff"><img src="../media/ore-launch-960.webp" srcset="../media/ore-launch-960.webp 960w, ../media/ore-launch-1920.webp 1920w" sizes="(max-width: 860px) 100vw, 860px" width="1920" height="1080" alt="The mass driver at Kirra fires ore capsule KR-112 toward a distant Earth, a streak of light."><figcaption><span class="rec ok"><i></i>Away</span><span>KR-112 · ${t} t · Halcyon catches it in 211 days</span></figcaption><p class="payoff-line">Drill 7 is back. The ore is on its way.</p></figure>`
+    : `<figure class="cam payoff"><img src="../media/mining-station-800.webp" srcset="../media/mining-station-800.webp 800w, ../media/mining-station-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="Kirra Station's pit with the drills running and haul trucks on the ramps."><figcaption><span class="rec ok"><i></i>Live</span><span>Drill 7 · running · ${t} t held on the driver</span></figcaption><p class="payoff-line">Drill 7 is back. The launch waits for you.</p></figure>`;
 }
 function renderSummary() {
   const done = S.plan.filter(p => p.state === 'done');
@@ -1129,7 +1143,7 @@ function renderSummary() {
   const failedOnce = S.checks.some(c => c.state === 'fail');
   const accepted = Object.values(S.decisions).filter(d => d === 'accepted').length;
   const est = S.estimateAtStart || estimate();
-  $('summarySlot').innerHTML = `<div class="summary">
+  $('summarySlot').innerHTML = `${S.phase === 'done' ? payoff() : ''}<div class="summary">
     <h3>${S.phase === 'stopped' ? 'Stopped' : 'What was done, with the proof'}</h3>
     <ul>
       <li>Took ${$('mTime').textContent} and spent ${money(S.cost)}, against the estimate of ${est.text} and ${money(est.usd)}.</li>
