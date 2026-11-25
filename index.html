@@ -82,6 +82,9 @@
   .body { display: grid; grid-template-columns: minmax(320px, 400px) 1fr; min-height: 0; }
   .side { display: grid; grid-template-rows: 1fr auto; min-width: 0; min-height: 0; border-right: 1px solid var(--line); }
   .scroll { overflow: auto; overscroll-behavior: contain; }
+  #workScroll { position: relative; }
+  .latest { position: sticky; z-index: 3; top: calc(100% - 52px); float: right; margin: 0 16px -40px 0; height: 34px; padding: 0 14px; border: 1px solid var(--line); border-radius: 17px; background: var(--ink); color: var(--bg); font: 600 13px var(--sans); box-shadow: 0 4px 14px rgb(0 0 0 / .18); cursor: pointer; animation: arrive .25s var(--ease) both; }
+  .latest:hover { filter: brightness(1.08); }
   .work { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
 
   /* Plan and steps */
@@ -409,6 +412,7 @@
         <button role="tab" id="tab-preview" aria-controls="pane-preview" aria-selected="false" tabindex="-1">Preview</button>
       </div>
       <div class="scroll" id="workScroll">
+        <button class="latest" id="latest" hidden><span id="latestN"></span> <span aria-hidden="true">↓</span></button>
         <section class="pane" id="pane-activity" role="tabpanel" aria-labelledby="tab-activity">
           <div id="askSlot"></div>
           <div id="summarySlot"></div>
@@ -575,7 +579,8 @@ $('addStep').addEventListener('keydown', e => {
 });
 
 // ---- Rendering: meters and status ------------------------------------------
-function setStatus(s, text) { $('status').dataset.s = s; $('statusText').textContent = text; }
+
+function setStatus(s, text) { $('status').dataset.s = s; $('statusText').textContent = text; document.title = (s === 'wait' ? '● ' : '') + text + ' · Steer'; }
 function meters() {
   const t = Math.round(S.clock / 1000);
   $('mTime').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
@@ -596,8 +601,22 @@ function feed(kind, html, cls = '') {
     : `<span class="k">${ICON[kind] || ''}</span><div class="msg ${cls}">${html}<time>${stamp()}</time></div>`;
   if (kind === 'head') li.firstElementChild.nextElementSibling.classList.add('step-head');
   $('feed').append(li);
-  if (activeTab() === 'activity') { const sc = $('workScroll'); if (sc.scrollHeight - sc.scrollTop - sc.clientHeight < 160) sc.scrollTop = sc.scrollHeight; }
+  if (activeTab() === 'activity') {
+    const sc = $('workScroll');
+    if (sc.scrollHeight - sc.scrollTop - sc.clientHeight < 160 + li.offsetHeight) sc.scrollTop = sc.scrollHeight;
+    else if (kind !== 'head') { S.unseen = (S.unseen || 0) + 1; showLatest(); }
+  }
 }
+function showLatest() {
+  const n = S.unseen || 0;
+  $('latest').hidden = !n || activeTab() !== 'activity';
+  $('latestN').textContent = n === 1 ? '1 new line' : n + ' new lines';
+}
+$('latest').addEventListener('click', () => { const sc = $('workScroll'); sc.scrollTo({ top: sc.scrollHeight, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); S.unseen = 0; showLatest(); });
+$('workScroll').addEventListener('scroll', () => {
+  const sc = $('workScroll');
+  if (S.unseen && sc.scrollHeight - sc.scrollTop - sc.clientHeight < 40) { S.unseen = 0; showLatest(); }
+}, { passive: true });
 
 // ---- The script: what each step does ---------------------------------------
 // Each action is [milliseconds, function]. The run reads queued steers only between steps.
@@ -1059,6 +1078,7 @@ function selectTab(name, focus) {
   if (name === 'preview') renderPreview();
   if (focus) $('tab-' + name).focus();
   $('workScroll').scrollTop = name === 'activity' && S.phase !== 'plan' ? $('workScroll').scrollHeight : 0;
+  S.unseen = 0; showLatest();
 }
 document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[role="tab"]'); if (b) selectTab(b.id.slice(4)); });
 document.querySelector('.tabs').addEventListener('keydown', e => {
