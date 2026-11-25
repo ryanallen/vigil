@@ -1,0 +1,1170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steer · Kirra Station: bring Drill 7 back</title>
+<meta name="description" content="The Steer console, live: read the plan to bring a seized drill back on an asteroid mine, steer the robot crew mid-job, decide on an ore launch that can't be recalled, and review every change with its proof.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#05070d">
+<link rel="canonical" href="https://ryanallen.com/steer/app/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ryanallen.com/steer/app/">
+<meta property="og:title" content="Steer · Kirra Station: bring Drill 7 back">
+<meta property="og:description" content="The Steer console, live: read the plan, steer the robot crew mid-job, decide on an ore launch that can't be recalled, and review every change with its proof.">
+<meta property="og:image" content="https://ryanallen.com/steer/share.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="author" content="Ryan Allen">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%232f5bd3%27/%3E%3Cpath d=%27M7 17 17 7M10 7h7v7%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272.4%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --sunk: #efede8; --line: #e2dfd8; --line-strong: #cfcbc2;
+    --ink: #1d1c1a; --ink-2: #4a4843; --muted: #5f5d57; --faint: #6f6d66;
+    --accent: #2f5bd3; --accent-ink: #ffffff; --accent-soft: #e6ecfb;
+    --ok: #1f7a4d; --ok-soft: #e3f2ea; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #b3261e; --bad-soft: #fbe5e3;
+    --add: #e6f4ea; --add-ink: #1d5e36; --del: #fbe9e7; --del-ink: #8a2a20;
+    --shadow: 0 1px 2px rgb(0 0 0 / .05), 0 4px 16px rgb(0 0 0 / .06);
+    --radius: 10px; --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --ease: cubic-bezier(.2, .7, .2, 1);
+  }
+  @media all { :root:not([data-theme="light"]) {
+    --bg: #121315; --panel: #1a1b1e; --sunk: #222327; --line: #2c2d31; --line-strong: #3a3b40;
+    --ink: #ecebe7; --ink-2: #c4c2bc; --muted: #a3a19a; --faint: #8f8d86;
+    --accent: #7c9cff; --accent-ink: #0e1220; --accent-soft: #1f2741;
+    --ok: #5cc28d; --ok-soft: #16281f; --warn: #e3a64a; --warn-soft: #2c2213; --bad: #ff8a80; --bad-soft: #321b19;
+    --add: #15281c; --add-ink: #8fd8a8; --del: #2e1a18; --del-ink: #f2a59c;
+    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .35);
+  } }
+  :root[data-theme="dark"] {
+    --bg: #121315; --panel: #1a1b1e; --sunk: #222327; --line: #2c2d31; --line-strong: #3a3b40;
+    --ink: #ecebe7; --ink-2: #c4c2bc; --muted: #a3a19a; --faint: #8f8d86;
+    --accent: #7c9cff; --accent-ink: #0e1220; --accent-soft: #1f2741;
+    --ok: #5cc28d; --ok-soft: #16281f; --warn: #e3a64a; --warn-soft: #2c2213; --bad: #ff8a80; --bad-soft: #321b19;
+    --add: #15281c; --add-ink: #8fd8a8; --del: #2e1a18; --del-ink: #f2a59c;
+    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* Frame */
+  .app { display: grid; grid-template-rows: auto 1fr; height: 100%; max-width: 1440px; margin: 0 auto; }
+  .top { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; letter-spacing: -.01em; }
+  .brand svg { width: 18px; height: 18px; }
+  .task { flex: 1; min-width: 0; }
+  .task h1 { margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task p { margin: 0; color: var(--muted); font-size: 12px; }
+  .meters { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .meters b { color: var(--ink-2); font-weight: 550; }
+  .ring { width: 18px; height: 18px; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 3; }
+  .ring .track { stroke: var(--line); }
+  .ring .fill { stroke: var(--accent); stroke-linecap: round; transition: stroke-dasharray .4s var(--ease); }
+  .status { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 8px; border-radius: 999px; background: var(--sunk); color: var(--ink-2); font-size: 12px; font-weight: 550; white-space: nowrap; }
+  .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .status[data-s="run"] i { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+  .status[data-s="wait"] { background: var(--warn-soft); color: var(--warn); } .status[data-s="wait"] i { background: var(--warn); }
+  .status[data-s="done"] { background: var(--ok-soft); color: var(--ok); } .status[data-s="done"] i { background: var(--ok); }
+  .status[data-s="stop"] { background: var(--bad-soft); color: var(--bad); } .status[data-s="stop"] i { background: var(--bad); }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .how { text-decoration: none; color: var(--ink-2); }
+  .icon-btn { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink-2); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  .body { display: grid; grid-template-columns: minmax(320px, 400px) 1fr; min-height: 0; }
+  .side { display: grid; grid-template-rows: 1fr auto; min-width: 0; min-height: 0; border-right: 1px solid var(--line); }
+  .scroll { overflow: auto; overscroll-behavior: contain; }
+  #workScroll { position: relative; }
+  .latest { position: sticky; z-index: 3; top: calc(100% - 52px); float: right; margin: 0 16px -40px 0; height: 34px; padding: 0 14px; border: 1px solid var(--line); border-radius: 17px; background: var(--ink); color: var(--bg); font: 600 13px var(--sans); box-shadow: 0 4px 14px rgb(0 0 0 / .18); cursor: pointer; animation: arrive .25s var(--ease) both; }
+  .latest:hover { filter: brightness(1.08); }
+  .work { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+
+  /* Plan and steps */
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 18px 20px 8px; }
+  .section-head h2 { margin: 0; font-size: 12px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .section-head span { color: var(--faint); font-size: 12px; }
+  .estimate { margin: -2px 20px 10px; color: var(--ink-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .estimate b { font-weight: 600; }
+  .note { margin: 0 20px 12px; color: var(--muted); font-size: 13px; }
+  .steps { list-style: none; margin: 0; padding: 0 12px 16px; }
+  .step { position: relative; display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: start; padding: 10px 8px; border-radius: 8px; }
+  .step + .step { margin-top: 2px; }
+  .step .dot { position: relative; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--line-strong); color: var(--faint); font-size: 11px; font-weight: 650; background: var(--panel); }
+  .step:not(:last-child) .dot::after { content: ""; position: absolute; top: 24px; left: 9.5px; width: 1.5px; height: calc(100% + 0px); min-height: 18px; background: var(--line); }
+  .step[data-s="now"] { background: var(--accent-soft); }
+  .step[data-flash] { animation: landed 1.6s var(--ease); }
+  @keyframes landed { 0%, 30% { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); } }
+  .step[data-s="now"] .dot { border-color: var(--accent); color: var(--accent); }
+  .step[data-s="now"] .dot::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid var(--accent); opacity: .35; animation: pulse 1.4s ease-in-out infinite; }
+  .step[data-s="done"] .dot { border-color: var(--ok); background: var(--ok); color: var(--panel); }
+  .step[data-s="done"] .dot svg { width: 14px; height: 14px; }
+  .step[data-fresh] .dot path { stroke-dasharray: 24; animation: draw .45s var(--ease) both; }
+  @keyframes draw { from { stroke-dashoffset: 24; } }
+  .step[data-s="done"]:not(:last-child) .dot::after { background: var(--ok); opacity: .45; }
+  .step[data-s="wait"] { background: var(--warn-soft); } .step[data-s="wait"] .dot { border-color: var(--warn); color: var(--warn); }
+  .step[data-s="skip"] .title { color: var(--faint); text-decoration: line-through; }
+  .step[data-s="skip"] .dot { border-style: dashed; }
+  .step .title { font-weight: 550; overflow-wrap: anywhere; }
+  .step .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .step .now-line { color: var(--accent); font-size: 12.5px; margin-top: 3px; font-family: var(--mono); overflow-wrap: anywhere; }
+  .step .tag { display: inline-block; margin-top: 5px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--warn-soft); color: var(--warn); }
+  .step .tag.steer { background: var(--accent-soft); color: var(--accent); }
+  .step textarea.title-edit { display: block; width: calc(100% + 12px); padding: 3px 6px; margin: -4px -6px -2px; border: 1px solid transparent; border-radius: 6px; background: transparent; font-weight: 550; line-height: 1.5; resize: none; overflow: hidden; }
+  .step textarea.title-edit:hover { border-color: var(--line); }
+  .step textarea.title-edit:focus { border-color: var(--accent); background: var(--panel); outline: none; }
+  .step-tools { display: flex; gap: 2px; opacity: .55; transition: opacity .15s; }
+  .step:hover .step-tools, .step:focus-within .step-tools { opacity: 1; }
+  .step-tools button { width: 26px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--muted); }
+  .step-tools button:hover { background: var(--sunk); color: var(--ink); }
+  .step-tools svg { width: 14px; height: 14px; }
+  .step .back { border: 0; background: none; padding: 0; color: var(--muted); font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+  .add-step { display: flex; gap: 8px; margin: 4px 20px 0; }
+  .add-step input { flex: 1; min-width: 0; padding: 7px 10px; border: 1px dashed var(--line-strong); border-radius: 8px; background: transparent; }
+  .add-step input:focus { border-style: solid; border-color: var(--accent); outline: none; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel); color: var(--ink); font-weight: 550; white-space: nowrap; }
+  .btn:hover { background: var(--sunk); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { filter: brightness(1.06); }
+  .btn.quiet { border-color: transparent; background: transparent; color: var(--ink-2); }
+  .btn.quiet:hover { background: var(--sunk); }
+  .btn.danger { color: var(--bad); }
+  .btn svg { width: 14px; height: 14px; }
+  .btn[disabled] { opacity: .45; cursor: default; }
+
+  /* Composer */
+  .composer { border-top: 1px solid var(--line); padding: 12px 14px 14px; background: var(--panel); }
+  .composer .row { display: flex; gap: 8px; align-items: flex-end; }
+  .composer textarea { flex: 1; min-width: 0; resize: none; height: 40px; max-height: 120px; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--bg); line-height: 1.4; }
+  .composer textarea:focus { border-color: var(--accent); outline: none; }
+  .chips { display: flex; gap: 6px; margin: 0 -14px 8px; padding: 0 14px; overflow-x: auto; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; }
+  .chip { padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--ink-2); font-size: 12px; }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+  .controls .spacer { flex: 1; }
+  .hint { position: relative; margin: 0 0 10px; padding: 9px 11px; border-radius: 10px; background: var(--ink); color: var(--bg); font-size: 12.5px; line-height: 1.45; animation: arrive .4s var(--ease) both; }
+  .hint b { font-weight: 650; }
+  .hint::after { content: ""; position: absolute; left: 22px; bottom: -5px; width: 10px; height: 10px; background: var(--ink); transform: rotate(45deg); }
+  .queued { margin: 0 0 8px; padding: 7px 10px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-size: 12.5px; }
+  .speed { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .speed button { border: 0; background: transparent; padding: 0 8px; height: 28px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .speed button[aria-pressed="true"] { background: var(--sunk); color: var(--ink); font-weight: 600; }
+
+  /* Work panel */
+  .tabs { display: flex; gap: 2px; padding: 10px 16px 0; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+  .tabs button { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px 10px; border: 0; background: none; color: var(--muted); font-weight: 550; white-space: nowrap; }
+  .tabs button[aria-selected="true"] { color: var(--ink); }
+  .tabs button[aria-selected="true"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ink); }
+  .count { min-width: 18px; padding: 0 5px; border-radius: 999px; background: var(--sunk); color: var(--ink-2); font-size: 11px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+  .count.alert { background: var(--warn-soft); color: var(--warn); }
+  .pane { padding: 20px 24px 40px; }
+  .pane[hidden] { display: none; }
+  .empty { max-width: 460px; margin: 40px auto; text-align: center; color: var(--muted); }
+  .empty h3 { margin: 0 0 6px; color: var(--ink); font-size: 16px; font-weight: 600; }
+
+  /* Activity */
+  .feed { list-style: none; margin: 0; padding: 0; max-width: 860px; }
+  .feed > li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; padding: 6px 0; animation: arrive .35s var(--ease) both; }
+  @keyframes arrive { from { opacity: 0; transform: translateY(4px); } }
+  .feed .k { width: 20px; height: 20px; display: grid; place-items: center; color: var(--faint); }
+  .feed .k svg { width: 15px; height: 15px; }
+  .feed .msg { min-width: 0; }
+  .feed .msg code { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); overflow-wrap: anywhere; }
+  .feed .say { color: var(--ink); }
+  .open-change { padding: 0; border: 0; background: none; color: var(--accent); text-align: left; }
+  .open-change code { color: inherit !important; text-decoration: underline; text-underline-offset: 2px; }
+  .change.flash { animation: flash 1.4s var(--ease); }
+  @keyframes flash { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: 0 0 0 3px transparent; } }
+  .feed .step-head { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-weight: 600; }
+  .feed .step-head:first-child { margin-top: 0; border-top: 0; padding-top: 0; }
+  .feed .you { padding: 8px 12px; border-radius: 10px; background: var(--accent-soft); color: var(--ink); }
+  .feed .you small { display: block; color: var(--accent); font-weight: 600; font-size: 11.5px; }
+  .feed .fail { color: var(--bad); }
+  .feed .pass { color: var(--ok); }
+  .feed time { color: var(--faint); font-size: 11.5px; margin-left: 6px; font-variant-numeric: tabular-nums; }
+  .thinking { display: inline-flex; gap: 3px; vertical-align: middle; margin-left: 4px; }
+  .thinking i { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
+  .thinking i:nth-child(2) { animation-delay: .15s; } .thinking i:nth-child(3) { animation-delay: .3s; }
+
+  /* The brief before a run */
+  .brief { max-width: 860px; }
+  .brief h3 { margin: 0 0 4px; font-size: 16px; }
+  .brief-lede { margin: 0 0 18px; color: var(--ink-2); max-width: 640px; }
+  .brief-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .brief section { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+  .brief h4 { margin: 0 0 8px; color: var(--muted); font-size: 11.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; }
+  .brief ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+  .read-list li { display: grid; gap: 1px; }
+  .read-list li > code { font: 600 12.5px var(--mono); }
+  .read-list span { color: var(--muted); font-size: 13px; }
+  .assume-list li { position: relative; padding-left: 16px; }
+  .assume-list li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+  .assume-list li.fixed { color: var(--muted); }
+  .assume-list li.fixed::before { background: var(--accent); }
+  .assume-list li.fixed s { text-decoration-thickness: 1px; }
+  .assume-list li.fixed em { display: block; color: var(--accent); font-style: normal; font-weight: 600; font-size: 12.5px; }
+  .brief + .feed:not(:empty) { margin-top: 18px; }
+  .brief-foot { margin: 16px 0 0; color: var(--muted); font-size: 13px; }
+
+  /* Approval card */
+  .ask { max-width: 860px; margin: 0 0 18px; padding: 16px 18px; border: 1px solid var(--warn); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); }
+  .ask h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 15px; }
+  .ask h3 svg { width: 16px; height: 16px; color: var(--warn); }
+  .ask dl { display: grid; grid-template-columns: 120px 1fr; gap: 6px 14px; margin: 12px 0 14px; font-size: 13px; }
+  .ask dt { color: var(--muted); }
+  .ask dd { margin: 0; }
+  .ask pre { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--sunk); font: 12.5px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .ask .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ask input { width: 100%; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); font: 12.5px var(--mono); }
+  .irreversible { color: var(--bad); font-weight: 600; }
+
+  /* Changes */
+  .group { max-width: 980px; margin-bottom: 26px; }
+  .group > h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; font-weight: 650; }
+  .group > h3 .n { color: var(--faint); font-weight: 500; }
+  .change { margin-bottom: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
+  .change[data-d="accepted"] { border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); }
+  .change[data-d="sent"] { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
+  .change-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--sunk); }
+  .change-head .file { font: 600 12.5px var(--mono); overflow-wrap: anywhere; }
+  .change-head .stat { white-space: nowrap; }
+  .change-head .stat { font: 12px var(--mono); color: var(--muted); }
+  .change-head .stat .a { color: var(--add-ink); } .change-head .stat .d { color: var(--del-ink); }
+  .change-head .spacer { flex: 1; }
+  .why { padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-2); font-size: 13px; }
+  .why b { color: var(--muted); font-weight: 600; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; margin-right: 6px; }
+  .diff { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--mono); overflow-x: auto; }
+  .diff div { display: grid; grid-template-columns: 34px 16px 1fr; padding-right: 12px; white-space: pre; }
+  .diff .ln { color: var(--faint); text-align: right; padding-right: 8px; user-select: none; }
+  .diff .sg { color: var(--faint); user-select: none; }
+  .diff .add { background: var(--add); } .diff .add .sg, .diff .add .tx { color: var(--add-ink); }
+  .diff .del { background: var(--del); } .diff .del .sg, .diff .del .tx { color: var(--del-ink); }
+  .diff .gap { color: var(--faint); background: var(--sunk); font-size: 11.5px; }
+  .decision { display: flex; gap: 6px; }
+  .verdict { font-size: 12px; font-weight: 600; }
+  .review-bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 12px; padding: 8px 0; background: var(--bg); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .review-bar #reviewCount { font-weight: 600; }
+  .review-bar .keys { flex: 1; color: var(--muted); font-size: 12px; }
+  .review-bar kbd { display: inline-block; min-width: 18px; margin-right: 2px; padding: 0 4px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; font: 600 11px/16px var(--mono); text-align: center; color: var(--ink-2); }
+  @media (hover: none), (max-width: 860px) { .review-bar .keys { display: none; } .review-bar { justify-content: space-between; } }
+  .change { scroll-margin-top: 64px; }
+  .change:focus { outline: none; }
+  .change:focus-visible, .change.cursor { box-shadow: 0 0 0 2px var(--accent); }
+  .diff mark { border-radius: 3px; color: inherit; }
+  .diff .add mark { background: color-mix(in srgb, var(--add-ink) 24%, transparent); }
+  .diff .del mark { background: color-mix(in srgb, var(--del-ink) 24%, transparent); }
+  .verdict.accepted { color: var(--ok); } .verdict.sent { color: var(--warn); }
+  .sendback { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--warn-soft); }
+  .sendback input { flex: 1; min-width: 0; padding: 6px 9px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel); }
+
+  /* Checks */
+  .checks { list-style: none; margin: 0; padding: 0; max-width: 860px; }
+  .check { margin-bottom: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+  .check summary { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; list-style: none; }
+  .check summary::-webkit-details-marker { display: none; }
+  .check .badge { padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650; }
+  .badge.pass { background: var(--ok-soft); color: var(--ok); } .badge.fail { background: var(--bad-soft); color: var(--bad); } .badge.run { background: var(--accent-soft); color: var(--accent); }
+  .check .name { font-weight: 600; }
+  .check .meta { margin-left: auto; color: var(--faint); font-size: 12px; }
+  .check pre { margin: 0; padding: 4px 14px 12px; font: 12.5px/1.55 var(--mono); white-space: pre-wrap; color: var(--ink-2); }
+  .run-out { border-top: 1px solid var(--line); }
+  .run-label { padding: 8px 14px 0; color: var(--muted); font-size: 11.5px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+  .runs { list-style: none; margin: 0; padding: 10px 14px; border-top: 1px solid var(--line); display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
+  .runs li { display: flex; align-items: center; gap: 8px; }
+  .runs .badge { min-width: 56px; text-align: center; }
+
+  /* Preview */
+  .compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 980px; }
+  .compare figure { margin: 0; }
+  .compare figcaption { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 26px; margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .look { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; text-transform: none; letter-spacing: 0; }
+  .look button { border: 0; background: none; padding: 2px 9px; color: var(--muted); font-size: 12px; font-weight: 550; }
+  .look button[aria-pressed="true"] { background: var(--sunk); color: var(--ink); }
+  .look[hidden] { display: none; }
+  .phone { border: 1px solid var(--line-strong); border-radius: 22px; padding: 10px; background: var(--sunk); box-shadow: var(--shadow); }
+  .tw { --tw-bg: #f7f4ee; --tw-card: #ffffff; --tw-ink: #18221f; --tw-muted: #66706b; --tw-line: #e3ded4; --tw-accent: #0f7b6c;
+    border-radius: 14px; overflow: hidden; background: var(--tw-bg); color: var(--tw-ink); font: 13px/1.45 var(--sans); min-height: 360px; transition: background .3s, color .3s; }
+  .tw { color: var(--ink); }
+  .tw .rig { display: grid; place-items: center; padding: 6px 0 4px; }
+  .tw .rig svg { width: 180px; height: 108px; overflow: visible; }
+  .tw .ring { fill: none; stroke: var(--line-strong); stroke-width: 2; }
+  .tw .teeth rect { fill: var(--muted); }
+  .tw .hub { fill: var(--ink); }
+  .tw .bear { fill: none; stroke-width: 5; stroke: var(--faint, var(--muted)); }
+  .tw .rig[data-s="bad"] .bear { stroke: var(--bad); filter: drop-shadow(0 0 8px var(--bad)); }
+  .tw .rig[data-s="work"] .bear { stroke: var(--warn); }
+  .tw .rig[data-s="run"] .bear { stroke: var(--ok); filter: drop-shadow(0 0 8px var(--ok)); }
+  .tw .rig[data-s="run"] .teeth { transform-origin: 100px 60px; animation: spin 2.4s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .tw .row b { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+  .tw .row b.bad { color: var(--bad); } .tw .row b.run { color: var(--ok); } .tw .row b.work { color: var(--warn); }
+  .tw[data-dark] { --tw-bg: #0f1615; --tw-card: #17201e; --tw-ink: #e6eeeb; --tw-line: #26312e; --tw-accent: #3cc2ad; }
+  .tw[data-dark][data-muted="old"] { --tw-muted: #6d7874; }
+  .tw[data-dark]:not([data-muted="old"]) { --tw-muted: #9aa6a2; }
+  .tw header { padding: 14px 16px 10px; font-weight: 700; }
+  .tw header small { display: block; color: var(--tw-muted); font-weight: 400; }
+  .tw .card { margin: 0 12px 10px; padding: 4px 14px; border-radius: 12px; background: var(--tw-card); border: 1px solid var(--tw-line); }
+  .tw .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; }
+  .tw .row + .row { border-top: 1px solid var(--tw-line); }
+  .tw .row span small { display: block; color: var(--tw-muted); font-size: 12px; }
+  .tw .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--tw-bg); border: 1px solid var(--tw-line); }
+  .tw .seg button { border: 0; border-radius: 6px; padding: 3px 8px; background: transparent; color: var(--tw-muted); font-size: 12px; }
+  .tw .seg button[aria-pressed="true"] { background: var(--tw-card); color: var(--tw-ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+  .tw .sw { width: 34px; height: 20px; border-radius: 999px; background: var(--tw-accent); position: relative; }
+  .tw .sw::after { content: ""; position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+  .contrast { margin-top: 10px; font-size: 12px; color: var(--muted); }
+
+  /* Summary */
+  .summary { max-width: 860px; margin-bottom: 18px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+  .summary h3 { margin: 0 0 8px; font-size: 15px; }
+  .summary ul { margin: 0; padding-left: 18px; }
+  .summary li { margin: 3px 0; }
+  .summary .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  /* Dialog */
+  dialog { max-width: 440px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--ink); box-shadow: var(--shadow); padding: 20px; }
+  dialog::backdrop { background: rgb(0 0 0 / .35); }
+  dialog h3 { margin: 0 0 8px; font-size: 16px; }
+  dialog p { margin: 0 0 10px; color: var(--ink-2); }
+  dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+  .demo-note { padding: 8px 20px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; }
+  .demo-note a { color: inherit; }
+
+  .m-only { display: none !important; }
+  @media (max-width: 860px) {
+    .m-only { display: inline-flex !important; }
+    .app { height: 100dvh; }
+    .top { flex-wrap: wrap; padding: 10px 14px; gap: 8px 10px; }
+    .task { order: 3; flex-basis: 100%; }
+    .task h1 { font-size: 14px; white-space: normal; }
+    .meters { gap: 10px; }
+    .meters .lbl { display: none; }
+    .status { margin-left: auto; }
+    .how { order: 4; height: auto; padding: 0; font-size: 12.5px; text-decoration: underline; text-underline-offset: 2px; }
+    .body { display: grid; grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; grid-template-areas: "tabs" "content" "composer"; min-height: 0; }
+    .side, .work { display: contents; }
+    .tabs { grid-area: tabs; padding: 4px 8px 0; }
+    .tabs button { padding: 8px 10px 10px; }
+    #sideScroll, #workScroll { grid-area: content; min-height: 0; }
+    .body[data-tab="plan"] #workScroll, .body:not([data-tab="plan"]) #sideScroll { display: none; }
+    .composer { grid-area: composer; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 18px rgb(0 0 0 / .08); }
+    .pane { padding: 16px 14px 28px; }
+    .ask dl { grid-template-columns: 1fr; gap: 2px; }
+    .ask dd { margin-bottom: 8px; }
+    .demo-note { display: none; }
+    .compare { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  /* Mission control */
+  @media all { :root:not([data-theme="light"]) {
+    --bg: #05070d; --panel: #0b1120; --sunk: #0f1628; --line: rgb(150 190 255 / .12); --line-strong: rgb(150 190 255 / .24);
+    --ink: #eef3ff; --ink-2: #c2cce2; --muted: #8b97b3; --faint: #6c7894;
+    --accent: #6fd6ff; --accent-ink: #03111c; --accent-soft: rgb(111 214 255 / .1);
+    --ok: #5cf0b0; --ok-soft: rgb(92 240 176 / .1); --warn: #ffb347; --warn-soft: rgb(255 179 71 / .12); --bad: #ff6b7d; --bad-soft: rgb(255 84 104 / .12);
+    --add: rgb(92 240 176 / .08); --add-ink: #9af5cf; --del: rgb(255 84 104 / .1); --del-ink: #ffa0ab;
+    --shadow: 0 1px 0 rgb(255 255 255 / .04) inset, 0 20px 60px -30px rgb(47 140 255 / .35);
+  } }
+  :root:not([data-theme="light"]) body { background: radial-gradient(1200px 600px at 80% -10%, rgb(47 140 255 / .12), transparent 60%), radial-gradient(900px 500px at -10% 110%, rgb(255 140 60 / .07), transparent 60%), var(--bg); }
+  .top { position: relative; isolation: isolate; }
+  :root:not([data-theme="light"]) .top::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, var(--bg) 20%, rgb(5 7 13 / .7) 60%, rgb(5 7 13 / .4)), url(../media/mining-station-800.webp) right 30% / cover; opacity: .9; }
+  .brand { gap: 10px; font: 750 13px var(--sans); letter-spacing: .3em; text-decoration: none; color: var(--ink); }
+  .brand svg { width: 20px; height: 20px; }
+  .task h1 { letter-spacing: -.015em; }
+  .section-head h2, .brief h4, .compare figcaption { font-family: var(--mono); letter-spacing: .2em; color: var(--accent); font-weight: 600; font-size: 11px; }
+  .status { font-family: var(--mono); text-transform: uppercase; letter-spacing: .12em; font-size: 11px; border: 1px solid transparent; }
+  .status[data-s="run"] { border-color: rgb(111 214 255 / .35); color: var(--accent); } .status[data-s="run"] i { box-shadow: 0 0 10px var(--accent); }
+  .status[data-s="wait"] { border-color: rgb(255 179 71 / .5); box-shadow: 0 0 24px -6px var(--warn); } .status[data-s="wait"] i { box-shadow: 0 0 10px var(--warn); animation: pulse 1.1s ease-in-out infinite; }
+  .status[data-s="done"] { border-color: rgb(92 240 176 / .4); }
+  .meters b { font-family: var(--mono); font-weight: 600; letter-spacing: .02em; }
+  .btn { border-radius: 999px; }
+  .btn.primary { box-shadow: 0 0 24px -6px var(--accent); }
+  .tabs button[aria-selected="true"]::after { background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .ask { position: relative; border-color: rgb(255 179 71 / .6); border-radius: 16px; background: linear-gradient(170deg, rgb(70 44 14 / .45), var(--panel) 60%); box-shadow: 0 0 0 1px rgb(255 179 71 / .15), 0 30px 90px -30px rgb(255 140 40 / .55); }
+  .ask .btn.primary { background: var(--warn); border-color: var(--warn); color: #1a0f02; box-shadow: 0 0 28px -4px rgb(255 179 71 / .7); }
+  .ask h3 { font-size: 17px; letter-spacing: -.01em; }
+  .ask .irreversible { font-weight: 650; }
+  .change, .brief section, .summary, .check, .phone { border-radius: 14px; }
+  :root:not([data-theme="light"]) .change, :root:not([data-theme="light"]) .brief section, :root:not([data-theme="light"]) .summary { background: linear-gradient(170deg, rgb(28 40 72 / .35), var(--panel)); }
+  .cam { position: relative; margin: 0 0 22px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: 0 30px 80px -30px rgb(47 140 255 / .45); aspect-ratio: 16 / 7; background: #000; }
+  .cam img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 30% 60%; }
+  .cam::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(0 0 0 / .75)), repeating-linear-gradient(0deg, rgb(0 0 0 / .08) 0 1px, transparent 1px 3px); pointer-events: none; }
+  .cam figcaption { position: absolute; z-index: 1; left: 14px; right: 14px; bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font: 600 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #dfe7ff; }
+  .cam .rec { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 4px; background: rgb(255 84 104 / .85); color: #fff; }
+  .cam .rec i { width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1.2s ease-in-out infinite; }
+  .cam .cam-r { margin-left: auto; } .cam .cam-r b { color: var(--warn); }
+  .step[data-s="now"] { box-shadow: inset 2px 0 0 var(--accent); }
+  .feed .step-head { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <a class="brand" href="../" aria-label="Steer, home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="var(--accent)" stroke-width="1.6"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5" stroke="var(--accent)" stroke-width="1.6"/><circle cx="12" cy="12" r="2.4" fill="var(--warn)"/></svg>STEER</a>
+    <div class="task">
+      <h1 id="taskTitle">Bring Drill 7 back before the ore window closes</h1>
+      <p>Kirra Station, 16 Psyche · work order <code>WO-4471</code></p>
+    </div>
+    <div class="meters" aria-live="off">
+      <span title="How long the agent has been working"><span class="lbl">Time </span><b id="mTime">0:00</b></span>
+      <span title="What this job has spent so far: crew time, parts and power"><span class="lbl">Cost </span><b id="mCost">$0.00</b></span>
+      <span title="How much of the agent's working memory this job fills; near full, it starts to lose early detail" style="display:inline-flex;align-items:center;gap:6px"><svg class="ring" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="8"/><circle class="fill" id="mRing" cx="10" cy="10" r="8" stroke-dasharray="0 51"/></svg><b id="mCtx">0%</b><span class="lbl"> context</span></span>
+    </div>
+    <span class="status" id="status" data-s="plan" role="status"><i></i><span id="statusText">Planning</span></span>
+    <a class="btn quiet how" href="../about.html">How it's designed</a>
+    <button class="icon-btn" id="themeBtn" aria-label="Switch light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  </header>
+
+  <div class="body">
+    <aside class="side" aria-label="Plan">
+      <div class="scroll" id="sideScroll">
+        <div class="section-head"><h2 id="planHead">Plan</h2><span id="planCount"></span></div>
+        <p class="estimate" id="estimate"></p>
+        <p class="note" id="planNote">The station's agent read the drill's logs and proposes this plan. Change anything before it starts: rename a step, move it, or drop it. Nothing has run yet.</p>
+        <ol class="steps" id="steps"></ol>
+        <div class="add-step" id="addStepRow"><input id="addStep" placeholder="Add a step, then press Enter" aria-label="Add a step"></div>
+      </div>
+      <div class="composer" id="composer">
+        <p class="hint" id="hint" hidden role="note"><b>Try it.</b> Steer the agent now: pick a suggestion or write your own. It reads your note before its next step and keeps what it has done.</p>
+        <p class="queued" id="queued" hidden></p>
+        <div class="chips" id="chips"></div>
+        <div class="row">
+          <label class="sr" for="steer">Steer the agent</label>
+          <textarea id="steer" rows="1" placeholder="Steer the agent"></textarea>
+          <button class="btn primary" id="sendSteer" aria-label="Send">Send</button>
+        </div>
+        <div class="controls">
+          <button class="btn primary" id="runBtn">Approve plan and run</button>
+          <button class="btn" id="pauseBtn" hidden>Pause</button>
+          <button class="btn danger quiet" id="stopBtn" hidden>Stop</button>
+          <span class="spacer"></span>
+          <div class="speed" role="group" aria-label="Playback speed"><button data-speed="1" aria-pressed="true">1×</button><button data-speed="2" aria-pressed="false">2×</button><button data-speed="4" aria-pressed="false">4×</button></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="work">
+      <div class="tabs" role="tablist" aria-label="The agent's work">
+        <button role="tab" class="m-only" id="tab-plan" aria-controls="sideScroll" aria-selected="false" tabindex="-1">Plan</button>
+        <button role="tab" id="tab-activity" aria-controls="pane-activity" aria-selected="true">Activity</button>
+        <button role="tab" id="tab-changes" aria-controls="pane-changes" aria-selected="false" tabindex="-1">Changes <span class="count" id="cChanges">0</span></button>
+        <button role="tab" id="tab-checks" aria-controls="pane-checks" aria-selected="false" tabindex="-1">Checks <span class="count" id="cChecks">0</span></button>
+        <button role="tab" id="tab-preview" aria-controls="pane-preview" aria-selected="false" tabindex="-1">Preview</button>
+      </div>
+      <div class="scroll" id="workScroll">
+        <button class="latest" id="latest" hidden><span id="latestN"></span> <span aria-hidden="true">↓</span></button>
+        <section class="pane" id="pane-activity" role="tabpanel" aria-labelledby="tab-activity">
+          <div id="askSlot"></div>
+          <div id="summarySlot"></div>
+          <div class="brief" id="feedEmpty">
+            <figure class="cam"><img src="../media/mining-station-1600.webp" srcset="../media/mining-station-800.webp 800w, ../media/mining-station-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="Kirra Station's open pit on the asteroid 16 Psyche: haul trucks on the ramps, and Drill 7 standing dark under an amber light." fetchpriority="high"><figcaption><span class="rec"><i></i>Live</span><span>Kirra Station · Shaft 3 · camera M-24</span><span class="cam-r">Drill 7 · <b>stopped 03:12</b></span></figcaption></figure>
+            <h3>Before you approve</h3>
+            <p class="brief-lede">What the station's agent looked at to write the plan, and what it is assuming. If an assumption is wrong, say so in the steer box or change the plan: nothing has run yet.</p>
+            <div class="brief-cols">
+              <section><h4>It read</h4><ul class="read-list">
+                <li><code>kirra/drill-7.log</code><span>The main bearing seized at 03:12; the drill stopped itself before the head was damaged</span></li>
+                <li><code>kirra/stores.db</code><span>One KR-B7 spare in bin C14; Halcyon's tug T4, docked here, carries a newer one</span></li>
+                <li><code>kirra/crews.yaml</code><span>Six maintenance robots free; Bay 2 is nearest Shaft 3</span></li>
+                <li><code>launch/KR-112.plan</code><span>4,000 t loaded on the mass driver; the window closes in 38 minutes</span></li>
+              </ul></section>
+              <section><h4>It assumes</h4><ul class="assume-list">
+                <li>Drill 4 keeps mining while Drill 7 is repaired.</li>
+                <li id="asAccount">The spare comes from Kirra's own stores.</li>
+                <li id="asDefault">Supervisor Varga goes down the shaft to sign off the fit, as station rules ask.</li>
+                <li>The ore launch goes in this window, and only after you say yes.</li>
+              </ul></section>
+            </div>
+            <p class="brief-foot">When you approve the plan, every action shows here in words, as it happens.</p>
+          </div>
+          <ol class="feed" id="feed" aria-live="polite"></ol>
+        </section>
+        <section class="pane" id="pane-changes" role="tabpanel" aria-labelledby="tab-changes" hidden>
+          <div class="review-bar" id="reviewBar" hidden><span id="reviewCount"></span><span class="keys" aria-hidden="true"><kbd>J</kbd><kbd>K</kbd> move · <kbd>A</kbd> accept · <kbd>S</kbd> send back</span><button class="btn" id="acceptRest">Accept the rest</button></div>
+          <div id="changes"></div>
+          <div class="empty" id="changesEmpty"><h3>No changes yet</h3><p>Each edit appears here under the plan step that made it, with the agent's reason. Accept it or send it back with a note.</p></div>
+        </section>
+        <section class="pane" id="pane-checks" role="tabpanel" aria-labelledby="tab-checks" hidden>
+          <ol class="checks" id="checks"></ol>
+          <div class="empty" id="checksEmpty"><h3>No checks have run</h3><p>The agent's turn ends only when the project's checks pass. Each run is kept here with its output, failures included.</p></div>
+        </section>
+        <section class="pane" id="pane-preview" role="tabpanel" aria-labelledby="tab-preview" hidden>
+          <div class="compare">
+            <figure><figcaption>Before · 03:12</figcaption><div class="phone"><div class="tw" id="twBefore"></div></div></figure>
+            <figure><figcaption><span id="afterCap">After (nothing done yet)</span><span class="look" hidden></span></figcaption><div class="phone"><div class="tw" id="twAfter"></div></div><p class="contrast" id="contrastNote"></p></figure>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <p class="demo-note">A scripted demonstration: no model runs and nothing leaves your browser. Designed and built by <a href="https://ryanallen.com/">Ryan Allen</a>.</p>
+</div>
+
+<dialog id="dialog"><h3 id="dTitle"></h3><div id="dBody"></div><div class="actions" id="dActions"></div></dialog>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ICON = {
+  read: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h11l5 5v9H4z"/><path d="M15 5v5h5"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  run: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m5 7 5 5-5 5"/><path d="M12 18h7"/></svg>',
+  say: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+  you: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  pass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>',
+  fail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg>',
+  drop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17.5v.5"/></svg>',
+};
+
+// ---- What the station's agent changes ---------------------------------
+// Each change is a hunk of a station file, written by the step named.
+const CHANGES = {
+  tokens: { file: 'kirra/crews.yaml', step: 'tokens', why: 'Four of the six free maintenance robots, from the bay nearest Shaft 3, so Drill 4\'s crew keeps mining.', lines: [
+    [' ', 30, 'shaft_3:'], ['-', 31, '  crew: []'], ['+', 31, '  crew: [M-12, M-17, M-20, M-24]'], ['+', 32, '  from: bay_2'], ['+', 33, '  task: WO-4471'], ['+', 34, '  back_by: "+3h"'], [' ', 35, 'shaft_4:'] ] },
+  toggle: { file: 'kirra/work-orders/WO-4471.yaml', step: 'toggle', why: 'Locks Drill 7 out before anything touches it, and logs the seized bearing so the fault can be traced to its batch.', lines: [
+    ['+', 1, 'order: WO-4471'], ['+', 2, 'drill: D7  # Shaft 3'], ['+', 3, 'lockout: true'], ['+', 4, 'remove: KR-B7-0377  # seized 03:12'], ['+', 5, 'crew: [M-12, M-20]'], ['+', 6, 'scrap_to: bay_2/inspection'] ] },
+  remember: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'Fits the one KR-B7 spare in Kirra\'s stores. Supervisor Varga goes down to sign off the fit, as station rules ask for a main bearing.', lines: [
+    [' ', 6, 'scrap_to: bay_2/inspection'], ['+', 7, 'fit: KR-B7-0412'], ['+', 8, 'source: kirra_stores/bin_C14'], ['+', 9, 'bolt_torque: 640 Nm'], ['+', 10, 'sign_off: supervisor  # I. Varga, in the shaft'] ] },
+  rememberSystem: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'No one goes down, as you asked. M-24 films the fit from three angles and Supervisor Varga signs it off from the control room.', lines: [
+    [' ', 6, 'scrap_to: bay_2/inspection'], ['+', 7, 'fit: KR-B7-0412'], ['+', 8, 'source: kirra_stores/bin_C14'], ['+', 9, 'bolt_torque: 640 Nm'], ['+', 10, 'sign_off: camera  # I. Varga, from control'], ['+', 11, 'people_in_shaft: 0'] ] },
+  rememberAccount: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'The spare from Halcyon, as you asked: a newer KR-B7 rated for 95 °C, already on the tug docked here. Kirra\'s own spare stays in stores for the next failure.', lines: [
+    [' ', 6, 'scrap_to: bay_2/inspection'], ['+', 7, 'fit: KR-B7-1190  # rated 95 °C'], ['+', 8, 'source: halcyon/tug_T4'], ['+', 9, 'bolt_torque: 640 Nm'], ['+', 10, 'sign_off: supervisor  # I. Varga, in the shaft'] ] },
+  rememberAccountSystem: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'The newer spare from Halcyon\'s tug, and no one in the shaft, as you asked: M-24 films the fit and Supervisor Varga signs it off from the control room.', lines: [
+    [' ', 6, 'scrap_to: bay_2/inspection'], ['+', 7, 'fit: KR-B7-1190  # rated 95 °C'], ['+', 8, 'source: halcyon/tug_T4'], ['+', 9, 'bolt_torque: 640 Nm'], ['+', 10, 'sign_off: camera  # I. Varga, from control'], ['+', 11, 'people_in_shaft: 0'] ] },
+  contrast: { file: 'kirra/drill-7.conf', step: 'checks', why: 'The load test failed on heat: the new bearing reached 91 °C at six minutes, over the 80 °C limit. A slower spin-up lets it seat; the second run held 64 °C.', lines: [
+    [' ', 17, 'drill: D7'], ['-', 18, 'spin_up: 40s'], ['+', 18, 'spin_up: 90s'], [' ', 19, 'torque_max: 100%'] ] },
+};
+
+// ---- The plan the agent proposes -----------------------------------------
+const PLAN = [
+  { id: 'read', est: [4, .04], title: 'Read Drill 7\'s logs and the station\'s stores', sub: 'drill-7.log, stores.db, crews.yaml' },
+  { id: 'tokens', est: [2, .02], title: 'Send a maintenance crew to Shaft 3', sub: 'Four robots from Bay 2' },
+  { id: 'toggle', est: [2, .03], title: 'Lock out the drill and pull the seized bearing', sub: 'Robots M-12 and M-20' },
+  { id: 'remember', est: [3, .03], title: 'Fit the new bearing', sub: 'Kirra\'s spare; Supervisor Varga signs off in the shaft' },
+  { id: 'checks', est: [9, .05], title: 'Run the telemetry check and the load test', sub: 'Full torque for ten minutes' },
+  { id: 'pr', est: [3, .01], title: 'Fire ore launch KR-112 to Earth orbit', sub: 'Asks you first', risky: true },
+];
+
+// ---- State ---------------------------------------------------------------
+const S = {
+  phase: 'plan', plan: PLAN.map(p => ({ ...p, state: 'todo' })), cur: -1,
+  speed: 1, paused: false, timer: 0, clock: 0, startedAt: 0, ran: 0,
+  tokens: 0, cost: 0, queued: null, followSystem: false, constraints: [],
+  changes: [], decisions: {}, checks: [], muted: 'old', pushed: false, checkpoints: [],
+};
+
+// ---- Rendering: the plan -------------------------------------------------
+const estOf = p => p.est || [3, .02];
+function estimate() {
+  const live = S.plan.filter(p => p.state !== 'skip');
+  const secs = live.reduce((a, p) => a + estOf(p)[0], 0), usd = live.reduce((a, p) => a + estOf(p)[1], 0);
+  return { secs, usd, text: Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0') };
+}
+function renderPlan() {
+  const editing = S.phase === 'plan';
+  const est = estimate();
+  $('estimate').hidden = !editing;
+  $('estimate').innerHTML = 'Estimate: about <b>' + est.text + '</b> and <b>' + money(est.usd) + '</b>, before anything is spent. It changes as you edit the plan.';
+  $('planHead').textContent = editing ? 'Plan' : 'Steps';
+  $('planNote').hidden = !editing;
+  $('addStepRow').hidden = !editing;
+  const live = S.plan.filter(p => p.state !== 'skip').length;
+  $('planCount').textContent = editing ? `${live} steps` : `${S.plan.filter(p => p.state === 'done').length} of ${live} done`;
+  $('steps').innerHTML = S.plan.map((p, i) => {
+    const n = i + 1;
+    const mark = p.state === 'done' ? ICON.pass.replace('stroke-width="2.4"', 'stroke-width="3"') : n;
+    const title = editing && p.state !== 'skip'
+      ? `<textarea class="title-edit" rows="1" data-i="${i}" aria-label="Step ${n}">${esc(p.title)}</textarea>`
+      : `<div class="title">${esc(p.title)}</div>`;
+    const tools = editing ? `<div class="step-tools">
+        <button data-act="up" data-i="${i}" aria-label="Move step ${n} up" ${i === 0 ? 'disabled' : ''}>${ICON.up}</button>
+        <button data-act="down" data-i="${i}" aria-label="Move step ${n} down" ${i === S.plan.length - 1 ? 'disabled' : ''}>${ICON.down}</button>
+        <button data-act="drop" data-i="${i}" aria-label="${p.state === 'skip' ? 'Restore' : 'Drop'} step ${n}">${p.state === 'skip' ? ICON.undo : ICON.drop}</button></div>`
+      : p.state === 'done' && S.phase !== 'run' && S.checkpoints.includes(p.id) ? `<button class="back" data-act="back" data-i="${i}">Return here</button>` : '<span></span>';
+    const now = p.state === 'now' && p.nowLine ? `<div class="now-line">${esc(p.nowLine)}</div>` : '';
+    const tag = !p.risky || p.state === 'skip' ? '' : p.state === 'done' ? `<span class="tag steer">${S.pushed ? 'You fired it' : 'Held by you'}</span>` : `<span class="tag">Asks you before it runs</span>`;
+    const steer = p.steered ? `<span class="tag steer">Changed by your steer</span>` : '';
+    const flash = p.flash; p.flash = false;
+    const fresh = p.state === 'done' && !p.drawn; if (p.state === 'done') p.drawn = true; else p.drawn = false;
+    return `<li class="step" data-s="${p.state}"${fresh ? ' data-fresh' : ''}${flash ? ' data-flash' : ''}><span class="dot" aria-hidden="true">${mark}</span><div>${title}<div class="sub">${esc(p.sub || '')}</div>${now}${tag}${steer}</div>${tools}</li>`;
+  }).join('');
+  $('steps').querySelectorAll('.title-edit').forEach(fitTitle);
+}
+
+$('steps').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const i = +b.dataset.i, act = b.dataset.act;
+  if (act === 'up' && i > 0) [S.plan[i - 1], S.plan[i]] = [S.plan[i], S.plan[i - 1]];
+  if (act === 'down' && i < S.plan.length - 1) [S.plan[i + 1], S.plan[i]] = [S.plan[i], S.plan[i + 1]];
+  if (act === 'drop') S.plan[i].state = S.plan[i].state === 'skip' ? 'todo' : 'skip';
+  if (act === 'back') return confirmReturn(i);
+  renderPlan();
+  const again = $('steps').querySelector(`button[data-act="${act}"][data-i="${act === 'up' ? i - 1 : act === 'down' ? i + 1 : i}"]`);
+  if (again && !again.disabled) again.focus();
+});
+const fitTitle = t => { t.style.height = 'auto'; if (t.scrollHeight) t.style.height = t.scrollHeight + 'px'; };
+$('steps').addEventListener('input', e => { const t = e.target.closest('.title-edit'); if (t) { S.plan[+t.dataset.i].title = t.value.replace(/\n/g, ' '); fitTitle(t); } });
+$('steps').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.title-edit')) { e.preventDefault(); e.target.blur(); } });
+$('addStep').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.value.trim()) return;
+  const at = Math.max(0, S.plan.findIndex(p => p.id === 'pr'));
+  S.plan.splice(at === -1 ? S.plan.length : at, 0, { id: 'own' + Date.now(), title: e.target.value.trim(), sub: 'Your step', own: true, state: 'todo' });
+  e.target.value = ''; renderPlan();
+});
+
+// ---- Rendering: meters and status ------------------------------------------
+
+function setStatus(s, text) { $('status').dataset.s = s; $('statusText').textContent = text; document.title = (s === 'wait' ? '● ' : '') + text + ' · Steer'; }
+function meters() {
+  const t = Math.round(S.clock / 1000);
+  $('mTime').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  $('mCost').textContent = money(S.cost);
+  const ctx = Math.min(100, Math.round(S.tokens / 2000));
+  $('mCtx').textContent = ctx + '%';
+  $('mRing').setAttribute('stroke-dasharray', `${(ctx / 100 * 50.3).toFixed(1)} 51`);
+}
+function spend(tokens) { S.tokens += tokens; S.cost += tokens * 0.000009; }
+const money = v => '$' + Math.round(v * 230000).toLocaleString('en-US');
+
+// ---- The feed ----------------------------------------------------------------
+function stamp() { const t = Math.round(S.clock / 1000); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; }
+function feed(kind, html, cls = '') {
+  if (S.phase !== 'plan') $('feedEmpty').hidden = true;
+  const li = document.createElement('li');
+  li.innerHTML = kind === 'head' ? `<span></span><div class="msg step-head">${html}</div>`
+    : kind === 'you' ? `<span class="k">${ICON.you}</span><div class="msg ${cls}">${html.replace('</small>', ` · ${stamp()}</small>`)}</div>`
+    : `<span class="k">${ICON[kind] || ''}</span><div class="msg ${cls}">${html}<time>${stamp()}</time></div>`;
+  if (kind === 'head') li.firstElementChild.nextElementSibling.classList.add('step-head');
+  $('feed').append(li);
+  if (activeTab() === 'activity') {
+    const sc = $('workScroll');
+    if (sc.scrollHeight - sc.scrollTop - sc.clientHeight < 160 + li.offsetHeight) sc.scrollTop = sc.scrollHeight;
+    else if (kind !== 'head') { S.unseen = (S.unseen || 0) + 1; showLatest(); }
+  }
+}
+function showLatest() {
+  const n = S.unseen || 0;
+  $('latest').hidden = !n || activeTab() !== 'activity';
+  $('latestN').textContent = n === 1 ? '1 new line' : n + ' new lines';
+}
+$('latest').addEventListener('click', () => { const sc = $('workScroll'); sc.scrollTo({ top: sc.scrollHeight, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); S.unseen = 0; showLatest(); });
+$('workScroll').addEventListener('scroll', () => {
+  const sc = $('workScroll');
+  if (S.unseen && sc.scrollHeight - sc.scrollTop - sc.clientHeight < 40) { S.unseen = 0; showLatest(); }
+}, { passive: true });
+
+// ---- The script: what each step does ---------------------------------------
+// Each action is [milliseconds, function]. The run reads queued steers only between steps.
+function script(step) {
+  const A = [];
+  const tool = (ms, kind, text, tokens = 900) => A.push([ms, () => { step.nowLine = text.replace(/<[^>]+>/g, ''); renderPlan(); feed(kind, text); spend(tokens); }]);
+  const say = (ms, text) => A.push([ms, () => feed('say', `<span class="say">${text}</span>`)]);
+  const change = (ms, key) => A.push([ms, () => addChange(key)]);
+  switch (step.id) {
+    case 'read':
+      tool(700, 'search', 'Searching <code>kirra/</code> for faults on <code>D7</code>', 400);
+      tool(900, 'read', 'Reading <code>kirra/drill-7.log</code> (2,140 lines)', 1800);
+      tool(800, 'read', 'Reading <code>kirra/stores.db</code>: bearings', 1200);
+      tool(700, 'read', 'Reading <code>kirra/crews.yaml</code>', 1500);
+      say(900, 'The main bearing seized at 03:12 and the drill stopped itself before the head was damaged. One spare is in stores, and six maintenance robots are free.');
+      break;
+    case 'tokens':
+      tool(900, 'edit', 'Editing <code>kirra/crews.yaml</code>: four robots from Bay 2 to Shaft 3', 2200);
+      change(300, 'tokens');
+      say(500, 'M-12, M-17, M-20 and M-24 are on their way down. Six minutes to the drill.');
+      break;
+    case 'toggle':
+      tool(800, 'run', 'Locking out <code>D7</code>: power off, head braked', 1200);
+      tool(900, 'edit', 'Writing <code>WO-4471</code>: pull the seized bearing', 2400);
+      change(300, 'toggle');
+      break;
+    case 'remember':
+      if (S.saveToAccount) {
+        say(600, 'Fitting the spare from Halcyon\'s tug, as you asked. Kirra\'s own spare stays in stores.');
+        tool(1100, 'edit', 'Writing <code>WO-4471</code>: fit <code>KR-B7-1190</code> from tug T4', 2700);
+        change(300, S.followSystem ? 'rememberAccountSystem' : 'rememberAccount');
+      } else if (S.followSystem) {
+        say(600, 'No one goes into the shaft, as you asked. M-24 films the fit for Supervisor Varga in the control room.');
+        tool(1000, 'edit', 'Writing <code>WO-4471</code>: fit <code>KR-B7-0412</code>, signed off on camera', 2600);
+        change(300, 'rememberSystem');
+      } else {
+        tool(1000, 'edit', 'Writing <code>WO-4471</code>: fit <code>KR-B7-0412</code>, Supervisor Varga to sign off', 2300);
+        change(300, 'remember');
+      }
+      break;
+    case 'checks':
+      tool(900, 'run', 'Running <code>telemetry check D7</code>', 1200);
+      A.push([1400, () => addCheck('Telemetry', 'pass', 'telemetry check D7', 'power      ✓ 11 kV restored\ncoolant    ✓ 0.4 MPa\nhead       ✓ no damage\nvibration  ✓ 0.8 mm/s\n\nAll 24 sensors reporting')]);
+      tool(700, 'run', 'Running <code>loadtest D7 --torque 100% --minutes 10</code>', 900);
+      A.push([1300, () => { addCheck('Load test', 'fail', 'loadtest D7 --torque 100% --minutes 10', '00:00  spin-up 40 s\n03:00  bearing 72 °C\n06:10  bearing 91 °C   ✗ limit 80 °C\n06:10  torque cut to 71%\n\nStopped at 6 min: bearing over temperature'); feed('fail', 'Load test failed: the new bearing reached 91 °C at six minutes. The limit is 80 °C.', 'fail'); }]);
+      say(800, 'Going back to fix it before calling this step done.');
+      tool(900, 'edit', 'Editing <code>kirra/drill-7.conf</code>: a slower spin-up, so the bearing can seat', 1400);
+      A.push([300, () => { addChange('contrast'); S.muted = 'new'; renderPreview(); }]);
+      tool(700, 'run', 'Running the load test again', 900);
+      A.push([1200, () => { addCheck('Load test', 'pass', 'loadtest D7 --torque 100% --minutes 10', '00:00  spin-up 90 s\n03:00  bearing 58 °C\n06:00  bearing 63 °C\n10:00  bearing 64 °C   ✓ torque 100%\n\nHeld full torque for 10 minutes'); feed('pass', 'Load test passed: full torque for ten minutes, the bearing at 64 °C.', 'pass'); }]);
+      break;
+    case 'pr':
+      A.push([700, () => askApproval(step)]);
+      break;
+    default:
+      tool(900, 'edit', `Working on your step: ${esc(step.title)}`, 1600);
+      say(800, 'Done. Nothing else at the station needed to change for it beyond what is in Changes.');
+  }
+  return A;
+}
+
+// ---- Running ---------------------------------------------------------------
+let queue = [], tickAt = 0;
+function startRun() {
+  $('feedEmpty').hidden = true;
+  S.phase = 'run'; S.startedAt = performance.now(); S.estimateAtStart = estimate();
+  $('runBtn').hidden = true; $('pauseBtn').hidden = false; $('stopBtn').hidden = false;
+  setStatus('run', 'Working');
+  feed('you', `<div class="you"><small>You approved the plan</small>${S.plan.filter(p => p.state !== 'skip').length} steps${S.plan.some(p => p.state === 'skip') ? `, ${S.plan.filter(p => p.state === 'skip').length} dropped` : ''}.</div>`);
+  renderPlan(); renderChips();
+  if (activeTab() === 'plan') selectTab('activity');
+  requestAnimationFrame(clockTick);
+  nextStep();
+}
+function clockTick(now) {
+  if (S.phase === 'run' && !S.paused) { S.clock += (now - (tickAt || now)) * S.speed; meters(); }
+  tickAt = now;
+  if (S.phase === 'run' || S.phase === 'wait') requestAnimationFrame(clockTick); else tickAt = 0;
+}
+function nextStep() {
+  if (S.queued) applySteer();
+  const i = S.plan.findIndex(p => p.state === 'todo');
+  if (i === -1) return finish();
+  S.cur = i; const step = S.plan[i];
+  const shown = (() => { try { return localStorage.getItem('steer-hint') === '1'; } catch { return true; } })();
+  if (step.id === 'tokens' && !S.steered && !shown) { $('hint').hidden = false; try { localStorage.setItem('steer-hint', '1'); } catch {} }
+  if (step.id === 'remember' || step.id === 'checks') $('hint').hidden = true;
+  step.state = 'now'; step.nowLine = '';
+  feed('head', `${i + 1}. ${esc(step.title)}`);
+  renderPlan();
+  queue = script(step);
+  pump();
+}
+function pump() {
+  clearTimeout(S.timer);
+  if (S.paused || S.phase !== 'run') return;
+  const next = queue.shift();
+  if (!next) return endStep();
+  S.timer = setTimeout(() => { next[1](); pump(); }, next[0] / S.speed);
+}
+function endStep() {
+  const step = S.plan[S.cur]; if (!step) return;
+  if (step.state === 'wait') return; // an approval holds the run
+  if (step.state === 'skip') { renderPlan(); return nextStep(); }
+  step.state = 'done'; step.nowLine = '';
+  S.checkpoints.push(step.id);
+  renderPlan();
+  nextStep();
+}
+
+// ---- Steering -------------------------------------------------------------
+const SUGGEST = ['Keep people out of the shaft', 'Use the spare from Halcyon', 'Keep 400 t back for the foundry'];
+const RX_SPARE = /halcyon|spare|tug/i, RX_PEOPLE = /people|person|human|no one|nobody|robots only|camera|varga/i, RX_HOLD = /keep .*back|foundry|400 ?t/i;
+function renderChips() {
+  const show = S.phase === 'run' || S.phase === 'plan';
+  $('chips').innerHTML = show ? SUGGEST.map(s => `<button class="chip">${esc(s)}</button>`).join('') : '';
+}
+$('chips').addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; $('steer').value = c.textContent; $('steer').focus(); });
+function sendSteer() {
+  const text = $('steer').value.trim(); if (!text) return;
+  $('steer').value = ''; autosize();
+  if (S.phase === 'plan') {
+    S.constraints.push(text);
+    if (RX_SPARE.test(text)) markAccount();
+    if (RX_PEOPLE.test(text)) markSystem();
+    if (RX_HOLD.test(text)) markHold();
+    feed('you', `<div class="you"><small>A note for the plan</small>${esc(text)}</div>`);
+    return;
+  }
+  if (S.phase === 'done' || S.phase === 'stopped') return;
+  S.queued = text; S.steered = true; $('hint').hidden = true;
+  $('queued').hidden = false;
+  $('queued').textContent = `Queued for the next step: "${text}". The agent finishes what it is doing first, so nothing is lost.`;
+  feed('you', `<div class="you"><small>You steered · applies at the next step</small>${esc(text)}</div>`);
+}
+function correct(id, now) { const li = $(id); if (li && !li.classList.contains('fixed')) { li.classList.add('fixed'); li.innerHTML = '<s>' + li.textContent + '</s><em>You corrected this: ' + now + '</em>'; } }
+function markAccount() {
+  S.saveToAccount = true; correct('asAccount', 'use the newer spare on Halcyon\'s tug.');
+  const r = S.plan.find(p => p.id === 'remember');
+  if (r && r.state === 'todo') { r.sub = rememberSub(); r.steered = true; r.flash = true; }
+  renderPlan();
+}
+function rememberSub() { return S.saveToAccount && S.followSystem ? 'Halcyon\'s spare; robots only, signed off on camera' : S.saveToAccount ? 'Halcyon\'s newer spare; Varga signs off in the shaft' : 'Kirra\'s spare; robots only, signed off on camera'; }
+function markHold() {
+  S.draft = true; const pr = S.plan.find(p => p.id === 'pr');
+  if (pr && pr.state === 'todo') { pr.sub = '3,600 t, 400 t kept for the foundry · asks you first'; pr.steered = true; pr.flash = true; }
+  renderPlan();
+}
+function markSystem() {
+  S.followSystem = true; correct('asDefault', 'no one goes down; the fit is signed off on camera.');
+  const r = S.plan.find(p => p.id === 'remember');
+  if (r && r.state === 'todo') { r.sub = rememberSub(); r.steered = true; r.flash = true; }
+  renderPlan();
+}
+function applySteer() {
+  const text = S.queued; S.queued = null; $('queued').hidden = true;
+  const r = S.plan.find(p => p.id === 'remember'), open = r && r.state === 'todo';
+  let heard = false;
+  if (RX_SPARE.test(text)) {
+    heard = true;
+    if (open) { markAccount(); feed('say', '<span class="say">Read your steer. The fit will use the newer spare on Halcyon\'s tug; Kirra\'s own stays in stores.</span>'); }
+    else feed('say', '<span class="say">Read your steer, but the bearing is already fitted. Return to that step from its checkpoint to redo it.</span>');
+  }
+  if (RX_PEOPLE.test(text)) {
+    heard = true;
+    if (open) { markSystem(); feed('say', '<span class="say">Read your steer. No one goes into the shaft: the fit is filmed and signed off from the control room. Nothing already done changes.</span>'); }
+    else { feed('say', '<span class="say">Read your steer. The bearing is already fitted, so I added a step to clear the shaft of people.</span>'); addOwnStep('Keep people out of the shaft', true); }
+  }
+  if (RX_HOLD.test(text)) { heard = true; markHold(); feed('say', '<span class="say">Read your steer. The launch will carry 3,600 t; 400 t stays on Kirra for the foundry.</span>'); }
+  if (!heard) {
+    S.constraints.push(text);
+    feed('say', `<span class="say">Read your steer and kept it for the remaining steps: "${esc(text)}".</span>`);
+  }
+  renderPlan();
+}
+function addOwnStep(title, steered) {
+  const at = S.plan.findIndex(p => p.id === 'pr' && p.state === 'todo');
+  S.plan.splice(at === -1 ? S.plan.length : at, 0, { id: 'own' + Date.now(), title, sub: 'Added by your steer', own: true, state: 'todo', steered });
+  if (RX_PEOPLE.test(title)) S.followSystem = true;
+}
+$('sendSteer').addEventListener('click', sendSteer);
+const autosize = () => { const t = $('steer'); t.style.height = '40px'; t.style.height = Math.min(120, t.scrollHeight + 2) + 'px'; };
+$('steer').addEventListener('input', autosize);
+$('steer').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSteer(); } });
+
+$('runBtn').addEventListener('click', startRun);
+$('pauseBtn').addEventListener('click', () => {
+  S.paused = !S.paused;
+  $('pauseBtn').textContent = S.paused ? 'Resume' : 'Pause';
+  setStatus(S.paused ? 'wait' : 'run', S.paused ? 'Paused' : 'Working');
+  feed('you', `<div class="you"><small>You ${S.paused ? 'paused' : 'resumed'}</small>${S.paused ? 'The agent stops after the action it is in. Nothing is undone.' : 'Carrying on from where it stopped.'}</div>`);
+  if (!S.paused) pump();
+});
+$('stopBtn').addEventListener('click', () => dialog('Stop the agent?', '<p>It stops now. Every finished step stays, and you can review those changes. The step in progress is left unfinished.</p>', [
+  ['Keep working', null], ['Stop', () => stopRun(), 'primary'],
+]));
+function stopRun() {
+  clearTimeout(S.timer); queue = [];
+  const step = S.plan[S.cur]; if (step && step.state === 'now') { step.state = 'todo'; step.nowLine = ''; }
+  S.phase = 'stopped'; setStatus('stop', 'Stopped'); $('composer').hidden = true;
+  $('pauseBtn').hidden = true; $('stopBtn').hidden = true;
+  feed('you', '<div class="you"><small>You stopped the agent</small>Finished steps are kept. Nothing was launched.</div>');
+  renderPlan(); renderChips(); renderSummary();
+}
+$('composer').querySelector('.speed').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  S.speed = +b.dataset.speed;
+  b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+});
+
+// ---- Approvals --------------------------------------------------------------
+function askApproval(step) {
+  step.state = 'wait'; step.nowLine = 'Waiting for you'; S.phase = 'wait';
+  setStatus('wait', 'Needs you'); renderPlan();
+  const title = 'Drill 7 back in service; first ore since the repair';
+  const tonnes = S.draft ? '3,600' : '4,000';
+  $('askSlot').innerHTML = `<div class="ask" role="alertdialog" aria-labelledby="askTitle" aria-describedby="askWhy">
+    <h3 id="askTitle">${ICON.lock}Fire ore launch KR-112 to Earth orbit?</h3>
+    <p id="askWhy">Once the capsule leaves the mass driver it can't be called back. It is the only action in this job that can't be undone.</p>
+    <dl>
+      <dt>Command</dt><dd><pre>launch arm KR-112 --load ${tonnes}t\nlaunch fire KR-112 --to halcyon-catch --note "<span id="prTitleEcho">${esc(title)}</span>"</pre></dd>
+      <dt>What it touches</dt><dd>Kirra's mass driver, ${tonnes} t of nickel-iron, and a 211-day path to Halcyon Station's catcher</dd>
+      <dt>Undo</dt><dd><span class="irreversible">Can't be recalled once fired.</span> If you hold it, the next window opens in 19 days.</dd>
+      <dt>Evidence</dt><dd>${S.checks.filter(c => c.state === 'pass').length} checks passing, ${S.changes.length} changes, ${Object.values(S.decisions).filter(d => d === 'accepted').length} accepted by you</dd>
+      <dt>Manifest note</dt><dd><input id="prTitle" value="${esc(title)}" aria-label="Manifest note"></dd>
+    </dl>
+    <div class="actions"><button class="btn primary" id="approve">Fire the launch</button><button class="btn" id="reviewFirst">Review changes first</button><button class="btn quiet" id="myself">Hold the launch</button></div>
+  </div>`;
+  $('prTitle').addEventListener('input', e => { $('prTitleEcho').textContent = e.target.value; });
+  $('approve').addEventListener('click', () => resolveApproval('yes'));
+  $('reviewFirst').addEventListener('click', () => selectTab('changes'));
+  $('myself').addEventListener('click', () => resolveApproval('self'));
+  feed('lock', 'Waiting for you to decide on the launch. Nothing fires until you do.');
+  if (activeTab() !== 'activity') $('cChanges').classList.add('alert');
+  selectTab('activity'); $('approve').focus({ preventScroll: true });
+  $('workScroll').scrollTop = 0;
+}
+function resolveApproval(answer) {
+  const step = S.plan[S.cur], title = $('prTitle') ? $('prTitle').value : '';
+  $('askSlot').innerHTML = ''; S.phase = 'run'; setStatus('run', 'Working');
+  if (answer === 'yes') {
+    feed('you', `<div class="you"><small>You approved</small>Fire KR-112, noted "${esc(title)}".</div>`);
+    queue = [
+      [800, () => { step.nowLine = 'launch arm KR-112'; renderPlan(); feed('run', `Running <code>launch arm KR-112 --load ${S.draft ? '3,600' : '4,000'}t</code>`); spend(500); }],
+      [1000, () => { feed('run', 'Running <code>launch fire KR-112</code>'); spend(600); }],
+      [900, () => { S.pushed = true; S.prTitle = title; feed('pass', `KR-112 is away: ${S.draft ? '3,600' : '4,000'} t on course for Halcyon Station, arriving in 211 days.`, 'pass'); }],
+    ];
+    step.state = 'now';
+  } else {
+    feed('you', '<div class="you"><small>You held the launch</small>The ore stays on the driver, loaded and safe. It can fire in the next window.</div>');
+    step.state = 'skip'; step.declined = true; step.sub = 'Held by you'; queue = [];
+  }
+  pump();
+}
+
+// ---- Changes -----------------------------------------------------------------
+function addChange(key) {
+  const c = { key, ...CHANGES[key] };
+  S.changes.push(c);
+  feed('edit', `<button class="open-change" data-open="${S.changes.length - 1}">Changed <code>${esc(c.file)}</code></button> <span style="color:var(--muted)">${diffStat(c)}</span>`);
+  renderChanges();
+  if (key !== 'tokens' || true) renderPreview();
+}
+function diffMarks(lines) {
+  const out = lines.map(l => esc(l[2]));
+  for (let i = 0; i + 1 < lines.length; i++) {
+    if (lines[i][0] !== '-' || lines[i + 1][0] !== '+') continue;
+    const a = lines[i][2], b = lines[i + 1][2];
+    let p = 0; while (p < a.length && p < b.length && a[p] === b[p]) p++;
+    let s = 0; while (s < a.length - p && s < b.length - p && a[a.length - 1 - s] === b[b.length - 1 - s]) s++;
+    const mark = t => { const mid = t.slice(p, t.length - s); return esc(t.slice(0, p)) + (mid ? '<mark>' + esc(mid) + '</mark>' : '') + esc(t.slice(t.length - s)); };
+    out[i] = mark(a); out[i + 1] = mark(b); i++;
+  }
+  return out;
+}
+function diffStat(c) { const a = c.lines.filter(l => l[0] === '+').length, d = c.lines.filter(l => l[0] === '-').length; return `+${a} −${d}`; }
+function renderChanges() {
+  $('cChanges').textContent = S.changes.length;
+  $('changesEmpty').hidden = S.changes.length > 0;
+  const left = S.changes.filter((c, i) => !S.decisions[i]).length;
+  $('reviewBar').hidden = S.changes.length === 0;
+  $('reviewCount').textContent = left ? `${S.changes.length - left} of ${S.changes.length} reviewed` : `All ${S.changes.length} reviewed`;
+  $('acceptRest').hidden = left < 2;
+  const byStep = new Map();
+  S.changes.forEach((c, i) => { const k = c.step; if (!byStep.has(k)) byStep.set(k, []); byStep.get(k).push([c, i]); });
+  $('changes').innerHTML = [...byStep].map(([stepId, list]) => {
+    const step = S.plan.find(p => p.id === stepId);
+    return `<section class="group"><h3>${esc(step ? step.title : stepId)} <span class="n">${list.length} change${list.length > 1 ? 's' : ''}</span></h3>${list.map(([c, i]) => {
+      const d = S.decisions[i];
+      const st = diffStat(c);
+      return `<article class="change${S.reviewAt === i ? ' cursor' : ''}" id="change-${i}" data-i="${i}" tabindex="-1" data-d="${d || ''}" aria-label="${esc(c.file)}${d ? (d === 'accepted' ? ', accepted' : ', sent back') : ''}">
+        <div class="change-head"><span class="file">${esc(c.file)}</span><span class="stat"><span class="a">${st.split(' ')[0]}</span> <span class="d">${st.split(' ')[1]}</span></span><span class="spacer"></span>
+          ${d ? `<span class="verdict ${d}">${d === 'accepted' ? 'Accepted' : 'Sent back'}</span><button class="btn quiet" data-undo="${i}">Undo</button>`
+            : `<div class="decision"><button class="btn" data-send="${i}">Send back</button><button class="btn primary" data-accept="${i}">Accept</button></div>`}</div>
+        <div class="why"><b>Why</b>${esc(c.why)}</div>
+        <div class="diff" role="table" aria-label="Changes to ${esc(c.file)}">${(tx => c.lines.map((l, k) => `<div class="${l[0] === '+' ? 'add' : l[0] === '-' ? 'del' : ''}" role="row"><span class="ln">${l[1]}</span><span class="sg">${l[0] === ' ' ? '' : l[0] === '-' ? '−' : '+'}</span><span class="tx">${tx[k]}</span></div>`).join(''))(diffMarks(c.lines))}</div>
+        ${S.sending === i ? `<div class="sendback"><input id="sendNote" placeholder="What should change?" aria-label="What should change"><button class="btn primary" data-sendgo="${i}">Send</button></div>` : ''}
+      </article>`; }).join('')}</section>`;
+  }).join('');
+}
+$('changes').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.accept) { S.decisions[b.dataset.accept] = 'accepted'; renderChanges(); }
+  if (b.dataset.undo) { delete S.decisions[b.dataset.undo]; renderChanges(); }
+  if (b.dataset.send) { S.sending = +b.dataset.send; renderChanges(); $('sendNote').focus(); }
+  if (b.dataset.sendgo) {
+    const i = +b.dataset.sendgo, note = $('sendNote').value.trim() || 'Needs another look';
+    S.decisions[i] = 'sent'; S.sending = null; renderChanges();
+    const c = S.changes[i];
+    feed('you', `<div class="you"><small>You sent back ${esc(c.file)}</small>${esc(note)}</div>`);
+    if (S.phase === 'done' || S.phase === 'stopped') { $('composer').hidden = false; S.phase = 'run'; setStatus('run', 'Working'); $('pauseBtn').hidden = false; $('stopBtn').hidden = false; $('summarySlot').innerHTML = ''; requestAnimationFrame(clockTick); }
+    addOwnStep(`Address your review of ${c.file}`, true);
+    const st = S.plan.find(p => p.title === `Address your review of ${c.file}`); st.sub = `"${note}"`;
+    renderPlan();
+    if (S.phase === 'run' && !queue.length && !S.plan.some(p => p.state === 'now')) nextStep();
+  }
+});
+
+$('acceptRest').addEventListener('click', () => {
+  S.changes.forEach((c, i) => { if (!S.decisions[i]) S.decisions[i] = 'accepted'; });
+  S.sending = null; renderChanges();
+});
+function reviewFocus(i) {
+  S.reviewAt = i; renderChanges();
+  const el = $('change-' + i); if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest' }); }
+}
+document.addEventListener('keydown', e => {
+  if (activeTab() !== 'changes' || !S.changes.length || e.metaKey || e.ctrlKey || e.altKey) return;
+  if ((e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) || $('dialog').open) return;
+  const k = e.key.toLowerCase(), n = S.changes.length;
+  const at = S.reviewAt ?? -1;
+  if (k === 'j') { e.preventDefault(); reviewFocus(Math.min(n - 1, at + 1)); }
+  else if (k === 'k') { e.preventDefault(); reviewFocus(Math.max(0, at - 1)); }
+  else if ((k === 'a' || k === 's') && at >= 0 && !S.decisions[at]) {
+    e.preventDefault();
+    if (k === 's') { S.sending = at; renderChanges(); $('sendNote').focus(); return; }
+    S.decisions[at] = 'accepted';
+    const next = S.changes.findIndex((c, i) => i > at && !S.decisions[i]);
+    reviewFocus(next >= 0 ? next : at);
+  }
+});
+
+$('feed').addEventListener('click', e => {
+  const b = e.target.closest('[data-open]'); if (!b) return;
+  selectTab('changes');
+  const el = document.getElementById('change-' + b.dataset.open);
+  if (el) { el.scrollIntoView({ block: 'start' }); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+});
+
+// ---- Checks ------------------------------------------------------------------
+function addCheck(name, state, cmd, out) {
+  S.checks.push({ name, state, cmd, out, at: stamp() });
+  renderChecks();
+}
+function renderChecks() {
+  const groups = new Map();
+  S.checks.forEach(c => { if (!groups.has(c.name)) groups.set(c.name, []); groups.get(c.name).push(c); });
+  const failing = [...groups.values()].filter(runs => runs[runs.length - 1].state === 'fail').length;
+  $('cChecks').textContent = !groups.size ? '0' : failing ? failing + ' failing' : groups.size + ' passing';
+  $('cChecks').classList.toggle('alert', failing > 0);
+  $('checksEmpty').hidden = groups.size > 0;
+  $('checks').innerHTML = [...groups].map(([name, runs]) => {
+    const last = runs[runs.length - 1];
+    const word = r => r.state === 'pass' ? 'Passed' : 'Failed';
+    const history = runs.length > 1 ? '<ol class="runs">' + runs.map((r, k) =>
+      '<li><span class="badge ' + r.state + '">' + word(r) + '</span>Run ' + (k + 1) + ' at ' + r.at + (r.state === 'fail' && runs[k + 1] ? ' · the agent fixed it and ran it again' : '') + '</li>').join('') + '</ol>' : '';
+    const outs = runs.slice().reverse().map((r, k) => '<div class="run-out"><div class="run-label">Run ' + (runs.length - k) + (k === 0 && runs.length > 1 ? ', latest' : '') + '</div><pre>' + esc(r.out) + '</pre></div>').join('');
+    return '<li><details class="check"' + (runs.some(r => r.state === 'fail') ? ' open' : '') + '><summary><span class="badge ' + last.state + '">' + word(last) + '</span><span class="name">' + esc(name) + '</span><span class="meta"><code>' + esc(last.cmd) + '</code> · ' + runs.length + ' run' + (runs.length > 1 ? 's' : '') + '</span></summary>' + history + outs + '</details></li>';
+  }).join('');
+}
+
+// ---- Preview: the real settings page, before and after ---------------------
+function tw(after) {
+  const has = c => S.changes.some(x => x.key === c);
+  const crew = after && has('tokens'), out = after && has('toggle');
+  const fit = after && S.changes.find(x => x.key.startsWith('remember'));
+  const tested = after && S.checks.some(c => c.name === 'Load test' && c.state === 'pass');
+  const failed = after && !tested && S.checks.some(c => c.name === 'Load test');
+  const serial = fit ? (fit.key.includes('Account') ? 'KR-B7-1190' : 'KR-B7-0412') : out ? 'removed' : 'KR-B7-0377';
+  const state = tested ? ['run', 'Running'] : failed ? ['bad', 'Over temperature'] : fit ? ['work', 'Bearing fitted'] : out ? ['work', 'Bearing out'] : crew ? ['work', 'Crew on the way'] : ['bad', 'Stopped · bearing seized'];
+  const row = (k, v, cls = '') => `<div class="row"><span>${k}</span><b class="${cls}">${v}</b></div>`;
+  return `<header>Drill 7<small>Kirra Station · Shaft 3</small></header>
+    <div class="rig" data-s="${state[0]}" aria-hidden="true"><svg viewBox="0 0 200 120"><circle class="ring" cx="100" cy="60" r="42"/><circle class="bear" cx="100" cy="60" r="20"/><g class="teeth">${Array.from({ length: 12 }, (_, i) => `<rect x="97" y="10" width="6" height="12" rx="2" transform="rotate(${i * 30} 100 60)"/>`).join('')}</g><circle class="hub" cx="100" cy="60" r="6"/></svg></div>
+    <div class="card">${row('Status', state[1], state[0])}${row('Output', tested ? '340 t/h' : '0 t/h')}${row('Main bearing', serial)}${row('Bearing heat', tested ? '64 °C' : failed ? '91 °C' : '—', failed ? 'bad' : '')}${row('Crew', crew ? 'M-12, M-17, M-20, M-24' : 'None')}${row('People in shaft', fit ? (S.followSystem ? '0' : '1 · I. Varga') : '0')}</div>`;
+}
+function renderPreview() {
+  const has = c => S.changes.some(x => x.key === c);
+  $('twBefore').innerHTML = tw(false);
+  $('twAfter').innerHTML = tw(true);
+  document.querySelector('.look').hidden = true;
+  $('afterCap').textContent = !has('tokens') ? 'After (nothing done yet)' : S.checks.some(c => c.name === 'Load test' && c.state === 'pass') ? 'After · back in service' : 'After · so far';
+  $('contrastNote').textContent = S.muted === 'new' ? 'Spin-up slowed from 40 s to 90 s after the first load test ran hot.' : '';
+}
+
+// ---- Finishing -------------------------------------------------------------
+function finish() {
+  S.phase = 'done'; clearTimeout(S.timer); $('composer').hidden = true;
+  setStatus('done', 'Ready for review');
+  $('pauseBtn').hidden = true; $('stopBtn').hidden = true;
+  renderPlan(); renderChips(); renderSummary();
+  feed('say', '<span class="say">Finished. The summary above lists what changed and the proof for each claim.</span>');
+  $('workScroll').scrollTop = 0;
+}
+function renderSummary() {
+  const done = S.plan.filter(p => p.state === 'done');
+  const passing = S.checks.filter(c => c.state === 'pass').map(c => c.name);
+  const failedOnce = S.checks.some(c => c.state === 'fail');
+  const accepted = Object.values(S.decisions).filter(d => d === 'accepted').length;
+  const est = S.estimateAtStart || estimate();
+  $('summarySlot').innerHTML = `<div class="summary">
+    <h3>${S.phase === 'stopped' ? 'Stopped' : 'What was done, with the proof'}</h3>
+    <ul>
+      <li>Took ${$('mTime').textContent} and spent ${money(S.cost)}, against the estimate of ${est.text} and ${money(est.usd)}.</li>
+      <li>${done.length} of ${S.plan.filter(p => p.state !== 'skip').length} steps finished; ${S.changes.length} changes in ${new Set(S.changes.map(c => c.file)).size} files (see Changes).</li>
+      ${passing.length ? `<li>Checks passing: ${[...new Set(passing)].join(', ')}${failedOnce ? '. The load test failed once on heat and was fixed; both runs are kept in Checks' : ''}.</li>` : '<li>No checks ran.</li>'}
+      ${S.followSystem ? '<li>No one went into the shaft: the fit was filmed and signed off from the control room, as you steered.</li>' : ''}
+      ${S.saveToAccount ? '<li>The newer spare from Halcyon\'s tug was fitted, as you steered; Kirra\'s own stays in stores.</li>' : ''}
+      <li>${S.pushed ? `KR-112 fired: ${S.draft ? '3,600 t, with 400 t kept for the foundry' : '4,000 t'}, noted "${esc(S.prTitle)}".` : 'The launch was held: the ore is still on the driver.'}</li>
+      <li>You have accepted ${accepted} of ${S.changes.length} changes.</li>
+    </ul>
+    <div class="actions"><button class="btn primary" id="toChanges">Review changes</button><button class="btn" id="toPreview">See before and after</button><button class="btn quiet" id="again">Start over</button></div>
+  </div>`;
+  $('toChanges').onclick = () => selectTab('changes');
+  $('toPreview').onclick = () => selectTab('preview');
+  $('again').onclick = () => location.reload();
+}
+
+// ---- Checkpoints -----------------------------------------------------------
+function confirmReturn(i) {
+  const step = S.plan[i];
+  const later = S.plan.slice(i + 1).filter(p => p.state === 'done');
+  dialog(`Return to after "${step.title}"?`, `<p>The ${later.length} step${later.length === 1 ? '' : 's'} after it ${later.length === 1 ? 'is' : 'are'} undone and run again, with any steer you add now.</p>${S.pushed ? '<p class="irreversible">KR-112 has already fired and can\'t be recalled. The new run would ask to fire a second launch.</p>' : ''}`, [
+    ['Cancel', null], ['Return here', () => returnTo(i), 'primary'],
+  ]);
+}
+function returnTo(i) {
+  const keepIds = S.plan.slice(0, i + 1).map(p => p.id);
+  S.plan.slice(i + 1).forEach(p => { if (p.state === 'done' || p.state === 'now' || p.declined) { p.state = 'todo'; if (p.declined) { p.declined = false; p.sub = PLAN.find(x => x.id === p.id).sub; } } });
+  S.changes = S.changes.filter(c => keepIds.includes(c.step));
+  S.decisions = {}; S.checkpoints = S.checkpoints.filter(id => keepIds.includes(id));
+  if (!S.changes.some(c => c.key === 'contrast')) S.muted = 'old';
+  $('summarySlot').innerHTML = '';
+  feed('you', `<div class="you"><small>You returned to a checkpoint</small>Back to after "${esc(S.plan[i].title)}". Later steps run again.</div>`);
+  renderChanges(); renderPreview();
+  S.phase = 'run'; setStatus('run', 'Working'); $('pauseBtn').hidden = false; $('stopBtn').hidden = false; $('composer').hidden = false;
+  renderChips(); requestAnimationFrame(clockTick); nextStep();
+}
+
+// ---- Tabs -------------------------------------------------------------------
+const ALL_TABS = ['plan', 'activity', 'changes', 'checks', 'preview'];
+const narrow = matchMedia('(max-width: 860px)');
+let TABS = narrow.matches ? ALL_TABS : ALL_TABS.slice(1);
+function activeTab() { return TABS.find(t => $('tab-' + t).getAttribute('aria-selected') === 'true'); }
+function selectTab(name, focus) {
+  if (name === 'plan' && !narrow.matches) name = 'activity';
+  document.querySelector('.body').dataset.tab = name;
+  ALL_TABS.forEach(t => {
+    const on = t === name;
+    $('tab-' + t).setAttribute('aria-selected', on); $('tab-' + t).tabIndex = on ? 0 : -1;
+    if (t !== 'plan') $('pane-' + t).hidden = name === 'plan' ? t !== 'activity' : !on;
+  });
+  if (name === 'changes') $('cChanges').classList.remove('alert');
+  if (name === 'plan') $('steps').querySelectorAll('.title-edit').forEach(fitTitle);
+  if (name === 'preview') renderPreview();
+  if (focus) $('tab-' + name).focus();
+  $('workScroll').scrollTop = name === 'activity' && S.phase !== 'plan' ? $('workScroll').scrollHeight : 0;
+  S.unseen = 0; showLatest();
+}
+document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[role="tab"]'); if (b) selectTab(b.id.slice(4)); });
+document.querySelector('.tabs').addEventListener('keydown', e => {
+  const i = TABS.indexOf(activeTab());
+  if (e.key === 'ArrowRight') selectTab(TABS[(i + 1) % TABS.length], true);
+  if (e.key === 'ArrowLeft') selectTab(TABS[(i + TABS.length - 1) % TABS.length], true);
+});
+
+// ---- Dialog -------------------------------------------------------------------
+function dialog(title, body, actions) {
+  const d = $('dialog');
+  $('dTitle').textContent = title; $('dBody').innerHTML = body;
+  $('dActions').innerHTML = '';
+  actions.forEach(([label, fn, cls]) => { const b = document.createElement('button'); b.className = 'btn ' + (cls || ''); b.textContent = label; b.onclick = () => { d.close(); fn && fn(); }; $('dActions').append(b); });
+  d.showModal(); $('dActions').lastElementChild.focus();
+}
+
+// ---- Theme of the page itself -----------------------------------------------
+$('themeBtn').addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme !== 'light';
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+});
+
+narrow.addEventListener('change', () => { TABS = narrow.matches ? ALL_TABS : ALL_TABS.slice(1); selectTab(activeTab() || 'activity'); });
+renderPlan(); renderChips(); renderPreview(); meters();
+selectTab(narrow.matches ? 'plan' : 'activity');
+</script>
+</body>
+</html>
