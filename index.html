@@ -88,6 +88,8 @@
   .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 18px 20px 8px; }
   .section-head h2 { margin: 0; font-size: 12px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   .section-head span { color: var(--faint); font-size: 12px; }
+  .estimate { margin: -2px 20px 10px; color: var(--ink-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .estimate b { font-weight: 600; }
   .note { margin: 0 20px 12px; color: var(--muted); font-size: 13px; }
   .steps { list-style: none; margin: 0; padding: 0 12px 16px; }
   .step { position: relative; display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: start; padding: 10px 8px; border-radius: 8px; }
@@ -95,6 +97,8 @@
   .step .dot { position: relative; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--line-strong); color: var(--faint); font-size: 11px; font-weight: 650; background: var(--panel); }
   .step:not(:last-child) .dot::after { content: ""; position: absolute; top: 24px; left: 9.5px; width: 1.5px; height: calc(100% + 0px); min-height: 18px; background: var(--line); }
   .step[data-s="now"] { background: var(--accent-soft); }
+  .step[data-flash] { animation: landed 1.6s var(--ease); }
+  @keyframes landed { 0%, 30% { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); } }
   .step[data-s="now"] .dot { border-color: var(--accent); color: var(--accent); }
   .step[data-s="now"] .dot::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid var(--accent); opacity: .35; animation: pulse 1.4s ease-in-out infinite; }
   .step[data-s="done"] .dot { border-color: var(--ok); background: var(--ok); color: var(--panel); }
@@ -341,6 +345,7 @@
     <aside class="side" aria-label="Plan">
       <div class="scroll" id="sideScroll">
         <div class="section-head"><h2 id="planHead">Plan</h2><span id="planCount"></span></div>
+        <p class="estimate" id="estimate"></p>
         <p class="note" id="planNote">The agent read the repository and proposes this plan. Change anything before it starts: rename a step, move it, or drop it. Nothing has run yet.</p>
         <ol class="steps" id="steps"></ol>
         <div class="add-step" id="addStepRow"><input id="addStep" placeholder="Add a step, then press Enter" aria-label="Add a step"></div>
@@ -440,12 +445,12 @@ const CHANGES = {
 
 // ---- The plan the agent proposes -----------------------------------------
 const PLAN = [
-  { id: 'read', title: 'Read the settings page and how colors are set', sub: 'settings.html, settings.js, theme.css' },
-  { id: 'tokens', title: 'Add dark values for the app\'s color tokens', sub: 'One block in theme.css' },
-  { id: 'toggle', title: 'Add an Appearance choice to Settings', sub: 'Light, Dark, System' },
-  { id: 'remember', title: 'Remember the choice', sub: 'Applied before the page paints' },
-  { id: 'checks', title: 'Run the tests and the contrast check', sub: 'npm test, npm run contrast' },
-  { id: 'pr', title: 'Push the branch and open a pull request', sub: 'Asks you first', risky: true },
+  { id: 'read', est: [4, .04], title: 'Read the settings page and how colors are set', sub: 'settings.html, settings.js, theme.css' },
+  { id: 'tokens', est: [2, .02], title: 'Add dark values for the app\'s color tokens', sub: 'One block in theme.css' },
+  { id: 'toggle', est: [2, .03], title: 'Add an Appearance choice to Settings', sub: 'Light, Dark, System' },
+  { id: 'remember', est: [3, .03], title: 'Remember the choice', sub: 'Applied before the page paints' },
+  { id: 'checks', est: [9, .05], title: 'Run the tests and the contrast check', sub: 'npm test, npm run contrast' },
+  { id: 'pr', est: [3, .01], title: 'Push the branch and open a pull request', sub: 'Asks you first', risky: true },
 ];
 
 // ---- State ---------------------------------------------------------------
@@ -457,8 +462,17 @@ const S = {
 };
 
 // ---- Rendering: the plan -------------------------------------------------
+const estOf = p => p.est || [3, .02];
+function estimate() {
+  const live = S.plan.filter(p => p.state !== 'skip');
+  const secs = live.reduce((a, p) => a + estOf(p)[0], 0), usd = live.reduce((a, p) => a + estOf(p)[1], 0);
+  return { secs, usd, text: Math.floor(secs / 60) + ':' + String(secs % 60).padStart(2, '0') };
+}
 function renderPlan() {
   const editing = S.phase === 'plan';
+  const est = estimate();
+  $('estimate').hidden = !editing;
+  $('estimate').innerHTML = 'Estimate: about <b>' + est.text + '</b> and <b>$' + est.usd.toFixed(2) + '</b>, before anything is spent. It changes as you edit the plan.';
   $('planHead').textContent = editing ? 'Plan' : 'Steps';
   $('planNote').hidden = !editing;
   $('addStepRow').hidden = !editing;
@@ -478,8 +492,9 @@ function renderPlan() {
     const now = p.state === 'now' && p.nowLine ? `<div class="now-line">${esc(p.nowLine)}</div>` : '';
     const tag = !p.risky || p.state === 'skip' ? '' : p.state === 'done' ? `<span class="tag steer">${S.pushed ? 'You approved it' : 'Left for you'}</span>` : `<span class="tag">Asks you before it runs</span>`;
     const steer = p.steered ? `<span class="tag steer">Changed by your steer</span>` : '';
+    const flash = p.flash; p.flash = false;
     const fresh = p.state === 'done' && !p.drawn; if (p.state === 'done') p.drawn = true; else p.drawn = false;
-    return `<li class="step" data-s="${p.state}"${fresh ? ' data-fresh' : ''}><span class="dot" aria-hidden="true">${mark}</span><div>${title}<div class="sub">${esc(p.sub || '')}</div>${now}${tag}${steer}</div>${tools}</li>`;
+    return `<li class="step" data-s="${p.state}"${fresh ? ' data-fresh' : ''}${flash ? ' data-flash' : ''}><span class="dot" aria-hidden="true">${mark}</span><div>${title}<div class="sub">${esc(p.sub || '')}</div>${now}${tag}${steer}</div>${tools}</li>`;
   }).join('');
   $('steps').querySelectorAll('.title-edit').forEach(fitTitle);
 }
@@ -523,6 +538,7 @@ function feed(kind, html, cls = '') {
   $('feedEmpty').hidden = true;
   const li = document.createElement('li');
   li.innerHTML = kind === 'head' ? `<span></span><div class="msg step-head">${html}</div>`
+    : kind === 'you' ? `<span class="k">${ICON.you}</span><div class="msg ${cls}">${html.replace('</small>', ` · ${stamp()}</small>`)}</div>`
     : `<span class="k">${ICON[kind] || ''}</span><div class="msg ${cls}">${html}<time>${stamp()}</time></div>`;
   if (kind === 'head') li.firstElementChild.nextElementSibling.classList.add('step-head');
   $('feed').append(li);
@@ -586,7 +602,7 @@ function script(step) {
 // ---- Running ---------------------------------------------------------------
 let queue = [], tickAt = 0;
 function startRun() {
-  S.phase = 'run'; S.startedAt = performance.now();
+  S.phase = 'run'; S.startedAt = performance.now(); S.estimateAtStart = estimate();
   $('runBtn').hidden = true; $('pauseBtn').hidden = false; $('stopBtn').hidden = false;
   setStatus('run', 'Working');
   feed('you', `<div class="you"><small>You approved the plan</small>${S.plan.filter(p => p.state !== 'skip').length} steps${S.plan.some(p => p.state === 'skip') ? `, ${S.plan.filter(p => p.state === 'skip').length} dropped` : ''}.</div>`);
@@ -655,7 +671,7 @@ function sendSteer() {
 function markSystem() {
   S.followSystem = true;
   const r = S.plan.find(p => p.id === 'remember');
-  if (r && r.state === 'todo') { r.sub = 'Follow the system unless a choice is saved'; r.steered = true; }
+  if (r && r.state === 'todo') { r.sub = 'Follow the system unless a choice is saved'; r.steered = true; r.flash = true; }
   renderPlan();
 }
 function applySteer() {
@@ -666,7 +682,7 @@ function applySteer() {
     if (r && r.state === 'todo') { markSystem(); feed('say', '<span class="say">Read your steer. The Remember step now follows the device by default; nothing already done changes.</span>'); }
     else feed('say', '<span class="say">Read your steer. The Remember step is already done, so I added a step to change it.</span>'), addOwnStep('Follow the system setting by default', true);
   } else if (/draft/.test(lower)) {
-    S.draft = true; const pr = S.plan.find(p => p.id === 'pr'); if (pr && pr.state === 'todo') { pr.sub = 'As a draft · asks you first'; pr.steered = true; }
+    S.draft = true; const pr = S.plan.find(p => p.id === 'pr'); if (pr && pr.state === 'todo') { pr.sub = 'As a draft · asks you first'; pr.steered = true; pr.flash = true; }
     feed('say', '<span class="say">Read your steer. The pull request will open as a draft.</span>');
   } else {
     S.constraints.push(text);
@@ -872,9 +888,11 @@ function renderSummary() {
   const passing = S.checks.filter(c => c.state === 'pass').map(c => c.name);
   const failedOnce = S.checks.some(c => c.state === 'fail');
   const accepted = Object.values(S.decisions).filter(d => d === 'accepted').length;
+  const est = S.estimateAtStart || estimate();
   $('summarySlot').innerHTML = `<div class="summary">
     <h3>${S.phase === 'stopped' ? 'Stopped' : 'What was done, with the proof'}</h3>
     <ul>
+      <li>Took ${$('mTime').textContent} and cost $${S.cost.toFixed(2)}, against the estimate of ${est.text} and $${est.usd.toFixed(2)}.</li>
       <li>${done.length} of ${S.plan.filter(p => p.state !== 'skip').length} steps finished; ${S.changes.length} changes in ${new Set(S.changes.map(c => c.file)).size} files (see Changes).</li>
       ${passing.length ? `<li>Checks passing: ${[...new Set(passing)].join(', ')}${failedOnce ? '. The contrast check failed once and was fixed; both runs are kept in Checks' : ''}.</li>` : '<li>No checks ran.</li>'}
       ${S.followSystem ? '<li>The theme follows the device unless the person picks Light or Dark, as you steered.</li>' : ''}
