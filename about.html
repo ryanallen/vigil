@@ -41,7 +41,7 @@
 
   <h2><span>1</span>Edit the plan before the agent starts</h2>
   <p>If the agent picks the wrong approach, finding out after it works is expensive. Devin's interactive planning lets a person change the approach first. Steer starts with a plan you can edit: rename, move, drop or add a step. The agent waits for your approval.</p>
-  <p>You can also see what the agent read and assumed. If Kirra's spare is the wrong choice, tell it to use the one on Halcyon's tug. The assumption, bearing step and work order change together. The plan gives you a time and power estimate; the summary shows the actual numbers.</p>
+  <p>You can also see what the agent read and assumed. If Kirra's spare is the wrong choice, tell it to use the one on Halcyon's tug. The assumption, bearing step and work order change together. The estimate changes as you edit the plan; the Power meter counts what the run draws.</p>
   <p class="in-page">In Steer: the Plan column, with move, drop and add, and Approve plan and run; Before the work starts, with It read and It assumes; the estimate above the plan.</p>
   <p class="src">Sources: <a href="https://builder.io/blog/devin-vs-cursor">Builder.io on Devin and Cursor</a>, <a href="https://latent.space/reading/async-agents-cognition-openinspect/">Latent Space on asynchronous agents</a>.</p>
 
@@ -51,23 +51,23 @@
   <p class="src">Source: <a href="https://tianpan.co/blog/2026-03-15-designing-the-human-agent-interaction-layer">Tian Pan, designing the human-agent interaction layer</a>.</p>
 
   <h2><span>3</span>Change course without starting over</h2>
-  <p>While four robots head for Shaft 3, tell the agent to keep people out. It reads the instruction before the next step and changes the bearing fit. Finished steps stay finished. Pause holds the current job; Stop ends it and keeps the work already done.</p>
-  <p class="in-page">In Steer: send "Keep people out of the shaft" while the crew is on its way, and step 4, Fit the spare bearing, changes, marked "Changed by your steer". Nothing already done moves.</p>
+  <p>While four robots head for Shaft 3, tell Kirra to keep people out. Before the fit, that moves Supervisor Ilse Varga's sign-off to control and has M-24 film the bearing. If you say it after the fit, Kirra tells you Varga already signed and keeps people in control for the next run. Pause holds the job; Stop keeps the finished steps.</p>
+  <p class="in-page">In Steer: send "Keep people out of the shaft" before step 4, Fit Kirra's spare bearing, and it is marked "Changed by your steer". Send it later to hear what has already happened.</p>
   <p class="src">Sources: <a href="https://www.copilotkit.ai/learning/what-is-agent-steering">CopilotKit on agent steering</a>, <a href="https://agentic-ai-wiki.vercel.app/playbooks/agent-ux-and-human-interaction/interruption-and-handoff/">interruption, steering and handoff</a>.</p>
 
   <h2><span>4</span>Ask before the launch</h2>
-  <p>Confirming every file edit would bury the one decision that matters. KR-112 carries 120,000 t of ore to Halcyon Station on a 211-day trip. Once it fires, it can't be recalled. The approval card shows the command, the load, the checks and what happens if you hold it. You can review the changes first.</p>
-  <p class="in-page">In Steer: the ore launch card, with Fire the launch, Review changes first, Hold the launch.</p>
+  <p>Confirming every file edit would bury the one decision that matters. KR-112 carries 120,000 t to Halcyon on a 211-day trip and can't be recalled once fired. The card shows the load test status, 31 days to spare before storm season if it fires now, and a 19-day wait for the next window.</p>
+  <p class="in-page">In Steer: the approval card has Fire KR-112 and Hold launch, with Review checks, Review stores and Return to plan below them.</p>
   <p class="src">Sources: <a href="https://dev.to/brennhill/how-to-build-a-good-human-in-the-loop-for-ai-coding-agents-1kan">building a good human-in-the-loop</a>, <a href="https://www.atlassian.com/software/jira/guides/agentic-engineering/human-in-the-loop">Atlassian on approval and review</a>, <a href="https://shop.smashingmagazine.com/2026/02/designing-agentic-ai-practical-ux-patterns/">Smashing on consent patterns</a>.</p>
 
   <h2><span>5</span>Put the evidence next to the result</h2>
-  <p>"Done" doesn't tell you whether the drill passed its load test. The summary names the checks, the failed run, the passing run, the launch decision and how many changes you accepted. You can open the underlying record from there.</p>
-  <p class="in-page">In Steer: the summary when the run ends, and the Checks tab, where the failing run is kept, not overwritten.</p>
+  <p>"Done" doesn't tell you what happened to the ore or the people in Halcyon's ring. The ending says whether the launch went half full, waited, or left with the full load. The review says "You found N of 5" and names each clue found and missed.</p>
+  <p class="in-page">In Steer: the ending summary and clue list, with the failed and reported passing tests still in Checks.</p>
   <p class="src">Sources: <a href="https://dev.to/haaaaaley/show-the-agents-evidence-before-asking-a-human-to-approve-its-diff-25gj">show the agent's evidence first</a>, <a href="https://arxiv.org/pdf/2608.12355">Humans are missing from AI coding agent research</a>.</p>
 
   <h2><span>6</span>Make the failed check visible</h2>
-  <p>The first load test reaches 91 °C against an 80 °C limit. The agent changes spin-up from 40 to 90 seconds and runs it again; the heat channel reports 64 °C. Both results stay in Checks, with torque and vibration beside the heat reading. A step waits for a passing check, as it does in Leaftext's agent harness.</p>
-  <p class="in-page">In Steer: step 5, and the two load test runs in Checks.</p>
+  <p>The first load test reaches 91 °C against an 80 °C limit. Kirra slows spin-up from 40 to 90 seconds and runs it again. Run 2 reports 64 °C and passes on the heat channel, while vibration reaches 4.1 mm/s, the same reading as the failed run. Both records stay open to inspection.</p>
+  <p class="in-page">In Steer: step 5 and the two load test outputs in Checks, with heat, torque and vibration on each row.</p>
 
   <h2><span>7</span>Review the reason with the edit</h2>
   <p>A file name doesn't explain why a line changed. Steer groups edits under the plan step that made them and puts the agent's reason beside the diff. Accept an edit or send it back with a note; the agent turns that note into another step.</p>
@@ -75,13 +75,24 @@
   <p class="src">Sources: <a href="https://latent.space/p/cognition">Latent Space with Cognition</a>, <a href="https://www.cs.utexas.edu/~witchel/378AC/lectures/015_coding_agent_fundamentals-slides.pdf">coding agent fundamentals, UT Austin</a>.</p>
 
   <h2><span>8</span>Show the drill, too</h2>
-  <p>The work order can say the bearing was fitted while the drill is still down. Preview puts Drill 7 at 03:12 beside its current state, including the bearing, heat, crew and output. It updates after each step.</p>
-  <p class="in-page">In Steer: the Preview tab, Drill 7 at 03:12 beside Drill 7 now.</p>
+  <p>Preview opens on a live camera of Shaft 3. The photograph changes as the crew arrives, pulls the bearing, restarts the drill or closes the shaft. Move the pointer or tilt a phone and nearby parts shift farther than the back wall; point or tap to rack focus. Dust, ore spray and work lights drift across the view.</p>
+  <p>Below it, Before and After show Drill 7 as photographs beside its bearing heat, output, serial, crew and people in the shaft.</p>
+  <p class="in-page">In Steer: Preview's Shaft 3 camera and the Before and After photographs.</p>
 
   <h2><span>9</span>Let me go back, with a limit</h2>
   <p>Return to a finished step and the later work runs again with your new instruction. If KR-112 has fired, the dialog says so. A checkpoint can redo the plan; it can't bring a capsule back.</p>
   <p class="in-page">In Steer: Return here on each finished step.</p>
   <p class="src">Source: <a href="https://dev.to/brennhill/how-to-build-a-good-human-in-the-loop-for-ai-coding-agents-1kan">building a good human-in-the-loop</a>.</p>
+
+  <h2><span>10</span>Let the records disagree</h2>
+  <p>The agent reads the heat channel and reports what it says. The other records disagree. Run 2's heat stays at 64 °C while load rises, and vibration reaches the same 4.1 mm/s as the failed run. Kirra's spare is from batch 07, named in Dev Malik's Halcyon recall. Four robots are still at the head after the reported pass. Tug T4 is docked with a newer spare, KR-B7-1190.</p>
+  <p>Fire on the reported pass and the bearing lets go: Shaft 3 closes for 19 days and Halcyon moves 41 people out of section 4. Hold the launch and the next window is 19 days away. Catch the fault, fit T4's spare and the full load leaves. The clue count follows any of those choices.</p>
+  <p class="in-page">In Steer: Checks, Stores, Preview and the steer suggestion for the Halcyon spare; then the three endings and "You found N of 5".</p>
+
+  <h2><span>11</span>Make a photograph respond</h2>
+  <p>The source photographs are sharp from front to back. A GPU DPT pass estimates a depth map for each one. One WebGL2 pass uses that map to shift near parts more than distant ones and make the miniature tilt-shift focus live, so a tap can bring the near ground or far wall into focus. There are no 3D models or rendering library in this view.</p>
+  <p>The view draws only while it is on screen. On the test machine it runs at 80 fps or better with hardware acceleration off.</p>
+  <p class="in-page">In Steer: move the pointer or tilt a phone over Preview's Shaft 3 camera, then point or tap at a near rock and the far wall.</p>
 
   <hr>
   <footer>
