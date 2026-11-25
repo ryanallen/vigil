@@ -1,0 +1,60 @@
+/* The night watch: one live camera fills the screen; everything else is small, quiet type laid over it. */
+.watch { position: fixed; inset: 0; overflow: hidden; background: #0b0d0c; color: #e9e8e2; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.watch .cam-canvas, .watch .cam-fallback, .watch .atmos { position: absolute; inset: 0; width: 100%; height: 100%; }
+.watch .cam-fallback { object-fit: cover; }
+.watch .atmos { pointer-events: none; }
+.watch::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgb(0 0 0 / .5), transparent 22%, transparent 62%, rgb(0 0 0 / .72)); }
+
+/* A camera cut: a short drop to black with grain, the way a feed changes channel. */
+.watch.cutting .cam-canvas { animation: cut .5s steps(1, end), cut-in .7s .12s cubic-bezier(.2, .7, .1, 1) both; }
+@keyframes cut { 0% { opacity: 0; } }
+@keyframes cut-in { from { filter: brightness(1.8) contrast(.6) blur(3px); } }
+
+.watch .hud { position: absolute; z-index: 2; inset: 0; pointer-events: none; }
+.watch .hud > * { pointer-events: auto; }
+.watch .cam-label { position: absolute; left: 22px; top: 18px; display: flex; align-items: center; gap: 9px; margin: 0; font: 600 11px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; color: rgb(233 232 226 / .85); }
+.watch .cam-label i { width: 7px; height: 7px; border-radius: 50%; background: #d9654f; animation: rec 1.6s ease-in-out infinite; }
+@keyframes rec { 50% { opacity: .25; } }
+.watch .clock { position: absolute; right: 22px; top: 12px; margin: 0; font: 500 28px/1 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .04em; font-variant-numeric: tabular-nums; color: #e9e8e2; }
+
+/* Bulletins: the newest types out; older ones dim and fall away. */
+.watch .wire { position: absolute; left: 22px; bottom: 112px; width: min(560px, calc(100% - 44px)); margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column-reverse; gap: 12px; }
+.watch .wire li { animation: wire-in .6s cubic-bezier(.2, .7, .1, 1) both; transition: opacity 1.2s; }
+.watch .wire li + li { opacity: .5; } .watch .wire li + li + li { opacity: .28; } .watch .wire li + li + li + li { opacity: .12; }
+@keyframes wire-in { from { opacity: 0; transform: translateY(10px); } }
+.watch .wire b { display: block; margin-bottom: 3px; font: 600 10.5px/1.3 ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; color: rgb(233 232 226 / .6); }
+.watch .wire span { display: block; font: 400 clamp(16px, 1.7vw, 20px)/1.45 Georgia, "Iowan Old Style", "Times New Roman", serif; text-shadow: 0 1px 14px rgb(0 0 0 / .8); }
+
+/* The ring that closes while focus is held on something, and what it says once found. */
+.watch .reveal { position: absolute; z-index: 2; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(rgb(233 232 226 / .85) calc(var(--k, 0) * 360deg), transparent 0); -webkit-mask: radial-gradient(circle, transparent 24px, #000 25px, #000 26px, transparent 27px); mask: radial-gradient(circle, transparent 24px, #000 25px, #000 26px, transparent 27px); }
+.watch .notes { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.watch .note { position: absolute; max-width: 300px; margin: 18px 0 0 18px; padding: 10px 12px; font: italic 400 15px/1.45 Georgia, "Iowan Old Style", serif; background: rgb(11 13 12 / .72); border-left: 1px solid rgb(233 232 226 / .5); animation: wire-in .6s both; transition: opacity 2s; }
+.watch .note.kept { opacity: 0; }
+
+/* The cameras the player can cut to. */
+.watch .cams { position: absolute; left: 22px; right: 22px; bottom: 18px; display: flex; gap: 8px; overflow-x: auto; }
+.watch .cams button { position: relative; flex: 0 0 auto; width: 128px; padding: 0; border: 1px solid rgb(233 232 226 / .25); border-radius: 3px; background: #000; color: inherit; cursor: pointer; overflow: hidden; transition: border-color .2s, transform .3s cubic-bezier(.2, .7, .1, 1); animation: wire-in .6s both; }
+.watch .cams button:hover { transform: translateY(-3px); }
+.watch .cams button[aria-pressed="true"] { border-color: #e9e8e2; }
+.watch .cams img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; opacity: .75; }
+.watch .cams span { position: absolute; left: 6px; bottom: 4px; font: 600 9.5px/1 ui-monospace, Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; text-shadow: 0 1px 4px #000; }
+
+/* The descent's choices: plain, physical, few. */
+.watch .choices { position: absolute; right: 22px; bottom: 112px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.watch .choices button { padding: 11px 18px; border: 1px solid rgb(233 232 226 / .55); border-radius: 3px; background: rgb(11 13 12 / .6); color: #e9e8e2; font: 600 15px system-ui, sans-serif; cursor: pointer; animation: wire-in .6s both; }
+.watch .choices button:hover { background: #e9e8e2; color: #0b0d0c; }
+
+.watch .ending { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; padding: 8vw; background: rgb(0 0 0 / .86); opacity: 0; pointer-events: none; transition: opacity 3s; }
+.watch.ended .ending { opacity: 1; pointer-events: auto; }
+.watch .ending h2 { margin: 0 0 16px; font: 400 clamp(30px, 4vw, 52px)/1.1 Georgia, serif; }
+.watch .ending p { max-width: 36em; margin: 0 0 12px; font: 400 18px/1.55 Georgia, serif; color: rgb(233 232 226 / .85); }
+.watch .ending .count { font: 600 11px ui-monospace, Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; color: rgb(233 232 226 / .55); }
+
+@media (max-width: 700px) {
+  .watch .clock { font-size: 20px; }
+  .watch .wire { bottom: 96px; }
+  .watch .cams button { width: 96px; }
+  .watch .choices { left: 22px; right: 22px; bottom: 96px; align-items: stretch; }
+}
+@media (prefers-reduced-motion: reduce) { .watch *, .watch *::before, .watch *::after { animation: none !important; transition: none !important; } }

@@ -93,6 +93,7 @@ export function mount(canvas) {
   let a = { c: black, d: flat }, b = a, mix = 1, fadeAt = 0, aspect = 16 / 9;
   let cam = [0, 0], camGoal = null, fp = [0.5, 0.6], fpGoal = null, pull = 0;
   let visible = true, raf = 0, t0 = performance.now(), last = 0;
+  let sc = [0.9, 0.9];
   let spinCfg = null, spinBox = null, spinOn = 0, spinPhase = 0;
 
   const resize = () => {
@@ -116,7 +117,8 @@ export function mount(canvas) {
     gl.viewport(0, 0, canvas.width, canvas.height);
     // Cover the canvas with the photo, leaving a margin the parallax can move into.
     const view = canvas.width / canvas.height, m = 0.9;
-    gl.uniform2f(U('scale'), view > aspect ? m : m * view / aspect, view > aspect ? m * aspect / view : m);
+    sc = [view > aspect ? m : m * view / aspect, view > aspect ? m * aspect / view : m];
+    gl.uniform2f(U('scale'), sc[0], sc[1]);
     gl.uniform2f(U('cam'), cam[0] * 0.022, cam[1] * 0.014);
     gl.uniform2f(U('fpt'), fp[0], fp[1]);
     gl.uniform1f(U('strength'), 1.0);
@@ -164,6 +166,8 @@ export function mount(canvas) {
     // spin({ box: [x0, y0, x1, y1] in the photo's 0–1 space, pitch, speed }) turns a part; spin(null) lets it coast to a stop.
     spin(cfg) { spinCfg = cfg; if (cfg) spinBox = cfg; kick(); },
     camera() { return cam; },
+    // Where focus sits, in the photo's own 0–1 space, and whether it has settled there.
+    focus() { return { x: (fp[0] - 0.5) * sc[0] + 0.5, y: (fp[1] - 0.5) * sc[1] + 0.5, settled: !!fpGoal && Math.hypot(fp[0] - fpGoal[0], fp[1] - fpGoal[1]) < 0.02 }; },
     async show(colour, depth) {
       const key = colour + '|' + depth; if (key === want) return; want = key;
       const [ci, di] = await Promise.all([load(colour), load(depth)]);
