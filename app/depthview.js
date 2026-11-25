@@ -122,11 +122,15 @@ export function mount(canvas) {
   const kick = () => { if (!raf) { last = 0; raf = requestAnimationFrame(frame); } };
 
   const host = canvas.parentElement;
-  host.addEventListener('pointermove', e => {
+  const aim = e => {
     const r = host.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
     camGoal = [(x - 0.5) * 2, (y - 0.5) * 2]; fpGoal = [x, y]; kick();
-  });
-  host.addEventListener('pointerleave', () => { camGoal = null; fpGoal = null; kick(); });
+  };
+  host.addEventListener('pointermove', aim);
+  // A tap racks focus to what was tapped and holds it there; the phone's tilt still moves the camera.
+  host.addEventListener('pointerdown', aim);
+  host.addEventListener('pointerleave', e => { camGoal = null; if (e.pointerType !== 'touch') fpGoal = null; kick(); });
+  host.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { camGoal = null; kick(); } });
   addEventListener('deviceorientation', e => {
     if (e.gamma == null || !visible) return;
     camGoal = [Math.max(-1, Math.min(1, e.gamma / 20)), Math.max(-1, Math.min(1, (e.beta - 50) / 20))]; kick();

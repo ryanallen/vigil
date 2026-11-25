@@ -443,7 +443,7 @@
   .view3d .frames img.on { opacity: 1; animation: focus-pull 1.8s var(--ease) both, drift 40s 1.8s ease-in-out infinite alternate; }
   @keyframes focus-pull { from { filter: blur(14px) brightness(1.08); transform: scale(1.06); } to { filter: blur(0) brightness(1); transform: scale(1.02); } }
   .view3d .v3d-hint2 { color: rgb(233 232 226 / .6); font-weight: 500; }
-  @media (hover: none) { .view3d .v3d-hint2 { display: none; } }
+  @media (hover: none) { .view3d .v3d-hint2 { font-size: 0; } .view3d .v3d-hint2::after { content: "Tap to focus"; font-size: 11px; } }
   .view3d .depth { position: absolute; inset: 0; width: 100%; height: 100%; }
   .view3d.has-depth .frames { display: none; }
   .view3d .atmos { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
@@ -1405,7 +1405,7 @@ const SHAFT = { seized: 'shaft-01-seized', crew: 'shaft-02-crew-coming', out: 's
 let atmos, depthView, depthTried = false;
 function showFrame(st) {
   if (!depthTried) { depthTried = true; import('./depthview.js').then(m => { depthView = m.mount($('depthCanvas')); if (depthView) { $('view3d').classList.add('has-depth'); showFrame(S.view3d || st); } }); }
-  if (depthView) { const n = SHAFT[st] || SHAFT.seized; depthView.show('../media/' + n + (Math.min(innerWidth, 980) * Math.min(2, devicePixelRatio || 1) > 1000 ? '-1600' : '-800') + '.webp', '../media/' + n + '-depth.webp'); }
+  if (depthView) { const n = SHAFT[st] || SHAFT.seized; depthView.show('../media/' + n + (Math.min(innerWidth, 980) * Math.min(2, devicePixelRatio || 1) > 640 ? '-1600' : '-800') + '.webp', '../media/' + n + '-depth.webp'); }
   if (!atmos && $('atmos')) import('./atmos.js').then(m => { atmos = m.mount($('atmos')); atmos.set(st); });
   if (atmos) atmos.set(st);
   const name = SHAFT[st] || SHAFT.seized, box = $('frames');
