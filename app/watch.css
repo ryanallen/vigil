@@ -98,3 +98,6 @@ html, body { margin: 0; background: #0b0d0c; }
 .watch .panel .sub { margin: 2px 0 8px; font-size: 13px; color: rgba(233,232,226,.7); }
 .watch .panel .keep { display: grid; gap: 6px; margin-bottom: 10px; }
 .watch .panel .keep button[aria-pressed="true"] { outline: 2px solid #e8c48e; outline-offset: 1px; }
+.watch .beside { position: absolute; right: 22px; top: 64px; z-index: 2; width: min(36vw, 520px); margin: 0; border: 1px solid rgba(233,232,226,.3); background: #0b0d0c; }
+.watch .beside img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.watch .beside span { display: block; padding: 6px 8px; font: 600 11px/1 ui-monospace, Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; color: rgba(233,232,226,.8); }

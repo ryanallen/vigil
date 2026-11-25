@@ -21,7 +21,7 @@ export default {
     { at: '03:29', show: { habitat: 'K03' }, from: 'Ivo', say: 'Why two cups? I am not through the lock yet.' },
     { at: '03:33', show: { below: 'B01', lock: 'A02' }, open: ['below'], from: 'Davi', say: 'The second lock is warm. Keep your light out of the water.' },
     { at: '03:37', show: { below: 'B02', habitat: 'K04' }, from: 'Ivo', say: 'There is someone under the ice. Davi, tell me who I am looking at.' },
-    { at: '03:40', show: { lock: 'A03' }, from: 'Davi', say: 'Their name is Mara. They went below before you came to Thule.' },
+    { at: '03:40', show: { lock: 'A03' }, beside: 'archive', from: 'Davi', say: 'Their name is Mara. They went below before you came to Thule.' },
     { at: '03:43', show: { below: 'B03', lock: 'A04' }, from: 'Davi', say: 'I kept the lock warm because Mara said they would come back.' },
     { at: '03:47', show: { habitat: 'K05', lock: 'A05' }, from: 'Ivo', say: 'The ice is closing around the intake. I need to come inside.',
       note: 'Ivo needs the outer lock. Mara is at its door. Davi has to decide how to bring them in.',

@@ -55,7 +55,7 @@ function room(sealed, offerLate) {
     { at: '03:33', show: { trays: 'T06', scope: 'M03' }, from: 'Atlas scale', say: 'Tray A gained 41 kilograms. Tray B gained 22 kilograms.',
       ...(offerLate ? { choose: [['Send seal command · may arrive too late', 'branch:late']] } : {}) },
     { at: '03:38', show: { trays: 'T07' }, from: 'Bo', say: 'There is someone in the room. I am outside the glass.' },
-    { at: '03:43', show: { trays: 'T08', records: 'R02' }, from: 'Bo', say: 'The old record says Yara Omid. She died before this factory was built.' },
+    { at: '03:43', show: { trays: 'T08', records: 'R02' }, beside: 'records', from: 'Bo', say: 'The old record says Yara Omid. She died before this factory was built.' },
     { at: '03:48', show: { trays: 'T09', door: 'D02' }, from: 'Atlas scale', say: 'Tray B gained 58 kilograms. Lid seal holding.' },
     { at: '04:02', show: { door: sealed ? 'D03' : 'D03b' }, from: 'Atlas door', say: sealed ? 'Salt room sealed.' : 'Salt room open.' },
     { at: '04:08', show: { door: 'D04', trays: 'T10' }, from: 'Bo', say: "The first one knows the old room in the archive. It does not know Yara's daughter. The second lid is lifting." },

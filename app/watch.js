@@ -23,10 +23,10 @@ export function run(S, root, { onWall } = {}) {
   if (!view) $('.cam-fallback').hidden = false;
   air($('.atmos')).set('still');
 
-  let fresh = new Set(), list, offset = 0, night, beat, held, heldSince, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
+  let beside = null, fresh = new Set(), list, offset = 0, night, beat, held, heldSince, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
   function reset() {
     list = S.beats; offset = 0; night = mins(S.start); beat = 0; held = null; current = null; ff = null;
-    keeping = null; photoOf = {}; fresh = new Set(); open = new Set(); found = new Set(); waiting = false; mode = 'night'; stop = null;
+    keeping = null; beside = null; photoOf = {}; fresh = new Set(); open = new Set(); found = new Set(); waiting = false; mode = 'night'; stop = null;
     $('.wire').innerHTML = ''; $('.notes').innerHTML = ''; $('.panel').innerHTML = ''; root.classList.remove('ended');
     $('.hint').textContent = touch ? S.hint.touch : S.hint.pointer; $('.hint').hidden = false;
     $('.lag').textContent = S.lagLine || '';
@@ -50,9 +50,15 @@ export function run(S, root, { onWall } = {}) {
   }
   // The camera's own time: Kirra's clock, a link's length behind Home's.
   function stamp() { if (current) $('.cam-label').innerHTML = `<i></i>${esc(S.cameras[current].name)} · ${esc(S.place)} · ${hhmm(night - (S.lag || 0))}`; }
+  // A second camera held beside the live one, a plain still at the side, never a crossfade (Halcyon's two pictures).
+  function drawBeside() {
+    const el = $('.beside'); el.hidden = !beside || !photoOf[beside];
+    if (!el.hidden) el.innerHTML = `<img src="${media(photoOf[beside], 800)}" alt=""><span>${esc(S.cameras[beside].name)}</span>`;
+  }
   function show(map) {
     // a camera that isn't on screen gets a quiet mark when its picture changes; it never pulls you away from what you're focused on
     for (const [cam, p] of Object.entries(map)) { const was = photoOf[cam]; photoOf[cam] = p; if (cam === current) cut(cam); else if (was && was !== p) fresh.add(cam); }
+    if (beside) drawBeside();
   }
 
   // ---- Wireless ------------------------------------------------------------------
@@ -105,6 +111,7 @@ export function run(S, root, { onWall } = {}) {
     drawStrip();
     if (b.say) bulletin(b.from, b.say);
     if (b.text) $('.lag').textContent = b.text;
+    if ('beside' in b) { beside = b.beside; drawBeside(); }
     if (b.choose) { panel(b.note ? `<p class="offer">${esc(b.note)}</p>` : ''); b.choose.forEach(([label, to, sub]) => { addControl(label, () => take(to)); if (sub) { const p = document.createElement('p'); p.className = 'sub'; p.textContent = sub; $('.panel').append(p); } }); }
     if (b.keep) keepPair(b.keep);
     if (b.route) offerRoute();

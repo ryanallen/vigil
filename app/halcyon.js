@@ -39,6 +39,7 @@ export default {
       { at: '03:42', end: 'shut' },
     ],
     both: [
+      { at: '03:39', cut: 'corridor', beside: 'old' },
       { at: '03:41', show: { corridor: 'C09', old: 'O06' }, from: 'Anika', say: 'I can see it in one picture. It is opening the door in the other.' },
       { at: '03:42', end: 'two' },
     ],
