@@ -385,7 +385,7 @@
   } }
   :root:not([data-theme="light"]) body { background: radial-gradient(1200px 600px at 80% -10%, rgb(47 140 255 / .12), transparent 60%), radial-gradient(900px 500px at -10% 110%, rgb(255 140 60 / .07), transparent 60%), var(--bg); }
   .top { position: relative; isolation: isolate; }
-  :root:not([data-theme="light"]) .top::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, var(--bg) 20%, rgb(5 7 13 / .7) 60%, rgb(5 7 13 / .4)), url(../media/mining-station-800.webp) right 30% / cover; opacity: .9; }
+  :root:not([data-theme="light"]) .top::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, var(--bg) 20%, rgb(5 7 13 / .7) 60%, rgb(5 7 13 / .4)), url(../media/photo-kirra-pit-800.webp) right 40% / cover; opacity: .9; }
   .brand { gap: 10px; font: 750 13px var(--sans); letter-spacing: .3em; text-decoration: none; color: var(--ink); }
   .brand svg { width: 20px; height: 20px; }
   .task h1 { letter-spacing: -.015em; }
@@ -545,7 +545,7 @@
           <div id="askSlot"></div>
           <div id="summarySlot"></div>
           <div class="brief" id="feedEmpty">
-            <figure class="cam"><img src="../media/mining-station-1600.webp" srcset="../media/mining-station-800.webp 800w, ../media/mining-station-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="Kirra Station's open pit on the asteroid 16 Psyche: haul trucks on the ramps, and Drill 7 standing dark under an amber light." fetchpriority="high"><figcaption><span class="rec"><i></i>Live</span><span>Kirra Station · Shaft 3 · camera M-24</span><span class="cam-r">Drill 7 · <b>stopped 03:12</b></span></figcaption></figure>
+            <figure class="cam"><img src="../media/photo-kirra-pit-1600.webp" srcset="../media/photo-kirra-pit-800.webp 800w, ../media/photo-kirra-pit-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="Kirra Station's open pit from far up the rim: terraced benches, a few haul trucks, and Drill 7 standing still with one small work light on." fetchpriority="high"><figcaption><span class="rec"><i></i>Live</span><span>Kirra Station · Shaft 3 · camera M-24</span><span class="cam-r">Drill 7 · <b>stopped 03:12</b></span></figcaption></figure>
             <h3>Before the work starts</h3>
             <p class="brief-lede">The bearing seized at 03:12. The agent found a spare and six free maintenance robots. Check what it read and what it assumed before you approve the plan.</p>
             <div class="brief-cols">
@@ -1188,8 +1188,8 @@ function finish() {
 function payoff() {
   const t = S.draft ? '3,600' : '4,000';
   return S.pushed
-    ? `<figure class="cam payoff"><img src="../media/ore-launch-960.webp" srcset="../media/ore-launch-960.webp 960w, ../media/ore-launch-1920.webp 1920w" sizes="(max-width: 860px) 100vw, 860px" width="1920" height="1080" alt="The mass driver at Kirra fires ore capsule KR-112 toward a distant Earth, a streak of light."><figcaption><span class="rec ok"><i></i>Away</span><span>KR-112 · ${t} t · Halcyon catches it in 211 days</span></figcaption><p class="payoff-line">Drill 7 is running. KR-112 is gone.</p></figure>`
-    : `<figure class="cam payoff"><img src="../media/drill-running-960.webp" srcset="../media/drill-running-960.webp 960w, ../media/drill-running-1920.webp 1920w" sizes="(max-width: 860px) 100vw, 860px" width="1920" height="1080" alt="Drill 7 running again at full power, blue-white light on its head, sparks and ore spraying onto the conveyor."><figcaption><span class="rec ok"><i></i>Live</span><span>Drill 7 · running · ${t} t held on the driver</span></figcaption><p class="payoff-line">Drill 7 is running. You held the launch.</p></figure>`;
+    ? `<figure class="cam payoff"><img src="../media/photo-ore-launch-1600.webp" srcset="../media/photo-ore-launch-800.webp 800w, ../media/photo-ore-launch-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="Kirra's mass driver from kilometres away, a thin plume of dust where KR-112 has just left."><figcaption><span class="rec ok"><i></i>Away</span><span>KR-112 · ${t} t · Halcyon catches it in 211 days</span></figcaption><p class="payoff-line">Drill 7 is running. KR-112 is gone.</p></figure>`
+    : `<figure class="cam payoff"><img src="../media/photo-shaft-3-crew-1600.webp" srcset="../media/photo-shaft-3-crew-800.webp 800w, ../media/photo-shaft-3-crew-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="Four small maintenance robots at the foot of Drill 7, seen from far up the pit rim under flat work lights."><figcaption><span class="rec ok"><i></i>Live</span><span>Drill 7 · running · ${t} t held on the driver</span></figcaption><p class="payoff-line">Drill 7 is running. You held the launch.</p></figure>`;
 }
 function renderSummary() {
   const done = S.plan.filter(p => p.state === 'done');
