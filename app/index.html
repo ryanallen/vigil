@@ -299,7 +299,7 @@
   .tw { color: var(--ink); }
   .tw .rig { display: grid; place-items: center; padding: 6px 0 4px; }
   .tw .rig svg { width: 180px; height: 108px; overflow: visible; }
-  .tw .ring { fill: none; stroke: var(--line-strong); stroke-width: 2; }
+  .tw .rim { fill: none; stroke: var(--line-strong); stroke-width: 2; }
   .tw .teeth rect { fill: var(--muted); }
   .tw .hub { fill: var(--ink); }
   .tw .bear { fill: none; stroke-width: 5; stroke: var(--faint, var(--muted)); }
@@ -401,6 +401,34 @@
   .ask .irreversible { font-weight: 650; }
   .change, .brief section, .summary, .check, .phone { border-radius: 14px; }
   :root:not([data-theme="light"]) .change, :root:not([data-theme="light"]) .brief section, :root:not([data-theme="light"]) .summary { background: linear-gradient(170deg, rgb(28 40 72 / .35), var(--panel)); }
+  /* The plan as a lit circuit */
+  .step[data-s="done"] .dot { box-shadow: 0 0 10px rgb(92 240 176 / .55); }
+  .step[data-s="now"] .dot { box-shadow: 0 0 14px var(--accent); background: rgb(111 214 255 / .15); }
+  .step[data-s="wait"] .dot { box-shadow: 0 0 14px var(--warn); }
+  .step[data-s="now"] { background: linear-gradient(90deg, rgb(111 214 255 / .14), transparent 80%); }
+  .step[data-s="wait"] { background: linear-gradient(90deg, rgb(255 179 71 / .16), transparent 80%); }
+
+  /* Corner brackets */
+  .cam::before, .ask::before, .phone::before, .summary::before { content: ""; position: absolute; inset: 6px; z-index: 2; pointer-events: none; --c: rgb(111 214 255 / .7);
+    background: linear-gradient(var(--c), var(--c)) left top / 14px 1.5px, linear-gradient(var(--c), var(--c)) left top / 1.5px 14px,
+      linear-gradient(var(--c), var(--c)) right top / 14px 1.5px, linear-gradient(var(--c), var(--c)) right top / 1.5px 14px,
+      linear-gradient(var(--c), var(--c)) left bottom / 14px 1.5px, linear-gradient(var(--c), var(--c)) left bottom / 1.5px 14px,
+      linear-gradient(var(--c), var(--c)) right bottom / 14px 1.5px, linear-gradient(var(--c), var(--c)) right bottom / 1.5px 14px; background-repeat: no-repeat; }
+  .ask::before { --c: rgb(255 179 71 / .85); }
+  .phone, .summary { position: relative; }
+  :root[data-theme="light"] .cam::before, :root[data-theme="light"] .phone::before, :root[data-theme="light"] .summary::before { --c: var(--accent); }
+
+  .tw { --tw-bg: var(--sunk); --tw-card: var(--panel); --tw-ink: var(--ink); --tw-muted: var(--muted); --tw-line: var(--line); --tw-accent: var(--accent); background: var(--tw-bg); color: var(--tw-ink); }
+  .tw .row span:first-child { color: var(--muted); }
+  /* Drill 7's heat gauge */
+  .tw .gauges { display: flex; justify-content: center; align-items: center; gap: 14px; }
+  .tw .gauge { width: 112px; height: 76px; }
+  .tw .gauge .track { fill: none; stroke: var(--line-strong); stroke-width: 6; stroke-linecap: round; }
+  .tw .gauge .val { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 1s var(--ease), stroke .4s; }
+  .tw .gauge .lim { stroke: var(--warn); stroke-width: 2; }
+  .tw .gauge text { fill: var(--ink); font: 700 15px var(--sans); text-anchor: middle; }
+  .tw .gauge .cap { fill: var(--muted); font: 600 7.5px var(--mono); letter-spacing: .12em; }
+
   .cam { position: relative; margin: 0 0 22px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line-strong); box-shadow: 0 30px 80px -30px rgb(47 140 255 / .45); aspect-ratio: 16 / 7; background: #000; }
   .cam img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 30% 60%; }
   .cam::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgb(0 0 0 / .75)), repeating-linear-gradient(0deg, rgb(0 0 0 / .08) 0 1px, transparent 1px 3px); pointer-events: none; }
@@ -942,6 +970,8 @@ function diffMarks(lines) {
     const a = lines[i][2], b = lines[i + 1][2];
     let p = 0; while (p < a.length && p < b.length && a[p] === b[p]) p++;
     let s = 0; while (s < a.length - p && s < b.length - p && a[a.length - 1 - s] === b[b.length - 1 - s]) s++;
+    while (p > 0 && /\w/.test(a[p - 1])) p--;
+    while (s > 0 && /\w/.test(a[a.length - s])) s--;
     const mark = t => { const mid = t.slice(p, t.length - s); return esc(t.slice(0, p)) + (mid ? '<mark>' + esc(mid) + '</mark>' : '') + esc(t.slice(t.length - s)); };
     out[i] = mark(a); out[i + 1] = mark(b); i++;
   }
@@ -1044,6 +1074,12 @@ function renderChecks() {
 }
 
 // ---- Preview: the real settings page, before and after ---------------------
+function gauge(t) {
+  // A 180° arc from 0 to 120 °C, with the 80 °C limit marked.
+  const L = Math.PI * 44, f = Math.min(1, t / 120), col = t > 80 ? 'var(--bad)' : t ? 'var(--ok)' : 'var(--faint)';
+  const a = Math.PI * (1 - 80 / 120), lx = 56 + Math.cos(a) * 44, ly = 62 - Math.sin(a) * 44, lx2 = 56 + Math.cos(a) * 34, ly2 = 62 - Math.sin(a) * 34;
+  return `<svg class="gauge" viewBox="0 0 112 76" role="img" aria-label="Bearing heat ${t ? t + ' °C' : 'not running'}, limit 80 °C"><path class="track" d="M12 62 A44 44 0 0 1 100 62"/><path class="val" d="M12 62 A44 44 0 0 1 100 62" stroke="${col}" stroke-dasharray="${L}" stroke-dashoffset="${L * (1 - f)}" style="filter:drop-shadow(0 0 5px ${col})"/><line class="lim" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${lx2.toFixed(1)}" y2="${ly2.toFixed(1)}"/><text x="56" y="54">${t ? t + '°' : '—'}</text><text class="cap" x="56" y="72">BEARING °C</text></svg>`;
+}
 function tw(after) {
   const has = c => S.changes.some(x => x.key === c);
   const crew = after && has('tokens'), out = after && has('toggle');
@@ -1054,7 +1090,7 @@ function tw(after) {
   const state = tested ? ['run', 'Running'] : failed ? ['bad', 'Over temperature'] : fit ? ['work', 'Bearing fitted'] : out ? ['work', 'Bearing out'] : crew ? ['work', 'Crew on the way'] : ['bad', 'Stopped · bearing seized'];
   const row = (k, v, cls = '') => `<div class="row"><span>${k}</span><b class="${cls}">${v}</b></div>`;
   return `<header>Drill 7<small>Kirra Station · Shaft 3</small></header>
-    <div class="rig" data-s="${state[0]}" aria-hidden="true"><svg viewBox="0 0 200 120"><circle class="ring" cx="100" cy="60" r="42"/><circle class="bear" cx="100" cy="60" r="20"/><g class="teeth">${Array.from({ length: 12 }, (_, i) => `<rect x="97" y="10" width="6" height="12" rx="2" transform="rotate(${i * 30} 100 60)"/>`).join('')}</g><circle class="hub" cx="100" cy="60" r="6"/></svg></div>
+    <div class="gauges"><div class="rig" data-s="${state[0]}" aria-hidden="true"><svg viewBox="0 0 200 120"><circle class="rim" cx="100" cy="60" r="42"/><circle class="bear" cx="100" cy="60" r="20"/><g class="teeth">${Array.from({ length: 12 }, (_, i) => `<rect x="97" y="10" width="6" height="12" rx="2" transform="rotate(${i * 30} 100 60)"/>`).join('')}</g><circle class="hub" cx="100" cy="60" r="6"/></svg></div>${gauge(tested ? 64 : failed ? 91 : 0)}</div>
     <div class="card">${row('Status', state[1], state[0])}${row('Output', tested ? '340 t/h' : '0 t/h')}${row('Main bearing', serial)}${row('Bearing heat', tested ? '64 °C' : failed ? '91 °C' : '—', failed ? 'bad' : '')}${row('Crew', crew ? 'M-12, M-17, M-20, M-24' : 'None')}${row('People in shaft', fit ? (S.followSystem ? '0' : '1 · I. Varga') : '0')}</div>`;
 }
 function renderPreview() {
