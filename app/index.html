@@ -419,6 +419,8 @@
   @media (max-width: 430px) { #themeBtn { display: none; } .status { font-size: 10px; } }
   .cam { position: relative; margin: 0 0 22px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); aspect-ratio: 16 / 7; background: #000; }
   .cam img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 30% 60%; }
+  .cam .cam-dv { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s var(--ease); }
+  .cam .cam-dv.on { opacity: 1; }
   .cam::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 60%, rgb(0 0 0 / .6)); pointer-events: none; }
   .cam figcaption { position: absolute; z-index: 1; left: 14px; right: 14px; bottom: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font: 600 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: #e9e8e2; }
   .cam .rec { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 4px; background: rgb(224 132 116 / .9); color: #1a0d0a; }
@@ -1464,6 +1466,20 @@ $('themeBtn').addEventListener('click', () => {
 narrow.addEventListener('change', () => { TABS = narrow.matches ? ALL_TABS : ALL_TABS.slice(1); selectTab(activeTab() || 'activity'); });
 renderPlan(); renderChips(); renderPreview(); meters();
 selectTab(narrow.matches ? 'plan' : 'activity');
+
+// The pit camera on Activity: a live 3D photo once the page has painted.
+{
+  const cam = document.querySelector('figure.cam:not(.payoff)');
+  const up = () => import('./depthview.js').then(async m => {
+    const c = document.createElement('canvas'); c.className = 'cam-dv'; c.setAttribute('aria-hidden', 'true');
+    cam.querySelector('img').after(c);
+    const v = m.mount(c); if (!v) { c.remove(); return; }
+    const size = Math.min(innerWidth, 980) * Math.min(2, devicePixelRatio || 1) > 640 ? 1600 : 800;
+    await v.show('../media/photo-kirra-pit-' + size + '.webp', '../media/photo-kirra-pit-depth.webp');
+    c.classList.add('on');
+  });
+  if (cam) addEventListener('load', () => (window.requestIdleCallback || setTimeout)(up, { timeout: 1500 }));
+}
 </script>
 </body>
 </html>
