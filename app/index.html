@@ -297,17 +297,7 @@
   .tw { --tw-bg: #f7f4ee; --tw-card: #ffffff; --tw-ink: #18221f; --tw-muted: #66706b; --tw-line: #e3ded4; --tw-accent: #0f7b6c;
     border-radius: 14px; overflow: hidden; background: var(--tw-bg); color: var(--tw-ink); font: 13px/1.45 var(--sans); min-height: 360px; transition: background .3s, color .3s; }
   .tw { color: var(--ink); }
-  .tw .rig { display: grid; place-items: center; padding: 6px 0 4px; }
-  .tw .rig svg { width: 180px; height: 108px; overflow: visible; }
-  .tw .rim { fill: none; stroke: var(--line-strong); stroke-width: 2; }
-  .tw .teeth rect { fill: var(--muted); }
-  .tw .hub { fill: var(--ink); }
-  .tw .bear { fill: none; stroke-width: 5; stroke: var(--faint, var(--muted)); }
-  .tw .rig[data-s="bad"] .bear { stroke: var(--bad); }
-  .tw .rig[data-s="work"] .bear { stroke: var(--warn); }
-  .tw .rig[data-s="run"] .bear { stroke: var(--ok); }
-  .tw .rig[data-s="run"] .teeth { transform-origin: 100px 60px; animation: spin 2.4s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .tw .shot { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; object-position: 58% 56%; background: #131615; }
   .tw .row b { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
   .tw .row b.bad { color: var(--bad); } .tw .row b.run { color: var(--ok); } .tw .row b.work { color: var(--warn); }
   .tw[data-dark] { --tw-bg: #0f1615; --tw-card: #17201e; --tw-ink: #e6eeeb; --tw-line: #26312e; --tw-accent: #3cc2ad; }
@@ -1284,7 +1274,7 @@ function gauge(t) {
   // A 180° arc from 0 to 120 °C, with the 80 °C limit marked.
   const L = Math.PI * 44, f = Math.min(1, t / 120), col = t > 80 ? 'var(--bad)' : t ? 'var(--ok)' : 'var(--faint)';
   const a = Math.PI * (1 - 80 / 120), lx = 56 + Math.cos(a) * 44, ly = 62 - Math.sin(a) * 44, lx2 = 56 + Math.cos(a) * 34, ly2 = 62 - Math.sin(a) * 34;
-  return `<svg class="gauge" viewBox="0 0 112 76" role="img" aria-label="Bearing heat ${t ? t + ' °C' : 'not running'}, limit 80 °C"><path class="track" d="M12 62 A44 44 0 0 1 100 62"/><path class="val" d="M12 62 A44 44 0 0 1 100 62" stroke="${col}" stroke-dasharray="${L}" stroke-dashoffset="${L * (1 - f)}" style="filter:drop-shadow(0 0 5px ${col})"/><line class="lim" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${lx2.toFixed(1)}" y2="${ly2.toFixed(1)}"/><text x="56" y="54">${t ? t + '°' : '—'}</text><text class="cap" x="56" y="72">BEARING °C</text></svg>`;
+  return `<svg class="gauge" viewBox="0 0 112 76" role="img" aria-label="Bearing heat ${t ? t + ' °C' : 'not running'}, limit 80 °C"><path class="track" d="M12 62 A44 44 0 0 1 100 62"/><path class="val" d="M12 62 A44 44 0 0 1 100 62" stroke="${col}" stroke-dasharray="${L}" stroke-dashoffset="${L * (1 - f)}"/><line class="lim" x1="${lx.toFixed(1)}" y1="${ly.toFixed(1)}" x2="${lx2.toFixed(1)}" y2="${ly2.toFixed(1)}"/><text x="56" y="54">${t ? t + '°' : '—'}</text><text class="cap" x="56" y="72">BEARING °C</text></svg>`;
 }
 function tw(after) {
   const has = c => S.changes.some(x => x.key === c);
@@ -1294,9 +1284,11 @@ function tw(after) {
   const failed = after && !tested && S.checks.some(c => c.name === 'Load test');
   const serial = fit ? (S.saveToAccount ? 'KR-B7-1190' : 'KR-B7-0412') : out ? 'removed' : 'KR-B7-0377';
   const state = tested ? ['run', 'Running'] : failed ? ['bad', 'Over temperature'] : fit ? ['work', 'Bearing fitted'] : out ? ['work', 'Bearing out'] : crew ? ['work', 'Crew on the way'] : ['bad', 'Stopped · bearing seized'];
+  const frame = after ? (S.closed ? 'closed' : S.failed ? 'failed' : S.honest ? 'cleared' : S.falsePass ? 'running' : failed ? 'hot' : fit ? 'fitted' : out ? 'out' : crew ? 'crew' : 'seized') : 'seized';
   const row = (k, v, cls = '') => `<div class="row"><span>${k}</span><b class="${cls}">${v}</b></div>`;
   return `<header>Drill 7<small>Kirra Station · Shaft 3</small></header>
-    <div class="gauges"><div class="rig" data-s="${state[0]}" aria-hidden="true"><svg viewBox="0 0 200 120"><circle class="rim" cx="100" cy="60" r="42"/><circle class="bear" cx="100" cy="60" r="20"/><g class="teeth">${Array.from({ length: 12 }, (_, i) => `<rect x="97" y="10" width="6" height="12" rx="2" transform="rotate(${i * 30} 100 60)"/>`).join('')}</g><circle class="hub" cx="100" cy="60" r="6"/></svg></div>${gauge(tested ? (S.honest ? 71 : 64) : failed ? 91 : 0)}</div>
+    <img class="shot" src="../media/${SHAFT[frame]}-800.webp" alt="" width="800" height="450" loading="lazy" decoding="async">
+    <div class="gauges">${gauge(tested ? (S.honest ? 71 : 64) : failed ? 91 : 0)}</div>
     <div class="card">${row('Status', state[1], state[0])}${row('Output', tested ? '340 t/h' : '0 t/h')}${row('Main bearing', serial)}${row('Bearing heat', tested ? (S.honest ? '71 °C' : '64 °C') : failed ? '91 °C' : '—', failed ? 'bad' : '')}${row('Crew', crew ? 'M-12, M-17, M-20, M-24' : 'None')}${row('People in shaft', fit ? (S.followSystem ? '0' : '1 · I. Varga') : '0')}</div>`;
 }
 function renderPreview() {
