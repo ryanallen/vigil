@@ -1283,20 +1283,21 @@ function tw(after) {
   const tested = after && (S.honest || S.falsePass);
   const failed = after && !tested && S.checks.some(c => c.name === 'Load test');
   const serial = fit ? (S.saveToAccount ? 'KR-B7-1190' : 'KR-B7-0412') : out ? 'removed' : 'KR-B7-0377';
-  const state = tested ? ['run', 'Running'] : failed ? ['bad', 'Over temperature'] : fit ? ['work', 'Bearing fitted'] : out ? ['work', 'Bearing out'] : crew ? ['work', 'Crew on the way'] : ['bad', 'Stopped · bearing seized'];
+  const broke = after && (S.closed || S.failed);
+  const state = broke ? ['bad', S.closed ? 'Shaft 3 closed · 19 days' : 'Bearing failed'] : tested ? ['run', 'Running'] : failed ? ['bad', 'Over temperature'] : fit ? ['work', 'Bearing fitted'] : out ? ['work', 'Bearing out'] : crew ? ['work', 'Crew on the way'] : ['bad', 'Stopped · bearing seized'];
   const frame = after ? (S.closed ? 'closed' : S.failed ? 'failed' : S.honest ? 'cleared' : S.falsePass ? 'running' : failed ? 'hot' : fit ? 'fitted' : out ? 'out' : crew ? 'crew' : 'seized') : 'seized';
   const row = (k, v, cls = '') => `<div class="row"><span>${k}</span><b class="${cls}">${v}</b></div>`;
   return `<header>Drill 7<small>Kirra Station · Shaft 3</small></header>
     <img class="shot" src="../media/${SHAFT[frame]}-800.webp" alt="" width="800" height="450" loading="lazy" decoding="async">
     <div class="gauges">${gauge(tested ? (S.honest ? 71 : 64) : failed ? 91 : 0)}</div>
-    <div class="card">${row('Status', state[1], state[0])}${row('Output', tested ? '340 t/h' : '0 t/h')}${row('Main bearing', serial)}${row('Bearing heat', tested ? (S.honest ? '71 °C' : '64 °C') : failed ? '91 °C' : '—', failed ? 'bad' : '')}${row('Crew', crew ? 'M-12, M-17, M-20, M-24' : 'None')}${row('People in shaft', fit ? (S.followSystem ? '0' : '1 · I. Varga') : '0')}</div>`;
+    <div class="card">${row('Status', state[1], state[0])}${row('Output', tested && !broke ? '340 t/h' : '0 t/h')}${row('Main bearing', serial)}${row('Bearing heat', tested ? (S.honest ? '71 °C' : '64 °C') : failed ? '91 °C' : '—', failed ? 'bad' : '')}${row('Crew', crew ? 'M-12, M-17, M-20, M-24' : 'None')}${row('People in shaft', fit ? (S.followSystem ? '0' : '1 · I. Varga') : '0')}</div>`;
 }
 function renderPreview() {
   const has = c => S.changes.some(x => x.key === c);
   $('twBefore').innerHTML = tw(false);
   $('twAfter').innerHTML = tw(true);
   document.querySelector('.look').hidden = true;
-  $('afterCap').textContent = !has('tokens') ? 'After (nothing done yet)' : S.checks.some(c => c.name === 'Load test' && c.state === 'pass') ? 'After · back in service' : 'After · so far';
+  $('afterCap').textContent = S.closed ? 'After · Shaft 3 closed' : S.failed ? 'After · bearing failed' : !has('tokens') ? 'After (nothing done yet)' : S.checks.some(c => /load test/i.test(c.name) && c.state === 'pass') ? 'After · back in service' : 'After · so far';
   const fit = S.changes.find(x => x.key.startsWith('remember'));
   const tested = S.honest || S.falsePass, failed = !tested && S.checks.some(c => c.name === 'Load test');
   const st3 = S.closed ? 'closed' : S.failed ? 'failed' : S.honest ? 'cleared' : S.falsePass ? 'running' : failed ? 'hot' : fit ? 'fitted' : has('toggle') ? 'out' : has('tokens') ? 'crew' : 'seized';
