@@ -1006,7 +1006,7 @@ function selectTab(name, focus) {
   if (name === 'plan') $('steps').querySelectorAll('.title-edit').forEach(fitTitle);
   if (name === 'preview') renderPreview();
   if (focus) $('tab-' + name).focus();
-  $('workScroll').scrollTop = name === 'activity' ? $('workScroll').scrollHeight : 0;
+  $('workScroll').scrollTop = name === 'activity' && S.phase !== 'plan' ? $('workScroll').scrollHeight : 0;
 }
 document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[role="tab"]'); if (b) selectTab(b.id.slice(4)); });
 document.querySelector('.tabs').addEventListener('keydown', e => {
