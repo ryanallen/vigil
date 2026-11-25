@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Quiet Hours</title>
+<meta name="description" content="A night watch through Kirra's cameras. The drill breaks through, the survey party stops answering, and one robot is left to send below.">
+<meta name="theme-color" content="#0b0d0c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%23202626%27/%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%274%27 fill=%27%23e9e8e2%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="watch.css">
+</head>
+<body>
+<main class="home" id="home">
+  <canvas class="home-canvas" aria-hidden="true"></canvas>
+  <div class="home-in">
+    <p class="home-clock">03:12 · Home, Earth</p>
+    <h1>The Quiet Hours</h1>
+    <p class="home-line">Everyone else is asleep. Kirra's survey is still running.</p>
+    <h2>Choose a place to watch</h2>
+    <ul class="places" id="places"></ul>
+  </div>
+</main>
+
+<div class="watch" id="watch" hidden>
+  <canvas class="cam-canvas" aria-hidden="true"></canvas>
+  <img class="cam-fallback" alt="" hidden>
+  <canvas class="atmos" aria-hidden="true"></canvas>
+  <div class="hud">
+    <p class="cam-label"></p>
+    <p class="clock">03:12</p>
+    <p class="lag"></p>
+    <p class="hint"></p>
+    <ol class="wire" aria-live="polite"></ol>
+    <div class="panel"></div>
+    <nav class="cams" aria-label="Cameras"></nav>
+  </div>
+  <div class="reveal" hidden></div>
+  <div class="notes" aria-live="polite"></div>
+  <div class="ending" role="dialog" aria-live="polite"></div>
+</div>
+
+<script type="module">
+import { run } from './watch.js';
+import { mount } from './depthview.js';
+import kirra from './kirra.js';
+if (new URLSearchParams(location.search).has('fast')) kirra.pace = 0.04; // for checking the whole night quickly
+
+// The wall at Home. Kirra is the watch that's ready; the other places are on the wall, quiet.
+const PLACES = [
+  ['Kirra Station', '16 Psyche', 'Survey in progress', kirra],
+  ['Tethys Farms', 'Pacific'], ['Thule Ice', 'Europa'], ['Helios Array', 'Near the Sun'],
+  ['Halcyon Station', 'Earth orbit'], ['Shackleton Foundry', 'The Moon'], ['Jezero House', 'Mars'],
+  ['Atlas Works', 'Ceres'],
+];
+const home = document.getElementById('home'), watch = document.getElementById('watch');
+document.getElementById('places').innerHTML = PLACES.map(([n, p, s, story], i) =>
+  `<li${story ? '' : ' class="quiet"'}><b>${n}</b><span>${p}</span>${s ? `<em>${s}</em>` : ''}${story ? `<button type="button" data-i="${i}">Watch ${n.split(' ')[0]}</button>` : ''}</li>`).join('');
+const hv = mount(home.querySelector('.home-canvas'));
+if (hv) hv.show(new URL('../media/watch-H01-1600.webp', import.meta.url).href, new URL('../media/watch-H01-depth.webp', import.meta.url).href);
+let started = false;
+document.getElementById('places').addEventListener('click', e => {
+  const b = e.target.closest('[data-i]'); if (!b) return;
+  home.hidden = true; watch.hidden = false;
+  if (!started) { started = true; run(PLACES[b.dataset.i][3], watch, { onWall: () => { watch.hidden = true; home.hidden = false; } }); }
+});
+</script>
+</body>
+</html>

@@ -51,6 +51,36 @@
 .watch .ending p { max-width: 36em; margin: 0 0 12px; font: 400 18px/1.55 Georgia, serif; color: rgb(233 232 226 / .85); }
 .watch .ending .count { font: 600 11px ui-monospace, Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; color: rgb(233 232 226 / .55); }
 
+/* Home: the kitchen at 03:12 and the wall of places. */
+html, body { margin: 0; background: #0b0d0c; }
+.home { position: fixed; inset: 0; overflow: auto; color: #e9e8e2; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.home[hidden], .watch[hidden] { display: none; }
+.home-canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+.home::after { content: ""; position: fixed; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgb(11 13 12 / .86), rgb(11 13 12 / .45) 55%, rgb(11 13 12 / .15)); }
+.home-in { position: relative; z-index: 1; max-width: 760px; padding: clamp(28px, 7vh, 80px) clamp(22px, 6vw, 72px); }
+.home-clock { margin: 0 0 18px; font: 600 12px ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; color: rgb(233 232 226 / .7); }
+.home h1 { margin: 0 0 12px; font: 400 clamp(40px, 6vw, 76px)/1 Georgia, "Iowan Old Style", serif; letter-spacing: -.01em; }
+.home-line { margin: 0 0 42px; font: 400 clamp(17px, 1.6vw, 20px)/1.5 Georgia, serif; color: rgb(233 232 226 / .82); }
+.home h2 { margin: 0 0 12px; font: 600 11px ui-monospace, Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; color: rgb(233 232 226 / .6); }
+.places { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.places li { display: flex; flex-direction: column; gap: 2px; padding: 13px 14px; border: 1px solid rgb(233 232 226 / .22); border-radius: 3px; background: rgb(11 13 12 / .55); }
+.places li.quiet { opacity: .5; }
+.places b { font-weight: 600; } .places span { color: rgb(233 232 226 / .65); font-size: 13.5px; } .places em { font-style: normal; font-size: 13.5px; }
+.places button { align-self: flex-start; margin-top: 10px; padding: 9px 16px; border: 0; border-radius: 3px; background: #e9e8e2; color: #0b0d0c; font: 600 14px system-ui, sans-serif; cursor: pointer; }
+
+/* The watch's quiet lines and controls. */
+.watch .lag { position: absolute; left: 22px; top: 40px; margin: 0; font: 400 12px/1.4 system-ui, sans-serif; color: rgb(233 232 226 / .6); }
+.watch .hint { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); margin: 0; font: 400 13px system-ui, sans-serif; color: rgb(233 232 226 / .75); transition: opacity 1s; }
+.watch .hint[hidden] { display: block; opacity: 0; }
+.watch .wire .then { margin-top: 8px; font-style: italic; }
+.watch .panel { position: absolute; right: 22px; bottom: 112px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; max-width: min(420px, calc(100% - 44px)); }
+.watch .panel .offer { margin: 0 0 4px; text-align: right; font: 400 14px/1.45 system-ui, sans-serif; color: rgb(233 232 226 / .85); text-shadow: 0 1px 10px #000; }
+.watch .panel button, .watch .end-controls button { padding: 11px 18px; border: 1px solid rgb(233 232 226 / .55); border-radius: 3px; background: rgb(11 13 12 / .6); color: #e9e8e2; font: 600 15px system-ui, sans-serif; cursor: pointer; animation: wire-in .6s both; }
+.watch .panel button:hover, .watch .end-controls button:hover { background: #e9e8e2; color: #0b0d0c; }
+.watch .ending .when { font: 600 11px ui-monospace, Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; color: rgb(233 232 226 / .55); }
+.watch .ending .last { font-style: italic; }
+.watch .end-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+
 @media (max-width: 700px) {
   .watch .clock { font-size: 20px; }
   .watch .wire { bottom: 96px; }
