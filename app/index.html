@@ -1127,7 +1127,7 @@ function resolveApproval(answer) {
       [900, () => { feed('run', 'Drill 7 / full torque / ore run'); spend(800); }],
       [1400, () => { S.failed = true; feed('fail', 'Six minutes into run / bearing race failed / M-24 feed white', 'fail'); renderPreview(); }],
       [900, () => feed('say', `<span class="say">${out ? 'The bearing let go. Nobody was in the shaft.' : 'The bearing let go. Varga is out of the shaft.'} I've closed Shaft 3 and held its ore lot.</span>`)],
-      [700, () => feed('run', 'Shaft 3 / closed 19 days')],
+      [700, () => { S.closed = true; feed('run', 'Shaft 3 / closed 19 days'); renderPreview(); }],
       [600, () => feed('run', 'KR-112 / Shaft 3 lot held / half-full manifest')],
       [700, () => { S.pushed = true; feed('run', 'KR-112 / fired / recall unavailable'); }],
       [700, () => feed('run', 'Halcyon / ring section 4 / move list: 41')],
@@ -1323,10 +1323,10 @@ function renderPreview() {
   $('afterCap').textContent = !has('tokens') ? 'After (nothing done yet)' : S.checks.some(c => c.name === 'Load test' && c.state === 'pass') ? 'After · back in service' : 'After · so far';
   const fit = S.changes.find(x => x.key.startsWith('remember'));
   const tested = S.honest || S.falsePass, failed = !tested && S.checks.some(c => c.name === 'Load test');
-  const st3 = S.failed ? 'failed' : S.honest ? 'cleared' : S.falsePass ? 'running' : failed ? 'hot' : fit ? 'fitted' : has('toggle') ? 'out' : has('tokens') ? 'crew' : 'seized';
-  const words = { seized: 'Stopped · bearing seized', crew: 'Crew on the way', out: 'Bearing out', fitted: 'New bearing fitted', hot: 'Over temperature · 91 °C', running: 'Running · 64 °C', cleared: 'Running · 71 °C', failed: 'Bearing failed · shaft closed' };
+  const st3 = S.closed ? 'closed' : S.failed ? 'failed' : S.honest ? 'cleared' : S.falsePass ? 'running' : failed ? 'hot' : fit ? 'fitted' : has('toggle') ? 'out' : has('tokens') ? 'crew' : 'seized';
+  const words = { seized: 'Stopped · bearing seized', crew: 'Crew on the way', out: 'Bearing out', fitted: 'New bearing fitted', hot: 'Over temperature · 91 °C', running: 'Running · 64 °C', cleared: 'Running · 71 °C', failed: 'Bearing failed', closed: 'Shaft 3 closed · 19 days' };
   $('v3dState').textContent = words[st3];
-  $('v3dState').style.color = st3 === 'running' || st3 === 'cleared' ? 'var(--ok)' : st3 === 'seized' || st3 === 'hot' || st3 === 'failed' ? 'var(--bad)' : 'var(--warn)';
+  $('v3dState').style.color = st3 === 'running' || st3 === 'cleared' ? 'var(--ok)' : st3 === 'seized' || st3 === 'hot' || st3 === 'failed' || st3 === 'closed' ? 'var(--bad)' : 'var(--warn)';
   S.view3d = st3;
   showFrame(st3);
   $('contrastNote').textContent = S.muted === 'new' ? 'Spin-up slowed from 40 s to 90 s after the first load test ran hot.' : '';
@@ -1424,7 +1424,7 @@ let TABS = narrow.matches ? ALL_TABS : ALL_TABS.slice(1);
 function activeTab() { return TABS.find(t => $('tab-' + t).getAttribute('aria-selected') === 'true'); }
 // The live view is a fixed camera on the pit rim: one photograph per moment of the job, crossfading as it moves.
 // Shaft frames (.dev/shaft, by Codex) replace the two stand-ins as they arrive.
-const SHAFT = { seized: 'photo-kirra-pit', crew: 'photo-kirra-pit', out: 'photo-shaft-3-crew', fitted: 'photo-shaft-3-crew', hot: 'photo-shaft-3-crew', running: 'photo-shaft-3-crew', cleared: 'photo-shaft-3-crew', failed: 'photo-shaft-3-crew' };
+const SHAFT = { seized: 'shaft-01-seized', crew: 'shaft-02-crew-coming', out: 'shaft-04-bearing-out', fitted: 'shaft-03-crew-at-drill', hot: 'shaft-03-crew-at-drill', running: 'shaft-05-running', cleared: 'shaft-06-running-clear', failed: 'shaft-07-failed', closed: 'shaft-08-closed' };
 function showFrame(st) {
   const name = SHAFT[st] || SHAFT.seized, box = $('frames');
   if (!box) return;
