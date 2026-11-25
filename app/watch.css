@@ -91,3 +91,10 @@ html, body { margin: 0; background: #0b0d0c; }
 
 .to-wall { position: absolute; left: 22px; top: 42px; z-index: 3; padding: 6px 10px; border: 1px solid rgba(233,232,226,.35); border-radius: 3px; background: rgba(11,13,12,.55); color: #e9e8e2; font: 600 12px/1.2 system-ui, sans-serif; cursor: pointer; }
 .to-wall:hover { background: rgba(11,13,12,.8); }
+.watch .cams button.fresh::after { content: ''; position: absolute; right: 6px; top: 6px; width: 7px; height: 7px; border-radius: 50%; background: #e8c48e; }
+.watch .cams button { position: relative; }
+.ending .after { margin: 18px 0 0; padding: 12px 0 0; border-top: 1px solid rgba(233,232,226,.2); color: rgba(233,232,226,.75); }
+.ending .after p { margin: 0 0 10px; font-size: 15px; }
+.watch .panel .sub { margin: 2px 0 8px; font-size: 13px; color: rgba(233,232,226,.7); }
+.watch .panel .keep { display: grid; gap: 6px; margin-bottom: 10px; }
+.watch .panel .keep button[aria-pressed="true"] { outline: 2px solid #e8c48e; outline-offset: 1px; }

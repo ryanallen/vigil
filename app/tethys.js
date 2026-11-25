@@ -1,6 +1,7 @@
 // Tethys Farms, Pacific: "The Low Tide". Every word and every picture of the watch, from .dev/script-tethys.md.
 // Earth to Earth, the farm cameras are live. Photos are media/watch-tethys-<ID>.
 export default {
+  after: { line: 'No ground motion at Home.' },
   title: 'The Low Tide',
   place: 'Tethys Farms · Pacific',
   start: '03:12',
@@ -14,7 +15,7 @@ export default {
   },
   beats: [
     { at: '03:12', show: { mast: 'M01', outer: 'U01', bow: 'B01' }, open: ['mast', 'outer', 'bow'], cut: 'mast', text: 'The beds measure the water to the centimetre. A harvest buoy has slipped its mooring.', from: 'Sora', say: 'A routine swell took buoy seven. I can see its light, but not the line. Which camera has it?' },
-    { at: '03:16', show: { bow: 'B02', mast: 'M02' }, from: 'Sora', say: 'Got the buoy. Its line is cut.' },
+    { at: '03:16', id: 'buoy', show: { bow: 'B02', mast: 'M02' }, from: 'Sora', say: 'Got the buoy. Its line is cut.' },
     { at: '03:19', show: { deck: 'R01', outer: 'U02' }, open: ['deck'], from: 'Imani', say: 'The buoy is dry inside. The lamp has been burning under the water.' },
     { at: '03:22', show: { mast: 'M03', outer: 'U03' }, from: 'Dara', say: 'The outer bed has lost six centimetres. The inner bed has lost six. There is no swell running between them.' },
     { at: '03:25', show: { deck: 'R02', bow: 'B03' }, from: 'Dara', say: 'I drew the shape under the mooring. Sora, do not tell me what you saw yet.' },
@@ -41,7 +42,7 @@ export default {
   },
   // Coordinates are fractions of the full 16:9 photograph from its upper left.
   reveals: [
-    { id: 'T1', photo: 'M01', x: 0.77, y: 0.64, r: 0.05, text: 'Buoy seven is thirty metres beyond the last row. Its light is below the surface.' },
+    { id: 'T1', photo: 'M01', x: 0.77, y: 0.64, r: 0.05, text: 'Buoy seven is thirty metres beyond the last row. Its light is below the surface.', unlock: ['Go to the buoy', 'buoy'] },
     { id: 'T2', photo: 'U01', x: 0.52, y: 0.56, r: 0.08, text: 'Two mooring chains hang at the same angle. The water is running as expected.' },
     { id: 'T3', photo: 'R01', x: 0.47, y: 0.58, r: 0.08, text: 'The seal is intact. Salt has dried on the outside, but the inside is clean.' },
     { id: 'T4', photo: 'U03', x: 0.69, y: 0.78, r: 0.09, text: 'The edge is straight. Five broad sides meet below the chain.' },

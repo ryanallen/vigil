@@ -23,10 +23,10 @@ export function run(S, root, { onWall } = {}) {
   if (!view) $('.cam-fallback').hidden = false;
   air($('.atmos')).set('still');
 
-  let list, offset = 0, night, beat, held, heldSince, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
+  let fresh = new Set(), list, offset = 0, night, beat, held, heldSince, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
   function reset() {
     list = S.beats; offset = 0; night = mins(S.start); beat = 0; held = null; current = null; ff = null;
-    photoOf = {}; open = new Set(); found = new Set(); waiting = false; mode = 'night'; stop = null;
+    keeping = null; photoOf = {}; fresh = new Set(); open = new Set(); found = new Set(); waiting = false; mode = 'night'; stop = null;
     $('.wire').innerHTML = ''; $('.notes').innerHTML = ''; $('.panel').innerHTML = ''; root.classList.remove('ended');
     $('.hint').textContent = touch ? S.hint.touch : S.hint.pointer; $('.hint').hidden = false;
     $('.lag').textContent = S.lagLine || '';
@@ -35,14 +35,14 @@ export function run(S, root, { onWall } = {}) {
 
   // ---- Cameras -----------------------------------------------------------------
   function drawStrip() {
-    $('.cams').innerHTML = [...open].map(id => `<button type="button" data-cam="${id}" aria-pressed="${id === current}">
+    $('.cams').innerHTML = [...open].map(id => `<button type="button" data-cam="${id}" aria-pressed="${id === current}"${fresh.has(id) ? ' class="fresh"' : ''}>
       <img src="${media(photoOf[id], 800)}" alt="" loading="lazy"><span>${esc(S.cameras[id].name)}</span></button>`).join('');
   }
   $('.cams').addEventListener('click', e => { const b = e.target.closest('[data-cam]'); if (b) cut(b.dataset.cam); });
   function cut(id) {
     if (!photoOf[id]) return;
     const changed = id !== current;
-    current = id;
+    current = id; fresh.delete(id);
     if (changed) { root.classList.remove('cutting'); void root.offsetWidth; root.classList.add('cutting'); }
     const p = photoOf[id];
     if (view) view.show(media(p, size()), depthOf(p)); else $('.cam-fallback').src = media(p, size());
@@ -51,7 +51,8 @@ export function run(S, root, { onWall } = {}) {
   // The camera's own time: Kirra's clock, a link's length behind Home's.
   function stamp() { if (current) $('.cam-label').innerHTML = `<i></i>${esc(S.cameras[current].name)} · ${esc(S.place)} · ${hhmm(night - (S.lag || 0))}`; }
   function show(map) {
-    for (const [cam, p] of Object.entries(map)) { photoOf[cam] = p; if (cam === current) cut(cam); }
+    // a camera that isn't on screen gets a quiet mark when its picture changes; it never pulls you away from what you're focused on
+    for (const [cam, p] of Object.entries(map)) { const was = photoOf[cam]; photoOf[cam] = p; if (cam === current) cut(cam); else if (was && was !== p) fresh.add(cam); }
   }
 
   // ---- Wireless ------------------------------------------------------------------
@@ -89,19 +90,23 @@ export function run(S, root, { onWall } = {}) {
     found.add(r.id); held = null; mark.hidden = true; $('.hint').hidden = true;
     const n = document.createElement('p'); n.className = 'note'; place(n, r.x, r.y); $('.notes').append(n);
     typeOut(n, r.text);
+    // some details open a way forward when they are read (Tethys: "Go to the buoy.")
+    if (r.unlock) { const [label, to] = r.unlock, b = S.beats.find(b => b.id === to); if (b && mins(b.at) > night) { addControl(label, () => { night = mins(b.at); }); $('.panel').lastChild.classList.add('unlock'); } }
     setTimeout(() => n.classList.add('kept'), 9000);
   }
 
   // ---- The night ----------------------------------------------------------------------
   function play(b) {
     if (b.ifWaiting && mode !== 'night') return;
+    $('.panel').querySelectorAll('.unlock').forEach(u => u.remove());
     if (b.show) show(b.show);
     (b.open || []).forEach(id => open.add(id));
     if (b.cut || !current) cut(b.cut || [...open][0]);
     drawStrip();
     if (b.say) bulletin(b.from, b.say);
     if (b.text) $('.lag').textContent = b.text;
-    if (b.choose) { panel(b.note ? `<p class="offer">${esc(b.note)}</p>` : ''); b.choose.forEach(([label, to]) => addControl(label, () => take(to))); }
+    if (b.choose) { panel(b.note ? `<p class="offer">${esc(b.note)}</p>` : ''); b.choose.forEach(([label, to, sub]) => { addControl(label, () => take(to)); if (sub) { const p = document.createElement('p'); p.className = 'sub'; p.textContent = sub; $('.panel').append(p); } }); }
+    if (b.keep) keepPair(b.keep);
     if (b.route) offerRoute();
     if (b.leave) addControl(S.route.leave, () => end('surface'));
     if (b.end) setTimeout(() => end(b.end), (b.hold || 3) * 1000);   // a beat that closes the watch after its picture has been seen
@@ -114,6 +119,22 @@ export function run(S, root, { onWall } = {}) {
     panel(`<p class="offer">${esc(S.route.note)}</p>`);
     addControl(S.route.offer, () => go(S.route.first));
     addControl(S.route.keep, () => { panel(''); addControl(S.route.offer, () => go(S.route.first)); });
+  }
+
+  // Home's lights: a pair kept on, changeable while power lasts, and the reserve's own estimate counting down to the
+  // minute the script says it fails. Which pair is kept changes nothing the script doesn't; the choice is the player's.
+  let keeping = null;
+  function keepPair(k) {
+    const box = document.createElement('div'); box.className = 'keep';
+    box.innerHTML = (k.note ? `<p class="offer">${esc(k.note)}</p>` : '') + k.options.map((o, i) => `<button type="button" aria-pressed="false" data-k="${i}">${esc(o)}</button>`).join('');
+    box.onclick = e => { const t = e.target.closest('[data-k]'); if (!t) return; box.querySelectorAll('[data-k]').forEach(x => x.setAttribute('aria-pressed', x === t)); };
+    $('.panel').prepend(box); keeping = k;
+  }
+  function readout() {
+    if (!keeping) return;
+    const left = Math.max(0, Math.ceil(mins(keeping.until) - night));
+    $('.lag').textContent = keeping.readout.replace('{n}', left);
+    if (!left) { $('.panel .keep')?.remove(); keeping = null; }
   }
 
   // A choice at a beat: an ending, or a branch of timed beats that carries on from the night's clock.
@@ -154,7 +175,11 @@ export function run(S, root, { onWall } = {}) {
     const E = S.endings[id]; mode = 'ended'; panel('');
     $('.ending').innerHTML = `<p class="when">${hhmm(night)} · Home, Earth</p><h2>${esc(E.title)}</h2><p>${esc(E.text)}</p>`
       + (E.last ? `<p class="last"></p>` : '')
-      + `<p class="count">${found.size} of ${S.reveals.length} details read</p><div class="end-controls"></div>`;
+      + `<p class="count">${found.size} of ${S.reveals.length} details read</p>`
+      + (S.after ? `<div class="after">${S.after.line ? `<p>${esc(S.after.line)}</p>` : ''}${S.after.button ? `<button type="button">${esc(S.after.button)}</button>` : ''}</div>` : '')
+      + `<div class="end-controls"></div>`;
+    // back at Home after the watch: one plain line, or one plain act, from the story (see each story's `after`)
+    const ab = $('.ending .after button'); if (ab) ab.onclick = () => ab.remove();
     root.classList.add('ended');
     if (E.last) setTimeout(() => typeOut($('.ending .last'), E.last), 2400);
     for (const [label, act] of E.controls) {
@@ -185,7 +210,7 @@ export function run(S, root, { onWall } = {}) {
       while (mode === 'night' && beat < list.length && mins(list[beat].at) + offset <= night) play(list[beat++]);
     } else if (mode !== 'ended') night += dt / 60; // once the bulletins stop, and between pictures, Home's clock runs at its real pace
     $('.clock').textContent = hhmm(night);
-    stamp();
+    stamp(); readout();
     watchFocus(now);
     requestAnimationFrame(tick);
   }

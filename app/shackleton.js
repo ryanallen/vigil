@@ -1,6 +1,7 @@
 // Shackleton Foundry, Moon: "The Lower Floor". Every word and every picture of the watch, from .dev/script-shackleton.md.
 // The Moon is about a second away, so the stamps match Home's clock. Photos are media/watch-shackleton-<ID>.
 export default {
+  after: { button: 'Unplug the speaker' },
   title: 'The Lower Floor',
   place: 'Shackleton Foundry · Moon',
   start: '03:12',

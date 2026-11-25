@@ -20,7 +20,7 @@ export default {
     { at: '03:25', show: { trays: 'T04', records: 'R01' }, open: ['records'], from: 'Atlas scale', say: 'Tray A gained 63 grams. Tray B gained 9 grams.' },
     { at: '03:28', show: { trays: 'T05', door: 'D01' }, open: ['door'], from: 'Bo', say: 'I will be at the tray room in forty minutes. Leave both lids closed.',
       note: 'Bo is due at the tray room at 04:08 Home time. A seal command takes 17 minutes to reach Atlas. Close the room now or keep the camera on it.',
-      choose: [['Seal the room', 'branch:sealed'], ['Keep it open', 'branch:open']] },
+      choose: [['Seal the room', 'branch:sealed', 'Bo can still see through the glass.'], ['Keep it open', 'branch:open']] },
     ...room(false, true),   // a watch that sends nothing leaves the room open
   ],
   // A seal sent by 03:33 shuts the room at Atlas before Bo returns; after that it may arrive too late, and is shown as late.

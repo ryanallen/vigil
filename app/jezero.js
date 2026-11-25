@@ -1,6 +1,7 @@
 // Jezero House, Mars: "The House Under the House". Every word and every picture of the watch, from .dev/script-jezero.md.
 // Times are arrival times at Home; Jezero's own camera stamps run twelve minutes behind. Photos are media/watch-jezero-<ID>.
 export default {
+  after: { line: 'Home wall: dry.' },
   title: 'The House Under the House',
   place: 'Jezero House · Mars',
   start: '03:12',
