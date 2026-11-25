@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Why Steer works this way</title>
-<meta name="description" content="How Steer lets you edit an agent's plan, change a job in progress, review its work and decide what can't be undone.">
+<title>Design notes · Steer: The Quiet Hours</title>
+<meta name="description" content="How Steer lets one person read an agent's repair, change a step and hold an ore launch that can't be recalled.">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#05070d">
 <link rel="canonical" href="https://ryanallen.com/steer/about.html">
@@ -35,8 +35,9 @@
 <body>
 <main>
   <div class="nav"><a class="back" href="./">← Steer</a><a class="launch" href="app/">Launch Steer</a></div>
-  <h1>Why Steer works this way</h1>
-  <p class="lede">Steer is one console for a fictional house on Mars, station in orbit, asteroid mine, robot crews and solar array. The holdings are sustainable; nothing is taken from people. Agents do the work. You need to know what they're doing, change the job while it runs and approve the things that can't be undone. The Kirra repair lets you try those decisions.</p>
+  <h1>Design notes</h1>
+  <p class="lede">One person watches 41 million agents run 6.2 million machines. At Kirra, you can read the repair, change a step and hold the ore launch before it leaves for Halcyon.</p>
+  <p>This is scripted fiction. Nothing leaves your browser.</p>
 
   <h2><span>1</span>Edit the plan before the agent starts</h2>
   <p>If the agent picks the wrong approach, finding out after it works is expensive. Devin's interactive planning lets a person change the approach first. Steer starts with a plan you can edit: rename, move, drop or add a step. The agent waits for your approval.</p>
@@ -55,7 +56,7 @@
   <p class="src">Sources: <a href="https://www.copilotkit.ai/learning/what-is-agent-steering">CopilotKit on agent steering</a>, <a href="https://agentic-ai-wiki.vercel.app/playbooks/agent-ux-and-human-interaction/interruption-and-handoff/">interruption, steering and handoff</a>.</p>
 
   <h2><span>4</span>Ask before the launch</h2>
-  <p>Confirming every file edit would bury the one decision that matters. KR-112 carries 4,000 t of ore to Halcyon Station on a 211-day trip. Once it fires, it can't be recalled. The approval card shows the command, the load, the checks and what happens if you hold it. You can review the changes first.</p>
+  <p>Confirming every file edit would bury the one decision that matters. KR-112 carries 120,000 t of ore to Halcyon Station on a 211-day trip. Once it fires, it can't be recalled. The approval card shows the command, the load, the checks and what happens if you hold it. You can review the changes first.</p>
   <p class="in-page">In Steer: the ore launch card, with Fire the launch, Review changes first, Hold the launch.</p>
   <p class="src">Sources: <a href="https://dev.to/brennhill/how-to-build-a-good-human-in-the-loop-for-ai-coding-agents-1kan">building a good human-in-the-loop</a>, <a href="https://www.atlassian.com/software/jira/guides/agentic-engineering/human-in-the-loop">Atlassian on approval and review</a>, <a href="https://shop.smashingmagazine.com/2026/02/designing-agentic-ai-practical-ux-patterns/">Smashing on consent patterns</a>.</p>
 
@@ -65,7 +66,7 @@
   <p class="src">Sources: <a href="https://dev.to/haaaaaley/show-the-agents-evidence-before-asking-a-human-to-approve-its-diff-25gj">show the agent's evidence first</a>, <a href="https://arxiv.org/pdf/2608.12355">Humans are missing from AI coding agent research</a>.</p>
 
   <h2><span>6</span>Make the failed check visible</h2>
-  <p>The first load test reaches 91 °C against an 80 °C limit. The agent changes spin-up from 40 to 90 seconds and runs it again; the bearing holds at 64 °C. Both results stay in Checks. A step waits for a passing check, as it does in Leaftext's agent harness.</p>
+  <p>The first load test reaches 91 °C against an 80 °C limit. The agent changes spin-up from 40 to 90 seconds and runs it again; the heat channel reports 64 °C. Both results stay in Checks, with torque and vibration beside the heat reading. A step waits for a passing check, as it does in Leaftext's agent harness.</p>
   <p class="in-page">In Steer: step 5, and the two load test runs in Checks.</p>
 
   <h2><span>7</span>Review the reason with the edit</h2>
@@ -84,7 +85,7 @@
 
   <hr>
   <footer>
-    <p>Steer is a playable script in hand-written HTML. There's no framework or build step. No model runs and nothing leaves your browser. It works in light and dark themes, on phone and desktop, with a keyboard and screen reader.</p>
+    <p>Steer is a playable script in hand-written HTML. There's no framework or build step. It works in light and dark themes, on phone and desktop, with a keyboard and screen reader.</p>
     <p>Designed and built by <a href="https://ryanallen.com/">Ryan Allen</a>. Source on <a href="https://github.com/ryanallen/steer">GitHub</a>.</p>
   </footer>
 </main>

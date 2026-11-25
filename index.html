@@ -3,20 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Steer: one console for everything you own</title>
-<meta name="description" content="A house on Mars, a station in orbit, and a mine on an asteroid run by agents. See what they do, change the plan mid-job, and approve what can't be undone. Play Steer.">
+<title>Steer: The Quiet Hours</title>
+<meta name="description" content="Forty-one million agents say everything is fine. One of them is wrong. Take the watch before an ore launch that can't be called back.">
 <meta name="theme-color" content="#03050b">
 <link rel="canonical" href="https://ryanallen.com/steer/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://ryanallen.com/steer/">
-<meta property="og:title" content="Steer: one console for everything you own">
-<meta property="og:description" content="See what your agents do, change course while they work, and decide what can't be undone.">
+<meta property="og:title" content="Steer: The Quiet Hours">
+<meta property="og:description" content="Forty-one million agents say everything is fine. One of them is wrong. I took the watch in Steer: The Quiet Hours.">
 <meta property="og:image" content="https://ryanallen.com/steer/share.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Steer: The Quiet Hours">
+<meta name="twitter:description" content="Forty-one million agents say everything is fine. One of them is wrong. I took the watch in Steer: The Quiet Hours.">
 <meta name="author" content="Ryan Allen">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%2303050b%27/%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%276.5%27 fill=%27none%27 stroke=%27%236fd6ff%27 stroke-width=%272%27/%3E%3Ccircle cx=%2712%27 cy=%2712%27 r=%272%27 fill=%27%23ffb347%27/%3E%3C/svg%3E">
 <style>
   :root {
     --void: #03050b; --deep: #070b16; --panel: rgb(14 20 36 / .62); --line: rgb(150 190 255 / .14); --line-2: rgb(150 190 255 / .26);
@@ -236,6 +237,7 @@
 
   /* Closing */
   .closing { position: relative; padding: clamp(140px, 24vh, 280px) 0 clamp(120px, 18vh, 200px); text-align: center; overflow: hidden; isolation: isolate; }
+  /* Image slot: closing horizon; replace this URL with the new photo set. */
   .closing::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, var(--void), rgb(3 5 11 / .1) 35%, rgb(3 5 11 / .2) 80%, var(--void)), image-set(url(media/closing-horizon-1920.webp) 1x, url(media/closing-horizon-2880.webp) 2x) center 70% / cover; }
   .closing h2 { font-size: clamp(56px, 10vw, 160px); }
   .closing .ctas { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 24px; margin-top: 44px; }
@@ -249,239 +251,153 @@
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
     .graph .l2 { stroke-dashoffset: 0; }
   }
+
+  /* The watch */
+  .bar nav { gap: 18px; }
+  .hero { min-height: 760px; }
+  .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, transparent 25%, rgb(3 5 11 / .12) 40%, rgb(3 5 11 / .78) 65%, rgb(3 5 11 / .3) 82%, transparent); }
+  .hero-copy { padding: 100px 24px 100px; }
+  .hero h1 { max-width: 1150px; margin-top: 30px; font-size: clamp(50px, 6.5vw, 100px); line-height: .98; letter-spacing: -.055em; }
+  .hero .tag { max-width: 700px; line-height: 1.42; text-shadow: 0 2px 12px var(--void), 0 0 20px var(--void); }
+  .hero .ctas { margin-top: 32px; }
+  .night { padding-bottom: 100px !important; }
+  .night .lede + .lede, .stakes .lede + .lede { margin-top: 14px; }
+  .night .lede { max-width: 760px; }
+  .fleet { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 45px; }
+  .sys, #sys-kirra { grid-column: auto; min-height: 170px; padding: 20px; gap: 8px; }
+  .sys h3, #sys-kirra h3 { font-size: clamp(19px, 2vw, 27px); }
+  .sys .now { margin: 0; min-height: 0; font-size: 14px; }
+  .sys .st { color: var(--ok); }
+  .sys.need .st { color: var(--amber); }
+  .sys .meter, .sys .foot { display: none; }
+  .sys.need .open { margin-top: 4px; }
+  .logframe, .manifest { display: inline-flex; align-items: center; gap: 12px; margin-top: 25px; padding: 13px 17px; border: 1px solid var(--line-2); border-radius: 9px; background: rgb(4 8 18 / .8); color: var(--ink-2); font: 600 13px/1.5 var(--mono); letter-spacing: .035em; }
+  .logframe::before { content: ''; width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--amber); box-shadow: 0 0 14px var(--amber); }
+  .manifest::before { content: ''; width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--ion); box-shadow: 0 0 14px var(--ion); }
+  .frame .wrap { padding-bottom: clamp(48px, 8vh, 84px); }
+  .frame p { max-width: 1000px; font-size: clamp(34px, 5.5vw, 78px); }
+  .frame .detail { max-width: 700px; margin-top: 20px; font: 500 clamp(17px, 1.65vw, 21px)/1.45 var(--sans); color: var(--ink-2); letter-spacing: 0; }
+  .stakes { text-align: center; }
+  .stakes .lede { max-width: 800px; margin-inline: auto; }
+  .rules { padding-top: 100px !important; }
+  .rules-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 45px 0 0; padding: 0; list-style: none; }
+  .rules-list li { padding: 25px 24px 30px; border-top: 1px solid var(--line-2); color: var(--ink); font: 650 clamp(23px, 2.5vw, 34px)/1.2 var(--sans); letter-spacing: -.025em; }
+  .rules-list li::before { display: block; margin-bottom: 24px; color: var(--ion); font: 600 12px var(--mono); letter-spacing: .2em; }
+  .rules-list li:nth-child(1)::before { content: '01'; }
+  .rules-list li:nth-child(2)::before { content: '02'; }
+  .rules-list li:nth-child(3)::before { content: '03'; }
+  .closing { padding-block: clamp(160px, 28vh, 320px) clamp(130px, 20vh, 230px); }
+  .closing .lede { max-width: 680px; margin: 0 auto; font-size: clamp(24px, 3vw, 36px); line-height: 1.3; }
+  .closing .ctas { margin-top: 34px; }
+  @media (max-width: 720px) {
+    .bar { padding-inline: 20px; }
+    .hero { height: 100svh; min-height: 760px; }
+    .hero-copy { padding: 105px 22px 205px; }
+    .hero h1 { font-size: clamp(46px, 11.5vw, 62px); line-height: .98; }
+    .hero .tag { margin-top: 22px; font-size: 18px; }
+    .hero .ctas { margin-top: 24px; }
+    .fleet { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .sys, #sys-kirra { min-height: 155px; padding: 15px; }
+    .sys .top { display: block; }
+    .sys .st { margin: 7px 0 0; }
+    .sys h3, #sys-kirra h3 { font-size: 19px; }
+    .sys .now { font-size: 12.5px; }
+    .sys.need .open { font-size: 12px; padding-inline: 10px; }
+    .frame { height: 72vh; min-height: 510px; }
+    .rules-list { grid-template-columns: 1fr; gap: 0; }
+    .rules-list li { padding: 20px 5px 25px; }
+    .rules-list li::before { margin-bottom: 12px; }
+    .logframe, .manifest { font-size: 11px; }
+  }
+  @media (max-width: 390px) { .hero h1 { font-size: 44px; } .fleet { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
 <header class="bar" id="bar">
   <a class="mark" href="./" aria-label="Steer, home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#6fd6ff" stroke-width="1.6"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5" stroke="#6fd6ff" stroke-width="1.6"/><circle cx="12" cy="12" r="2.4" fill="#ffb347"/></svg>STEER</a>
-  <nav>
-    <a class="hide-s" href="#fleet">Fleet</a>
-    <a class="hide-s" href="#how">How it works</a>
-    <a class="hide-s" href="about.html">Design notes</a>
-    <a class="launch" href="app/">Launch</a>
-  </nav>
+  <nav><a href="about.html">Design notes</a></nav>
 </header>
 
 <main>
-<section class="hero" aria-label="Steer">
+<section class="hero" aria-label="Steer: The Quiet Hours">
   <canvas id="stars" aria-hidden="true"></canvas>
   <svg class="orbit" id="orbit" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-    <defs>
-      <linearGradient id="trail" x1="0" x2="1"><stop offset="0" stop-color="#6fd6ff" stop-opacity="0"/><stop offset=".5" stop-color="#6fd6ff" stop-opacity=".28"/><stop offset="1" stop-color="#6fd6ff" stop-opacity="0"/></linearGradient>
-      <filter id="glow" x="-400%" y="-400%" width="900%" height="900%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <path id="orbitPath" d="M -120 848 A 3054 3054 0 0 1 2040 848"/>
-    </defs>
-    <use href="#orbitPath" class="trail"/>
-    <circle class="sat" r="3.2"><animateMotion dur="54s" repeatCount="indefinite"><mpath href="#orbitPath"/></animateMotion></circle>
+    <defs><linearGradient id="trail" x1="0" x2="1"><stop offset="0" stop-color="#6fd6ff" stop-opacity="0"/><stop offset=".5" stop-color="#6fd6ff" stop-opacity=".28"/><stop offset="1" stop-color="#6fd6ff" stop-opacity="0"/></linearGradient><filter id="glow" x="-400%" y="-400%" width="900%" height="900%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><path id="orbitPath" d="M -120 848 A 3054 3054 0 0 1 2040 848"/></defs>
+    <use href="#orbitPath" class="trail"/><circle class="sat" r="3.2"><animateMotion dur="54s" repeatCount="indefinite"><mpath href="#orbitPath"/></animateMotion></circle>
   </svg>
+  <!-- Image slot: hero; replace with the new photo set when ready. -->
   <img class="planet" id="planet" src="media/hero-planet-1920.webp" srcset="media/hero-planet-960.webp 960w, media/hero-planet-1920.webp 1920w, media/hero-planet-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="" fetchpriority="high">
-  <div class="hud tl" aria-hidden="true">Sol system · <b>7 holdings</b><br>Agents online · <b id="hudAgents">12,408</b></div>
-  <div class="hud tr" aria-hidden="true">Earth · low orbit<br>Halcyon Station <b>over the Pacific</b></div>
-  <div class="hud bl" aria-hidden="true"><span class="dot"></span>Kirra Station · <b>needs you</b></div>
-  <div class="hud br" aria-hidden="true">Scroll</div>
   <div class="hero-copy">
-    <span class="label">One console for everything you own</span>
-    <h1>Steer</h1>
-    <p class="tag">Your house on Mars, station in orbit and mine on an asteroid all have agents on the job. <b>You can see what they're doing and change their minds.</b></p>
-    <div class="ctas"><a class="launch big" href="app/">Launch Steer <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="ghost" href="#problem">See why ↓</a></div>
+    <span class="label">THE QUIET HOURS</span>
+    <h1>Forty-one million agents say everything is fine. One of them is wrong.</h1>
+    <p class="tag">6.2 million machines, about 2,400 people, and tonight one of you awake. Find the wrong report before Kirra fires an ore launch it can't call back.</p>
+    <div class="ctas"><a class="launch big" href="app/">Take the watch</a></div>
   </div>
 </section>
 
-<section class="s center" id="problem">
+<section class="s night" id="night">
   <div class="wrap">
-    <span class="label reveal">The problem</span>
-    <h2 class="reveal d1">The agents can do the work.<br><span class="dim">You still have to be in charge.</span></h2>
-    <p class="lede reveal d2">Robots seal the house before a storm. The station rotates its crews. The mine repairs its own drill. The problem is knowing what they're doing in your name, changing course while they work, and saying no before the ore leaves for a 211-day trip.</p>
-    <div class="ratio reveal d3" aria-label="12,408 agents, one of you">
-      <div><span class="n" id="nAgents">12,408</span><span class="u">Agents at work</span></div>
-      <span class="vs" aria-hidden="true">:</span>
-      <div><span class="n one">1</span><span class="u">Of you</span></div>
-    </div>
+    <span class="label reveal">03:12 · HOME, EARTH</span>
+    <h2 class="reveal d1">The kitchen light is on. Your nearest neighbour is 40 km away.</h2>
+    <p class="lede reveal d2">Across the fleet, the cards are green. Kirra Station, on 16 Psyche, turns amber.</p>
+    <div class="logframe reveal d3">Drill 7 / bearing seized / Shaft 3</div>
+    <p class="lede reveal d3">Kirra has three people, 40,000 machines and 212 drills. Its agent has a repair plan ready before you finish reading the fault.</p>
   </div>
 </section>
 
-<section class="frame" aria-label="A person seen from behind in a dark room, facing a wall of screens that show many places at once.">
-  <img src="media/the-owner-1920.webp" srcset="media/the-owner-960.webp 960w, media/the-owner-1920.webp 1920w, media/the-owner-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="A person seen from behind in a dark room, facing a wall of screens that show many places at once." loading="lazy" decoding="async">
-  <div class="wrap"><span class="label reveal">Your call</span><p class="reveal d1">12,408 agents at work.<br><span>One person to answer to.</span></p></div>
+<section class="frame" aria-label="A person at the watch, facing a wall of screens.">
+  <!-- Image slot: the person on watch; replace with the new photo set when ready. -->
+  <img src="media/the-owner-1920.webp" srcset="media/the-owner-960.webp 960w, media/the-owner-1920.webp 1920w, media/the-owner-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="A person at the watch, facing a wall of screens." loading="lazy" decoding="async">
 </section>
 
 <section class="s" id="fleet">
+  <div class="wrap"><div class="fleet" id="fleetGrid"></div></div>
+</section>
+
+<section class="frame" aria-label="Maintenance robots at a stopped drill in an asteroid mine.">
+  <!-- Image slot: Drill 7 repair; replace with the new photo set when ready. -->
+  <img src="media/maintenance-robots-1920.webp" srcset="media/maintenance-robots-900.webp 900w, media/maintenance-robots-1920.webp 1920w, media/maintenance-robots-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="Maintenance robots at a stopped drill in an asteroid mine." loading="lazy" decoding="async">
+</section>
+
+<section class="s stakes" id="launch">
   <div class="wrap">
-    <div class="fleet-head">
-      <div>
-        <span class="label reveal">The fleet</span>
-        <h2 class="reveal d1">See what's running.<br>Find what needs you.</h2>
-      </div>
-      <div class="totals reveal d2" aria-live="off">
-        <div>Holdings<b>7</b></div>
-        <div>Working<b id="tWorking">5</b></div>
-        <div class="need">Needs you<b>1</b></div>
-      </div>
-    </div>
-    <div class="fleet" id="fleetGrid"></div>
-    <p class="fleet-note reveal">Kirra needs a decision. The other jobs keep moving and show you where they stand.</p>
+    <span class="label reveal">THE LAUNCH</span>
+    <h2 class="reveal d1">120,000 t. One way.</h2>
+    <p class="lede reveal d2">KR-112 carries nickel-iron for the plate around Halcyon's thin ring section 4. There are 312 people aboard.</p>
+    <p class="lede reveal d2">The trip takes 211 days. The window closes in 38 minutes, and the next is 19 days away. Once the capsule fires, you can't recall it.</p>
+    <div class="manifest reveal d3">KR-112 / Halcyon ring 4 / window open</div>
   </div>
 </section>
 
-<section class="frame" aria-label="Maintenance robots repairing a giant drill bearing in low gravity, sparks flying under work lights.">
-  <img src="media/maintenance-robots-1920.webp" srcset="media/maintenance-robots-900.webp 900w, media/maintenance-robots-1920.webp 1920w, media/maintenance-robots-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="Maintenance robots repairing a giant drill bearing in low gravity, sparks flying under work lights." loading="lazy" decoding="async">
-  <div class="wrap"><span class="label reveal">Kirra Station · 03:12</span><p class="reveal d1">The bearing seized.<br><span>Four robots left Bay 2.</span></p></div>
+<section class="frame" aria-label="An ore capsule leaving Kirra on a long trip to Halcyon.">
+  <!-- Image slot: ore launch; replace with the new photo set when ready. -->
+  <img src="media/ore-launch-1920.webp" srcset="media/ore-launch-960.webp 960w, media/ore-launch-1920.webp 1920w, media/ore-launch-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="An ore capsule leaving Kirra on a long trip to Halcyon." loading="lazy" decoding="async">
 </section>
 
-<section class="s" id="how">
-  <div class="wrap feat">
-    <div>
-      <span class="label reveal">Plan</span>
-      <h2 class="reveal d1">Read the plan before the agent starts.</h2>
-      <p class="lede reveal d2">Drill 7 has a seized bearing. The agent lays out the repair, the cost and the decision it will bring back to you. Move a step, drop it or add one before you approve the work.</p>
-    </div>
-    <div class="glass reveal d2">
-      <span class="label">Kirra Station · Drill 7</span>
-      <div class="mini-title">Bring Drill 7 back before the ore window closes</div>
-      <ol class="plan">
-        <li class="done"><div>Read Drill 7's telemetry<small>Main bearing seized at 03:12</small></div><span class="t">0:40</span></li>
-        <li class="now"><div>Send a maintenance crew<small>Four robots from Bay 2</small></div><span class="t">6:00</span></li>
-        <li><div>Swap the main bearing<small>Spare from the station's stores</small></div><span class="t">2:10 h</span></li>
-        <li><div>Run the load test<small>Full torque for ten minutes</small></div><span class="t">0:15 h</span></li>
-        <li class="risky"><div>Fire the ore launch to Earth orbit<small>Asks you first</small></div><span class="t">asks</span></li>
-      </ol>
-      <div class="est"><span>Estimate</span><span><b>2 h 50 m</b> · <b>$41,200</b> · 1 question</span></div>
-    </div>
+<section class="s rules" id="watch">
+  <div class="wrap">
+    <span class="label reveal">YOUR WATCH</span>
+    <ol class="rules-list"><li class="reveal d1">Read what the agents did.</li><li class="reveal d2">Change what they're doing.</li><li class="reveal d3">Say yes or no before the thing you can't undo.</li></ol>
   </div>
-</section>
-
-<section class="s">
-  <div class="wrap feat flip">
-    <div>
-      <span class="label reveal">Steer</span>
-      <h2 class="reveal d1">Change the job while it's running.</h2>
-      <p class="lede reveal d2">Tell the crew to keep people out of the shaft. The agent changes the bearing step before it runs and shows you the edit. The steps already finished stay finished.</p>
-    </div>
-    <div class="glass reveal d2" id="steerDemo">
-      <div class="note"><span class="who">You</span><span id="steerText" class="typed"></span></div>
-      <ol class="plan">
-        <li class="done"><div>Read Drill 7's telemetry<small>Main bearing seized at 03:12</small></div><span class="t">0:40</span></li>
-        <li class="now"><div>Send a maintenance crew<small>Four robots from Bay 2</small></div><span class="t">6:00</span></li>
-        <li id="steerStep"><div>Swap the main bearing<small id="steerSub">Spare from the station's stores</small></div><span class="t">2:10 h</span></li>
-        <li><div>Run the load test<small>Full torque for ten minutes</small></div><span class="t">0:15 h</span></li>
-      </ol>
-    </div>
-  </div>
-</section>
-
-<section class="frame" aria-label="A mass driver firing an ore capsule off an asteroid toward a distant blue Earth.">
-  <img src="media/ore-launch-1920.webp" srcset="media/ore-launch-960.webp 960w, media/ore-launch-1920.webp 1920w, media/ore-launch-2880.webp 2880w" sizes="100vw" width="1920" height="1080" alt="A mass driver firing an ore capsule off an asteroid toward a distant blue Earth." loading="lazy" decoding="async">
-  <div class="wrap"><span class="label reveal">Ore launch KR-112</span><p class="reveal d1">4,000 tonnes.&nbsp;211&nbsp;days.<br><span>If you fire it, you can't call it back.</span></p></div>
-</section>
-
-<section class="s">
-  <div class="wrap feat">
-    <div>
-      <span class="label reveal">Ask</span>
-      <h2 class="reveal d1">The launch needs your yes.</h2>
-      <p class="lede reveal d2">KR-112 carries 4,000 tonnes to Halcyon Station. Once it fires, you can't call it back for 211 days. Read the checks, fire it or hold it.</p>
-    </div>
-    <div class="glass ask reveal d2">
-      <span class="label">Needs you</span>
-      <div class="mini-title">Fire ore launch KR-112 to Earth orbit</div>
-      <dl>
-        <dt>What</dt><dd>4,000 tonnes of nickel-iron, on the mass driver at Kirra.</dd>
-        <dt>When</dt><dd>The window closes in 38 minutes. The next one is in 19 days.</dd>
-        <dt>Undo</dt><dd><span class="never">Can't be recalled once fired.</span> Halcyon Station catches it in 211 days.</dd>
-      </dl>
-      <div class="acts"><span class="btn fire">Fire the launch</span><span class="btn">Show me the load test</span><span class="btn">Hold</span></div>
-    </div>
-  </div>
-</section>
-
-<section class="s">
-  <div class="wrap feat flip">
-    <div>
-      <span class="label reveal">Proof</span>
-      <h2 class="reveal d1">The first load test failed.</h2>
-      <p class="lede reveal d2">The bearing hit 91 °C against an 80 °C limit. The agent changed spin-up from 40 to 90 seconds and ran the test again. It passed at 64 °C. Both runs stay here.</p>
-    </div>
-    <div class="glass reveal d2">
-      <span class="label">Load test · Drill 7</span>
-      <svg class="graph" viewBox="0 0 400 120" preserveAspectRatio="none" aria-hidden="true">
-        <line class="lim" x1="0" y1="34" x2="400" y2="34"/>
-        <path class="l1" d="M0 104 C40 98 70 70 110 58 S170 46 190 52 S220 92 240 98"/>
-        <path class="l2" d="M0 104 C50 94 90 58 140 44 S230 26 280 22 S360 20 400 20"/>
-      </svg>
-      <div class="runs">
-        <div class="run fail"><span class="r">Run 1 · failed</span><span class="v">91 °C</span><p>The bearing passed the 80 °C limit at six minutes. The agent slowed spin-up before trying again.</p></div>
-        <div class="run pass"><span class="r">Run 2 · passed</span><span class="v">100%</span><p>Full torque for ten minutes. Bearing at 64 °C, under the 80 °C limit.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="s">
-  <div class="wrap feat">
-    <div>
-      <span class="label reveal">Review</span>
-      <h2 class="reveal d1">See why the agent changed it.</h2>
-      <p class="lede reveal d2">The work order, crew assignment and drill settings each show the reason for the edit. Accept a change or send it back with a note.</p>
-    </div>
-    <div class="glass reveal d2">
-      <span class="label">kirra/drill-7.conf</span>
-      <p class="why" style="margin-top:12px"><b>Why</b>The bearing hit 91 °C, above its 80 °C limit. A 90-second spin-up passed at 64 °C.</p>
-      <div class="diff" role="img" aria-label="Spin-up time changed from 40 to 90 seconds">
-        <div><span class="ln">18</span><span></span>bearing: KR-B7-0412</div>
-        <div class="del"><span class="ln">19</span><span>−</span>spin_up: <mark>40</mark>s</div>
-        <div class="add"><span class="ln">19</span><span>+</span>spin_up: <mark>90</mark>s</div>
-        <div><span class="ln">20</span><span></span>torque_max: 100%</div>
-      </div>
-      <div class="verdict"><span class="btn">Send back</span><span class="btn fire" style="background:var(--ion);border-color:var(--ion);box-shadow:0 0 30px -4px rgb(111 214 255 / .6)">Accept</span></div>
-    </div>
-  </div>
-</section>
-
-<section class="s">
-  <div class="wrap feat flip">
-    <div>
-      <span class="label reveal">Rewind</span>
-      <h2 class="reveal d1">Go back to a finished step.</h2>
-      <p class="lede reveal d2">Pick a checkpoint, change the instruction and run the later steps again. If KR-112 has already fired, the dialog tells you it can't come back.</p>
-    </div>
-    <div class="glass reveal d2">
-      <span class="label">Drill 7 · checkpoints</span>
-      <div class="timeline" aria-hidden="true">
-        <div class="d"><i></i>Read</div><div class="d"><i></i>Crew</div><div class="d here"><i></i>Bearing</div><div class="d"><i></i>Test</div><div><i></i>Launch</div><div><i></i>Report</div>
-      </div>
-      <div class="rewind">↺ <span>Return to after <b>Swap the main bearing</b>: the load test runs again.</span></div>
-    </div>
-  </div>
-</section>
-
-<section class="statement" aria-label="Twelve thousand hands. One wheel.">
-  <p class="reveal"><span class="a"><span class="w">Twelve</span> <span class="w">thousand</span> <span class="w">hands.</span></span></p>
-  <p class="reveal d1"><span class="b">One wheel.</span></p>
 </section>
 
 <section class="closing">
+  <!-- Image slot: closing horizon, in .closing::before above; replace with the new photo set when ready. -->
   <div class="wrap">
-    <span class="label reveal">Kirra Station is waiting</span>
-    <h2 class="reveal d1">Your call.</h2>
-    <p class="lede reveal d2" style="margin-inline:auto">Drill 7 is down at Kirra Station. Four robots are ready. Read the plan, change it while they work and decide whether KR-112 fires.</p>
-    <div class="ctas reveal d3"><a class="launch big" href="app/">Launch Steer <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="ghost" href="about.html">How it's designed →</a></div>
+    <p class="lede reveal">The repair can wait for a person. The launch can't wait long.</p>
+    <div class="ctas reveal d1"><a class="launch big" href="app/">Take the watch</a></div>
   </div>
 </section>
 </main>
-
-<footer>
-  <div class="wrap"><span>Steer is a playable fiction about sustainable holdings. Nothing is taken from people. No model runs, and nothing leaves your browser.</span><span>Designed and built by <a href="https://ryanallen.com/">Ryan Allen</a>.</span></div>
-</footer>
+<footer><div class="wrap"><span>Steer: The Quiet Hours</span><a href="about.html">Design notes</a></div></footer>
 
 <script>
 const $ = id => document.getElementById(id);
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-// Bar turns solid once the hero is behind.
 const bar = $('bar');
 addEventListener('scroll', () => bar.classList.toggle('solid', scrollY > innerHeight * .6), { passive: true });
 
-// Stars, drawn once per resize; a slow drift only while the hero is on screen.
+// Stars drift only while the opening is on screen.
 const cv = $('stars'), cx = cv.getContext('2d');
 let stars = [], heroOn = true, t0 = performance.now();
 function sizeStars() {
@@ -507,102 +423,49 @@ sizeStars(); drawStars(performance.now());
 addEventListener('resize', () => { sizeStars(); drawStars(performance.now()); });
 new IntersectionObserver(([e]) => { const was = heroOn; heroOn = e.isIntersecting; if (heroOn && !was && !still) requestAnimationFrame(drawStars); }).observe(document.querySelector('.hero'));
 
-// The planet sinks as you scroll away.
+// The hero and image frames move a little as the page passes them.
 const planet = $('planet');
 if (still) $('orbit').pauseAnimations();
-if (!still) addEventListener('scroll', () => { if (scrollY < innerHeight * 1.2) planet.style.transform = $('orbit').style.transform = `translateY(${scrollY * .3}px) scale(${1 + scrollY / 4000})`; }, { passive: true });
-
-// Film frames drift as they pass.
-const frames = [...document.querySelectorAll('.frame img')];
 if (!still) addEventListener('scroll', () => {
-  for (const img of frames) {
+  if (scrollY < innerHeight * 1.2) planet.style.transform = $('orbit').style.transform = `translateY(${scrollY * .3}px) scale(${1 + scrollY / 4000})`;
+  for (const img of document.querySelectorAll('.frame img')) {
     const r = img.parentElement.getBoundingClientRect();
     if (r.bottom < 0 || r.top > innerHeight) continue;
     img.style.transform = `translateY(${(r.top + r.height / 2 - innerHeight / 2) * -0.08}px)`;
   }
 }, { passive: true });
 
-// Reveals.
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -12% 0px' });
-document.querySelectorAll('.reveal, .glass').forEach(el => io.observe(el));
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-// The fleet: live, ticking while on screen.
+// Image slots: the card artwork in this array will use the new photo set.
 const FLEET = [
-  { id: 'kirra', art: 'mining-station-1200', name: 'Kirra Station', where: '16 Psyche · asteroid belt', now: 'Drill 7 stopped at 03:12. The bearing seized. A repair plan is ready, and the ore window closes in 38 minutes.', p: 62, agents: 1840, need: true },
-  { id: 'jezero', art: 'mars-house-640', name: 'Jezero House', where: 'Mars', now: 'The locks are sealing and the masts are coming down before the dust storm.', p: 82, agents: 214 },
-  { id: 'halcyon', art: 'space-station-640', name: 'Halcyon Station', where: 'Earth orbit', now: 'Crew rotation is under way: 14 of 40 cabins are ready.', p: 35, agents: 3120 },
-  { id: 'atlas', art: 'robot-workforce-640', name: 'Atlas Works', where: 'Robot crews', now: '2,140 robots are on shift. Another 31 are in the maintenance bays.', p: 48, agents: 2140 },
-  { id: 'shackleton', art: 'lunar-foundry-640', name: 'Shackleton Foundry', where: 'The Moon · south pole', now: 'Hull plates are coming off the line: batch 88 of 120.', p: 73, agents: 4310 },
-  { id: 'tethys', art: 'ocean-farm-640', name: 'Tethys Farms', where: 'Pacific Ocean', now: 'The kelp is harvested and the beds are replanted.', p: 100, agents: 784, done: true },
-  { id: 'helios', art: 'helios-array-1200', name: 'Helios Array', where: 'Inner orbit', now: 'The collectors are sending 3.1 GW of solar power to Kirra and the Moon.', p: 91, agents: 512 },
+  { id: 'home', art: 'the-owner-1920', name: 'Home', where: 'Earth', now: 'Watch open' },
+  { id: 'tethys', art: 'ocean-farm-640', name: 'Tethys Farms', where: 'Pacific', now: 'Beds replanted' },
+  { id: 'halcyon', art: 'space-station-640', name: 'Halcyon Station', where: 'Earth orbit', now: '312 aboard' },
+  { id: 'shackleton', art: 'lunar-foundry-640', name: 'Shackleton Foundry', where: 'Moon', now: 'Ring 4 mold ready' },
+  { id: 'helios', art: 'helios-array-1200', name: 'Helios Array', where: 'near the Sun', now: 'Power steady' },
+  { id: 'jezero', art: 'mars-house-640', name: 'Jezero House', where: 'Mars', now: 'Storm seals closing' },
+  { id: 'kirra', art: 'mining-station-1200', name: 'Kirra Station', where: '16 Psyche', now: 'Drill 7 stopped', need: true },
+  { id: 'atlas', art: 'robot-workforce-640', name: 'Atlas Works', where: 'Ceres', now: '410,000 robots working' },
+  { id: 'thule', art: null, name: 'Thule Ice', where: 'Europa', now: 'Water convoy en route' },
 ];
 const grid = $('fleetGrid');
 grid.innerHTML = FLEET.map((f, i) => {
   const tag = f.need ? 'a' : 'article';
-  return `<${tag} class="sys reveal${i % 3 ? ' d' + (i % 3) : ''}${f.need ? ' need' : ''}" ${f.need ? 'href="app/" aria-label="Kirra Station needs you: Drill 7 is down. Open it in Steer"' : ''} data-s="${f.need ? 'need' : f.done ? 'done' : 'run'}" id="sys-${f.id}"${f.art ? ` style="--art:url(media/${f.art}.webp)"` : ''}>
-    <div class="top"><span class="where">${f.where}</span><span class="st"><i></i>${f.need ? 'Needs you' : f.done ? 'Done' : 'Working'}</span></div>
-    <h3>${f.name}</h3>
-    <p class="now">${f.now}</p>
-    <div class="meter"><span style="--p:${f.p}%"></span></div>
-    <div class="foot"><span><span class="ag">${f.agents.toLocaleString('en-US')}</span> agents</span><span class="pc">${f.p}%</span></div>
-    ${f.need ? '<span class="open">Open in Steer →</span>' : ''}
+  return `<${tag} class="sys reveal${i % 3 ? ' d' + (i % 3) : ''}${f.need ? ' need' : ''}" ${f.need ? 'href="app/" aria-label="Open Kirra"' : ''} data-s="${f.need ? 'need' : 'run'}" id="sys-${f.id}"${f.art ? ` style="--art:url(media/${f.art}.webp)"` : ''}>
+    <div class="top"><span class="where">${f.where}</span><span class="st"><i></i>${f.need ? 'Needs you' : 'Working'}</span></div>
+    <h3>${f.name}</h3><p class="now">${f.now}</p>${f.need ? '<span class="open">Open Kirra</span>' : ''}
   </${tag}>`;
 }).join('');
 grid.querySelectorAll('.reveal').forEach(el => io.observe(el));
-let fleetOn = false;
-new IntersectionObserver(([e]) => fleetOn = e.isIntersecting).observe(grid);
-setInterval(() => {
-  if (!fleetOn || still) return;
-  FLEET.forEach(f => {
-    if (f.need || f.done) return;
-    f.p = Math.min(99, f.p + (Math.random() < .5 ? 1 : 0));
-    const el = $('sys-' + f.id); el.querySelector('.meter span').style.setProperty('--p', f.p + '%'); el.querySelector('.pc').textContent = f.p + '%';
-  });
-}, 1400);
-
-// Cards lean toward the pointer, a few degrees.
 if (!still && matchMedia('(hover: hover)').matches) {
   grid.addEventListener('pointermove', e => {
     const card = e.target.closest('.sys'); if (!card) return;
     const r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
-    card.classList.add('tilt');
-    card.style.transform = `rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 8).toFixed(2)}deg) translateZ(0)`;
+    card.classList.add('tilt'); card.style.transform = `rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 8).toFixed(2)}deg)`;
   });
   grid.addEventListener('pointerout', e => { const card = e.target.closest('.sys'); if (card && !card.contains(e.relatedTarget)) { card.style.transform = ''; card.classList.remove('tilt'); } });
-}
-
-// The statement lights word by word as it crosses the middle of the screen.
-const words = [...document.querySelectorAll('.statement .a .w')];
-const lightWords = () => {
-  const r = document.querySelector('.statement').getBoundingClientRect();
-  const p = Math.min(1, Math.max(0, (innerHeight * .8 - r.top) / (r.height * .6)));
-  words.forEach((w, i) => w.classList.toggle('lit', still || p > (i + 1) / (words.length + 1)));
-};
-addEventListener('scroll', lightWords, { passive: true }); lightWords();
-
-// The agents count breathes a little.
-let agents = 12408;
-setInterval(() => {
-  if (still || document.hidden) return;
-  agents += Math.round((Math.random() - .45) * 6);
-  const s = agents.toLocaleString('en-US'); $('nAgents').textContent = s; $('hudAgents').textContent = s;
-}, 2200);
-
-// The steer demo: a note is typed, then the step it changes rewrites itself.
-const NOTE = 'Use the spare from Halcyon, not our own stores';
-let steerRan = false;
-new IntersectionObserver(([e]) => { if (e.isIntersecting && !steerRan) { steerRan = true; playSteer(); } }, { threshold: .5 }).observe($('steerDemo'));
-function playSteer() {
-  const out = $('steerText'), step = $('steerStep'), sub = $('steerSub');
-  if (still) { out.textContent = NOTE; out.classList.remove('typed'); sub.textContent = 'Spare from Halcyon · changed by your steer'; step.classList.add('rewritten'); return; }
-  let i = 0;
-  const tick = () => {
-    out.textContent = NOTE.slice(0, ++i);
-    if (i < NOTE.length) return setTimeout(tick, 38 + Math.random() * 40);
-    setTimeout(() => { out.classList.remove('typed'); sub.textContent = 'Spare from Halcyon · changed by your steer'; step.classList.add('rewritten'); }, 700);
-    setTimeout(() => { steerRan = false; step.classList.remove('rewritten'); sub.textContent = "Spare from the station's stores"; out.textContent = ''; out.classList.add('typed'); }, 9000);
-  };
-  setTimeout(tick, 500);
 }
 </script>
 </body>
