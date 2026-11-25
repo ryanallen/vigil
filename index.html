@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steer: watch, steer and review an AI agent's work</title>
+<meta name="description" content="A playable interface for working with an AI agent: edit its plan, watch it work, steer it mid-run, approve what can't be undone, and review its changes with the evidence beside them.">
+<meta name="color-scheme" content="light dark">
+<link rel="canonical" href="https://ryanallen.com/steer/">
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --sunk: #efede8; --line: #e2dfd8; --line-strong: #cfcbc2;
+    --ink: #1d1c1a; --ink-2: #4a4843; --muted: #6b6962; --faint: #8e8b83;
+    --accent: #2f5bd3; --accent-ink: #ffffff; --accent-soft: #e6ecfb;
+    --ok: #1f7a4d; --ok-soft: #e3f2ea; --warn: #9a5b00; --warn-soft: #fbefd9; --bad: #b3261e; --bad-soft: #fbe5e3;
+    --add: #e6f4ea; --add-ink: #1d5e36; --del: #fbe9e7; --del-ink: #8a2a20;
+    --shadow: 0 1px 2px rgb(0 0 0 / .05), 0 4px 16px rgb(0 0 0 / .06);
+    --radius: 10px; --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --ease: cubic-bezier(.2, .7, .2, 1);
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #121315; --panel: #1a1b1e; --sunk: #222327; --line: #2c2d31; --line-strong: #3a3b40;
+    --ink: #ecebe7; --ink-2: #c4c2bc; --muted: #9b9992; --faint: #77756f;
+    --accent: #7c9cff; --accent-ink: #0e1220; --accent-soft: #1f2741;
+    --ok: #5cc28d; --ok-soft: #16281f; --warn: #e3a64a; --warn-soft: #2c2213; --bad: #ff8a80; --bad-soft: #321b19;
+    --add: #15281c; --add-ink: #8fd8a8; --del: #2e1a18; --del-ink: #f2a59c;
+    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .35);
+  } }
+  :root[data-theme="dark"] {
+    --bg: #121315; --panel: #1a1b1e; --sunk: #222327; --line: #2c2d31; --line-strong: #3a3b40;
+    --ink: #ecebe7; --ink-2: #c4c2bc; --muted: #9b9992; --faint: #77756f;
+    --accent: #7c9cff; --accent-ink: #0e1220; --accent-soft: #1f2741;
+    --ok: #5cc28d; --ok-soft: #16281f; --warn: #e3a64a; --warn-soft: #2c2213; --bad: #ff8a80; --bad-soft: #321b19;
+    --add: #15281c; --add-ink: #8fd8a8; --del: #2e1a18; --del-ink: #f2a59c;
+    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* Frame */
+  .app { display: grid; grid-template-rows: auto 1fr; height: 100%; max-width: 1440px; margin: 0 auto; }
+  .top { display: flex; align-items: center; gap: 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; letter-spacing: -.01em; }
+  .brand svg { width: 18px; height: 18px; }
+  .task { flex: 1; min-width: 0; }
+  .task h1 { margin: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task p { margin: 0; color: var(--muted); font-size: 12px; }
+  .meters { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .meters b { color: var(--ink-2); font-weight: 550; }
+  .ring { width: 18px; height: 18px; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 3; }
+  .ring .track { stroke: var(--line); }
+  .ring .fill { stroke: var(--accent); stroke-linecap: round; transition: stroke-dasharray .4s var(--ease); }
+  .status { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 8px; border-radius: 999px; background: var(--sunk); color: var(--ink-2); font-size: 12px; font-weight: 550; white-space: nowrap; }
+  .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .status[data-s="run"] i { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+  .status[data-s="wait"] { background: var(--warn-soft); color: var(--warn); } .status[data-s="wait"] i { background: var(--warn); }
+  .status[data-s="done"] { background: var(--ok-soft); color: var(--ok); } .status[data-s="done"] i { background: var(--ok); }
+  .status[data-s="stop"] { background: var(--bad-soft); color: var(--bad); } .status[data-s="stop"] i { background: var(--bad); }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .icon-btn { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink-2); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  .body { display: grid; grid-template-columns: minmax(320px, 400px) 1fr; min-height: 0; }
+  .side { display: grid; grid-template-rows: 1fr auto; min-width: 0; min-height: 0; border-right: 1px solid var(--line); }
+  .scroll { overflow: auto; overscroll-behavior: contain; }
+  .work { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+
+  /* Plan and steps */
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 18px 20px 8px; }
+  .section-head h2 { margin: 0; font-size: 12px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .section-head span { color: var(--faint); font-size: 12px; }
+  .note { margin: 0 20px 12px; color: var(--muted); font-size: 13px; }
+  .steps { list-style: none; margin: 0; padding: 0 12px 16px; }
+  .step { position: relative; display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: start; padding: 10px 8px; border-radius: 8px; }
+  .step + .step { margin-top: 2px; }
+  .step .dot { position: relative; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--line-strong); color: var(--faint); font-size: 11px; font-weight: 650; background: var(--panel); }
+  .step:not(:last-child) .dot::after { content: ""; position: absolute; top: 24px; left: 9.5px; width: 1.5px; height: calc(100% + 0px); min-height: 18px; background: var(--line); }
+  .step[data-s="now"] { background: var(--accent-soft); }
+  .step[data-s="now"] .dot { border-color: var(--accent); color: var(--accent); }
+  .step[data-s="now"] .dot::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid var(--accent); opacity: .35; animation: pulse 1.4s ease-in-out infinite; }
+  .step[data-s="done"] .dot { border-color: var(--ok); background: var(--ok); color: var(--panel); }
+  .step[data-s="wait"] { background: var(--warn-soft); } .step[data-s="wait"] .dot { border-color: var(--warn); color: var(--warn); }
+  .step[data-s="skip"] .title { color: var(--faint); text-decoration: line-through; }
+  .step[data-s="skip"] .dot { border-style: dashed; }
+  .step .title { font-weight: 550; overflow-wrap: anywhere; }
+  .step .sub { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .step .now-line { color: var(--accent); font-size: 12.5px; margin-top: 3px; font-family: var(--mono); overflow-wrap: anywhere; }
+  .step .tag { display: inline-block; margin-top: 5px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--warn-soft); color: var(--warn); }
+  .step .tag.steer { background: var(--accent-soft); color: var(--accent); }
+  .step textarea.title-edit { display: block; width: calc(100% + 12px); padding: 3px 6px; margin: -4px -6px -2px; border: 1px solid transparent; border-radius: 6px; background: transparent; font-weight: 550; line-height: 1.5; resize: none; overflow: hidden; }
+  .step textarea.title-edit:hover { border-color: var(--line); }
+  .step textarea.title-edit:focus { border-color: var(--accent); background: var(--panel); outline: none; }
+  .step-tools { display: flex; gap: 2px; opacity: .55; transition: opacity .15s; }
+  .step:hover .step-tools, .step:focus-within .step-tools { opacity: 1; }
+  .step-tools button { width: 26px; height: 26px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--muted); }
+  .step-tools button:hover { background: var(--sunk); color: var(--ink); }
+  .step-tools svg { width: 14px; height: 14px; }
+  .step .back { border: 0; background: none; padding: 0; color: var(--muted); font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+  .add-step { display: flex; gap: 8px; margin: 4px 20px 0; }
+  .add-step input { flex: 1; min-width: 0; padding: 7px 10px; border: 1px dashed var(--line-strong); border-radius: 8px; background: transparent; }
+  .add-step input:focus { border-style: solid; border-color: var(--accent); outline: none; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel); color: var(--ink); font-weight: 550; white-space: nowrap; }
+  .btn:hover { background: var(--sunk); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { filter: brightness(1.06); }
+  .btn.quiet { border-color: transparent; background: transparent; color: var(--ink-2); }
+  .btn.quiet:hover { background: var(--sunk); }
+  .btn.danger { color: var(--bad); }
+  .btn svg { width: 14px; height: 14px; }
+  .btn[disabled] { opacity: .45; cursor: default; }
+
+  /* Composer */
+  .composer { border-top: 1px solid var(--line); padding: 12px 14px 14px; background: var(--panel); }
+  .composer .row { display: flex; gap: 8px; align-items: flex-end; }
+  .composer textarea { flex: 1; min-width: 0; resize: none; height: 40px; max-height: 120px; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--bg); line-height: 1.4; }
+  .composer textarea:focus { border-color: var(--accent); outline: none; }
+  .chips { display: flex; gap: 6px; margin: 0 -14px 8px; padding: 0 14px; overflow-x: auto; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; }
+  .chip { padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--ink-2); font-size: 12px; }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+  .controls .spacer { flex: 1; }
+  .queued { margin: 0 0 8px; padding: 7px 10px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-size: 12.5px; }
+  .speed { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .speed button { border: 0; background: transparent; padding: 0 8px; height: 28px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .speed button[aria-pressed="true"] { background: var(--sunk); color: var(--ink); font-weight: 600; }
+
+  /* Work panel */
+  .tabs { display: flex; gap: 2px; padding: 10px 16px 0; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+  .tabs button { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px 10px; border: 0; background: none; color: var(--muted); font-weight: 550; white-space: nowrap; }
+  .tabs button[aria-selected="true"] { color: var(--ink); }
+  .tabs button[aria-selected="true"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ink); }
+  .count { min-width: 18px; padding: 0 5px; border-radius: 999px; background: var(--sunk); color: var(--ink-2); font-size: 11px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+  .count.alert { background: var(--warn-soft); color: var(--warn); }
+  .pane { padding: 20px 24px 40px; }
+  .pane[hidden] { display: none; }
+  .empty { max-width: 460px; margin: 40px auto; text-align: center; color: var(--muted); }
+  .empty h3 { margin: 0 0 6px; color: var(--ink); font-size: 16px; font-weight: 600; }
+
+  /* Activity */
+  .feed { list-style: none; margin: 0; padding: 0; max-width: 860px; }
+  .feed > li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; padding: 6px 0; animation: arrive .35s var(--ease) both; }
+  @keyframes arrive { from { opacity: 0; transform: translateY(4px); } }
+  .feed .k { width: 20px; height: 20px; display: grid; place-items: center; color: var(--faint); }
+  .feed .k svg { width: 15px; height: 15px; }
+  .feed .msg { min-width: 0; }
+  .feed .msg code { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); overflow-wrap: anywhere; }
+  .feed .say { color: var(--ink); }
+  .feed .step-head { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-weight: 600; }
+  .feed .step-head:first-child { margin-top: 0; border-top: 0; padding-top: 0; }
+  .feed .you { padding: 8px 12px; border-radius: 10px; background: var(--accent-soft); color: var(--ink); }
+  .feed .you small { display: block; color: var(--accent); font-weight: 600; font-size: 11.5px; }
+  .feed .fail { color: var(--bad); }
+  .feed .pass { color: var(--ok); }
+  .feed time { color: var(--faint); font-size: 11.5px; margin-left: 6px; font-variant-numeric: tabular-nums; }
+  .thinking { display: inline-flex; gap: 3px; vertical-align: middle; margin-left: 4px; }
+  .thinking i { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
+  .thinking i:nth-child(2) { animation-delay: .15s; } .thinking i:nth-child(3) { animation-delay: .3s; }
+
+  /* Approval card */
+  .ask { max-width: 860px; margin: 0 0 18px; padding: 16px 18px; border: 1px solid var(--warn); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); }
+  .ask h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 15px; }
+  .ask h3 svg { width: 16px; height: 16px; color: var(--warn); }
+  .ask dl { display: grid; grid-template-columns: 120px 1fr; gap: 6px 14px; margin: 12px 0 14px; font-size: 13px; }
+  .ask dt { color: var(--muted); }
+  .ask dd { margin: 0; }
+  .ask pre { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--sunk); font: 12.5px/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .ask .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ask input { width: 100%; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--bg); font: 12.5px var(--mono); }
+  .irreversible { color: var(--bad); font-weight: 600; }
+
+  /* Changes */
+  .group { max-width: 980px; margin-bottom: 26px; }
+  .group > h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 13px; font-weight: 650; }
+  .group > h3 .n { color: var(--faint); font-weight: 500; }
+  .change { margin-bottom: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
+  .change[data-d="accepted"] { border-color: color-mix(in srgb, var(--ok) 55%, var(--line)); }
+  .change[data-d="sent"] { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
+  .change-head { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--sunk); }
+  .change-head .file { font: 600 12.5px var(--mono); }
+  .change-head .stat { font: 12px var(--mono); color: var(--muted); }
+  .change-head .stat .a { color: var(--add-ink); } .change-head .stat .d { color: var(--del-ink); }
+  .change-head .spacer { flex: 1; }
+  .why { padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--ink-2); font-size: 13px; }
+  .why b { color: var(--muted); font-weight: 600; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; margin-right: 6px; }
+  .diff { margin: 0; padding: 6px 0; font: 12.5px/1.6 var(--mono); overflow-x: auto; }
+  .diff div { display: grid; grid-template-columns: 34px 16px 1fr; padding-right: 12px; white-space: pre; }
+  .diff .ln { color: var(--faint); text-align: right; padding-right: 8px; user-select: none; }
+  .diff .sg { color: var(--faint); user-select: none; }
+  .diff .add { background: var(--add); } .diff .add .sg, .diff .add .tx { color: var(--add-ink); }
+  .diff .del { background: var(--del); } .diff .del .sg, .diff .del .tx { color: var(--del-ink); }
+  .diff .gap { color: var(--faint); background: var(--sunk); font-size: 11.5px; }
+  .decision { display: flex; gap: 6px; }
+  .verdict { font-size: 12px; font-weight: 600; }
+  .verdict.accepted { color: var(--ok); } .verdict.sent { color: var(--warn); }
+  .sendback { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--warn-soft); }
+  .sendback input { flex: 1; min-width: 0; padding: 6px 9px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel); }
+
+  /* Checks */
+  .checks { list-style: none; margin: 0; padding: 0; max-width: 860px; }
+  .check { margin-bottom: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+  .check summary { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; list-style: none; }
+  .check summary::-webkit-details-marker { display: none; }
+  .check .badge { padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650; }
+  .badge.pass { background: var(--ok-soft); color: var(--ok); } .badge.fail { background: var(--bad-soft); color: var(--bad); } .badge.run { background: var(--accent-soft); color: var(--accent); }
+  .check .name { font-weight: 600; }
+  .check .meta { margin-left: auto; color: var(--faint); font-size: 12px; }
+  .check pre { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--line); font: 12.5px/1.55 var(--mono); white-space: pre-wrap; color: var(--ink-2); }
+
+  /* Preview */
+  .compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 980px; }
+  .compare figure { margin: 0; }
+  .compare figcaption { margin-bottom: 8px; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .phone { border: 1px solid var(--line-strong); border-radius: 22px; padding: 10px; background: var(--sunk); box-shadow: var(--shadow); }
+  .tw { --tw-bg: #f7f4ee; --tw-card: #ffffff; --tw-ink: #18221f; --tw-muted: #66706b; --tw-line: #e3ded4; --tw-accent: #0f7b6c;
+    border-radius: 14px; overflow: hidden; background: var(--tw-bg); color: var(--tw-ink); font: 13px/1.45 var(--sans); min-height: 360px; transition: background .3s, color .3s; }
+  .tw[data-dark] { --tw-bg: #0f1615; --tw-card: #17201e; --tw-ink: #e6eeeb; --tw-line: #26312e; --tw-accent: #3cc2ad; }
+  .tw[data-dark][data-muted="old"] { --tw-muted: #6d7874; }
+  .tw[data-dark]:not([data-muted="old"]) { --tw-muted: #9aa6a2; }
+  .tw header { padding: 14px 16px 10px; font-weight: 700; }
+  .tw header small { display: block; color: var(--tw-muted); font-weight: 400; }
+  .tw .card { margin: 0 12px 10px; padding: 4px 14px; border-radius: 12px; background: var(--tw-card); border: 1px solid var(--tw-line); }
+  .tw .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; }
+  .tw .row + .row { border-top: 1px solid var(--tw-line); }
+  .tw .row span small { display: block; color: var(--tw-muted); font-size: 12px; }
+  .tw .seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--tw-bg); border: 1px solid var(--tw-line); }
+  .tw .seg button { border: 0; border-radius: 6px; padding: 3px 8px; background: transparent; color: var(--tw-muted); font-size: 12px; }
+  .tw .seg button[aria-pressed="true"] { background: var(--tw-card); color: var(--tw-ink); box-shadow: 0 1px 2px rgb(0 0 0 / .12); }
+  .tw .sw { width: 34px; height: 20px; border-radius: 999px; background: var(--tw-accent); position: relative; }
+  .tw .sw::after { content: ""; position: absolute; top: 2px; right: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+  .contrast { margin-top: 10px; font-size: 12px; color: var(--muted); }
+
+  /* Summary */
+  .summary { max-width: 860px; margin-bottom: 18px; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+  .summary h3 { margin: 0 0 8px; font-size: 15px; }
+  .summary ul { margin: 0; padding-left: 18px; }
+  .summary li { margin: 3px 0; }
+  .summary .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  /* Dialog */
+  dialog { max-width: 440px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--ink); box-shadow: var(--shadow); padding: 20px; }
+  dialog::backdrop { background: rgb(0 0 0 / .35); }
+  dialog h3 { margin: 0 0 8px; font-size: 16px; }
+  dialog p { margin: 0 0 10px; color: var(--ink-2); }
+  dialog .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+  .demo-note { padding: 8px 20px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11.5px; }
+  .demo-note a { color: inherit; }
+
+  @media (max-width: 860px) {
+    .app { height: auto; min-height: 100%; }
+    .top { flex-wrap: wrap; padding: 12px 14px; gap: 10px; }
+    .task { order: 3; flex-basis: 100%; }
+    .meters .lbl { display: none; }
+    .body { grid-template-columns: 1fr; }
+    .side { border-right: 0; border-bottom: 1px solid var(--line); }
+    .composer { position: sticky; bottom: 0; z-index: 5; box-shadow: 0 -6px 18px rgb(0 0 0 / .06); }
+    .pane { padding: 16px 14px 32px; }
+    .ask dl { grid-template-columns: 1fr; gap: 2px; }
+    .ask dd { margin-bottom: 8px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20 20 4"/><path d="M9 4h11v11"/></svg>Steer</div>
+    <div class="task">
+      <h1 id="taskTitle">Add a dark theme to Tidewater's settings page</h1>
+      <p>Tidewater, a surf forecast web app · branch <code>dark-theme</code></p>
+    </div>
+    <div class="meters" aria-live="off">
+      <span><span class="lbl">Time </span><b id="mTime">0:00</b></span>
+      <span><span class="lbl">Cost </span><b id="mCost">$0.00</b></span>
+      <span title="Context used" style="display:inline-flex;align-items:center;gap:6px"><svg class="ring" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="8"/><circle class="fill" id="mRing" cx="10" cy="10" r="8" stroke-dasharray="0 51"/></svg><b id="mCtx">0%</b><span class="lbl"> context</span></span>
+    </div>
+    <span class="status" id="status" data-s="plan" role="status"><i></i><span id="statusText">Planning</span></span>
+    <button class="icon-btn" id="themeBtn" aria-label="Switch light or dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  </header>
+
+  <div class="body">
+    <aside class="side" aria-label="Plan">
+      <div class="scroll" id="sideScroll">
+        <div class="section-head"><h2 id="planHead">Plan</h2><span id="planCount"></span></div>
+        <p class="note" id="planNote">The agent read the repository and proposes this plan. Change anything before it starts: rename a step, move it, or drop it. Nothing has run yet.</p>
+        <ol class="steps" id="steps"></ol>
+        <div class="add-step" id="addStepRow"><input id="addStep" placeholder="Add a step, then press Enter" aria-label="Add a step"></div>
+      </div>
+      <div class="composer" id="composer">
+        <p class="queued" id="queued" hidden></p>
+        <div class="chips" id="chips"></div>
+        <div class="row">
+          <label class="sr" for="steer">Steer the agent</label>
+          <textarea id="steer" rows="1" placeholder="Steer the agent. It reads this at the next step."></textarea>
+          <button class="btn primary" id="sendSteer" aria-label="Send">Send</button>
+        </div>
+        <div class="controls">
+          <button class="btn primary" id="runBtn">Approve plan and run</button>
+          <button class="btn" id="pauseBtn" hidden>Pause</button>
+          <button class="btn danger quiet" id="stopBtn" hidden>Stop</button>
+          <span class="spacer"></span>
+          <div class="speed" role="group" aria-label="Playback speed"><button data-speed="1" aria-pressed="true">1×</button><button data-speed="2" aria-pressed="false">2×</button><button data-speed="4" aria-pressed="false">4×</button></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="work">
+      <div class="tabs" role="tablist" aria-label="The agent's work">
+        <button role="tab" id="tab-activity" aria-controls="pane-activity" aria-selected="true">Activity</button>
+        <button role="tab" id="tab-changes" aria-controls="pane-changes" aria-selected="false" tabindex="-1">Changes <span class="count" id="cChanges">0</span></button>
+        <button role="tab" id="tab-checks" aria-controls="pane-checks" aria-selected="false" tabindex="-1">Checks <span class="count" id="cChecks">0</span></button>
+        <button role="tab" id="tab-preview" aria-controls="pane-preview" aria-selected="false" tabindex="-1">Preview</button>
+      </div>
+      <div class="scroll" id="workScroll">
+        <section class="pane" id="pane-activity" role="tabpanel" aria-labelledby="tab-activity">
+          <div id="askSlot"></div>
+          <div id="summarySlot"></div>
+          <ol class="feed" id="feed" aria-live="polite"></ol>
+          <div class="empty" id="feedEmpty"><h3>Nothing has run yet</h3><p>Read the plan on the left and change it if you want. When you approve it, every action the agent takes shows here, in words, as it happens.</p></div>
+        </section>
+        <section class="pane" id="pane-changes" role="tabpanel" aria-labelledby="tab-changes" hidden>
+          <div id="changes"></div>
+          <div class="empty" id="changesEmpty"><h3>No changes yet</h3><p>Each edit appears here under the plan step that made it, with the agent's reason. Accept it or send it back with a note.</p></div>
+        </section>
+        <section class="pane" id="pane-checks" role="tabpanel" aria-labelledby="tab-checks" hidden>
+          <ol class="checks" id="checks"></ol>
+          <div class="empty" id="checksEmpty"><h3>No checks have run</h3><p>The agent's turn ends only when the project's checks pass. Each run is kept here with its output, failures included.</p></div>
+        </section>
+        <section class="pane" id="pane-preview" role="tabpanel" aria-labelledby="tab-preview" hidden>
+          <div class="compare">
+            <figure><figcaption>Before</figcaption><div class="phone"><div class="tw" id="twBefore"></div></div></figure>
+            <figure><figcaption id="afterCap">After (not built yet)</figcaption><div class="phone"><div class="tw" id="twAfter"></div></div><p class="contrast" id="contrastNote"></p></figure>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  <p class="demo-note">A scripted demonstration: no model runs and nothing leaves your browser. Designed and built by <a href="https://ryanallen.com/">Ryan Allen</a>.</p>
+</div>
+
+<dialog id="dialog"><h3 id="dTitle"></h3><div id="dBody"></div><div class="actions" id="dActions"></div></dialog>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ICON = {
+  read: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h11l5 5v9H4z"/><path d="M15 5v5h5"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
+  run: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m5 7 5 5-5 5"/><path d="M12 18h7"/></svg>',
+  say: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+  you: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  pass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>',
+  fail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 14 6-6 6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 10 6 6 6-6"/></svg>',
+  drop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3 2 21h20z"/><path d="M12 10v4M12 17.5v.5"/></svg>',
+};
+
+// ---- The repository the agent works in --------------------------------
+// Each change is a hunk of a real-looking file, written by the step named.
+const CHANGES = {
+  tokens: { file: 'src/theme.css', step: 'tokens', why: 'Dark values for the six colors the app already names, so every page that uses them changes with no other edit.', lines: [
+    [' ', 12, ':root {'], [' ', 13, '  --bg: #f7f4ee;'], [' ', 14, '  --card: #ffffff;'], [' ', 15, '  --ink: #18221f;'], [' ', 16, '  --muted: #66706b;'], [' ', 17, '}'],
+    ['+', 18, ''], ['+', 19, ':root[data-theme="dark"] {'], ['+', 20, '  --bg: #0f1615;'], ['+', 21, '  --card: #17201e;'], ['+', 22, '  --ink: #e6eeeb;'], ['+', 23, '  --muted: #6d7874;'], ['+', 24, '  --line: #26312e;'], ['+', 25, '  --accent: #3cc2ad;'], ['+', 26, '}'] ] },
+  toggle: { file: 'src/settings.html', step: 'toggle', why: 'An Appearance row in the Display card, beside Units, with three choices so nobody is stuck with the system\'s pick.', lines: [
+    [' ', 41, '<section class="card" aria-labelledby="display">'], [' ', 42, '  <h2 id="display">Display</h2>'], [' ', 43, '  <div class="row">Units <units-picker></units-picker></div>'],
+    ['+', 44, '  <div class="row">'], ['+', 45, '    Appearance'], ['+', 46, '    <div class="seg" role="radiogroup" aria-label="Appearance">'], ['+', 47, '      <button role="radio" data-theme="light">Light</button>'], ['+', 48, '      <button role="radio" data-theme="dark">Dark</button>'], ['+', 49, '      <button role="radio" data-theme="system">System</button>'], ['+', 50, '    </div>'], ['+', 51, '  </div>'], [' ', 52, '</section>'] ] },
+  remember: { file: 'src/settings.js', step: 'remember', why: 'The choice is kept in this browser and applied before the page paints, so a reload never flashes the wrong theme.', lines: [
+    ['+', 88, 'const saved = localStorage.getItem("theme") || "light";'], ['+', 89, 'applyTheme(saved);'], ['+', 90, ''], ['+', 91, 'function applyTheme(choice) {'], ['+', 92, '  document.documentElement.dataset.theme = choice;'], ['+', 93, '  localStorage.setItem("theme", choice);'], ['+', 94, '}'] ] },
+  rememberSystem: { file: 'src/settings.js', step: 'remember', why: 'Follows the device unless the person picks Light or Dark, as you asked; the choice is applied before the page paints, so a reload never flashes the wrong theme.', lines: [
+    ['+', 88, 'const saved = localStorage.getItem("theme") || "system";'], ['+', 89, 'const dark = matchMedia("(prefers-color-scheme: dark)");'], ['+', 90, 'applyTheme(saved);'], ['+', 91, 'dark.addEventListener("change", () => applyTheme(saved));'], ['+', 92, ''], ['+', 93, 'function applyTheme(choice) {'], ['+', 94, '  const on = choice === "dark" || (choice === "system" && dark.matches);'], ['+', 95, '  document.documentElement.dataset.theme = on ? "dark" : "light";'], ['+', 96, '  localStorage.setItem("theme", choice);'], ['+', 97, '}'] ] },
+  contrast: { file: 'src/theme.css', step: 'checks', why: 'The contrast check failed: secondary text on dark cards was 3.6:1, under the 4.5:1 the project requires. Lightened it to 6.1:1.', lines: [
+    [' ', 22, '  --ink: #e6eeeb;'], ['-', 23, '  --muted: #6d7874;'], ['+', 23, '  --muted: #9aa6a2;'], [' ', 24, '  --line: #26312e;'] ] },
+};
+
+// ---- The plan the agent proposes -----------------------------------------
+const PLAN = [
+  { id: 'read', title: 'Read the settings page and how colors are set', sub: 'settings.html, settings.js, theme.css' },
+  { id: 'tokens', title: 'Add dark values for the app\'s color tokens', sub: 'One block in theme.css' },
+  { id: 'toggle', title: 'Add an Appearance choice to Settings', sub: 'Light, Dark, System' },
+  { id: 'remember', title: 'Remember the choice', sub: 'Applied before the page paints' },
+  { id: 'checks', title: 'Run the tests and the contrast check', sub: 'npm test, npm run contrast' },
+  { id: 'pr', title: 'Push the branch and open a pull request', sub: 'Asks you first', risky: true },
+];
+
+// ---- State ---------------------------------------------------------------
+const S = {
+  phase: 'plan', plan: PLAN.map(p => ({ ...p, state: 'todo' })), cur: -1,
+  speed: 1, paused: false, timer: 0, clock: 0, startedAt: 0, ran: 0,
+  tokens: 0, cost: 0, queued: null, followSystem: false, constraints: [],
+  changes: [], decisions: {}, checks: [], muted: 'old', pushed: false, checkpoints: [],
+};
+
+// ---- Rendering: the plan -------------------------------------------------
+function renderPlan() {
+  const editing = S.phase === 'plan';
+  $('planHead').textContent = editing ? 'Plan' : 'Steps';
+  $('planNote').hidden = !editing;
+  $('addStepRow').hidden = !editing;
+  const live = S.plan.filter(p => p.state !== 'skip').length;
+  $('planCount').textContent = editing ? `${live} steps` : `${S.plan.filter(p => p.state === 'done').length} of ${live} done`;
+  $('steps').innerHTML = S.plan.map((p, i) => {
+    const n = i + 1;
+    const mark = p.state === 'done' ? ICON.pass.replace('stroke-width="2.4"', 'stroke-width="3"') : n;
+    const title = editing && p.state !== 'skip'
+      ? `<textarea class="title-edit" rows="1" data-i="${i}" aria-label="Step ${n}">${esc(p.title)}</textarea>`
+      : `<div class="title">${esc(p.title)}</div>`;
+    const tools = editing ? `<div class="step-tools">
+        <button data-act="up" data-i="${i}" aria-label="Move step ${n} up" ${i === 0 ? 'disabled' : ''}>${ICON.up}</button>
+        <button data-act="down" data-i="${i}" aria-label="Move step ${n} down" ${i === S.plan.length - 1 ? 'disabled' : ''}>${ICON.down}</button>
+        <button data-act="drop" data-i="${i}" aria-label="${p.state === 'skip' ? 'Restore' : 'Drop'} step ${n}">${p.state === 'skip' ? ICON.undo : ICON.drop}</button></div>`
+      : p.state === 'done' && S.phase !== 'run' && S.checkpoints.includes(p.id) ? `<button class="back" data-act="back" data-i="${i}">Return here</button>` : '<span></span>';
+    const now = p.state === 'now' && p.nowLine ? `<div class="now-line">${esc(p.nowLine)}</div>` : '';
+    const tag = !p.risky || p.state === 'skip' ? '' : p.state === 'done' ? `<span class="tag steer">${S.pushed ? 'You approved it' : 'Left for you'}</span>` : `<span class="tag">Asks you before it runs</span>`;
+    const steer = p.steered ? `<span class="tag steer">Changed by your steer</span>` : '';
+    return `<li class="step" data-s="${p.state}"><span class="dot" aria-hidden="true">${mark}</span><div>${title}<div class="sub">${esc(p.sub || '')}</div>${now}${tag}${steer}</div>${tools}</li>`;
+  }).join('');
+  $('steps').querySelectorAll('.title-edit').forEach(fitTitle);
+}
+
+$('steps').addEventListener('click', e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const i = +b.dataset.i, act = b.dataset.act;
+  if (act === 'up' && i > 0) [S.plan[i - 1], S.plan[i]] = [S.plan[i], S.plan[i - 1]];
+  if (act === 'down' && i < S.plan.length - 1) [S.plan[i + 1], S.plan[i]] = [S.plan[i], S.plan[i + 1]];
+  if (act === 'drop') S.plan[i].state = S.plan[i].state === 'skip' ? 'todo' : 'skip';
+  if (act === 'back') return confirmReturn(i);
+  renderPlan();
+  const again = $('steps').querySelector(`button[data-act="${act}"][data-i="${act === 'up' ? i - 1 : act === 'down' ? i + 1 : i}"]`);
+  if (again && !again.disabled) again.focus();
+});
+const fitTitle = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
+$('steps').addEventListener('input', e => { const t = e.target.closest('.title-edit'); if (t) { S.plan[+t.dataset.i].title = t.value.replace(/\n/g, ' '); fitTitle(t); } });
+$('steps').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.title-edit')) { e.preventDefault(); e.target.blur(); } });
+$('addStep').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !e.target.value.trim()) return;
+  const at = Math.max(0, S.plan.findIndex(p => p.id === 'pr'));
+  S.plan.splice(at === -1 ? S.plan.length : at, 0, { id: 'own' + Date.now(), title: e.target.value.trim(), sub: 'Your step', own: true, state: 'todo' });
+  e.target.value = ''; renderPlan();
+});
+
+// ---- Rendering: meters and status ------------------------------------------
+function setStatus(s, text) { $('status').dataset.s = s; $('statusText').textContent = text; }
+function meters() {
+  const t = Math.round(S.clock / 1000);
+  $('mTime').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  $('mCost').textContent = `$${S.cost.toFixed(2)}`;
+  const ctx = Math.min(100, Math.round(S.tokens / 2000));
+  $('mCtx').textContent = ctx + '%';
+  $('mRing').setAttribute('stroke-dasharray', `${(ctx / 100 * 50.3).toFixed(1)} 51`);
+}
+function spend(tokens) { S.tokens += tokens; S.cost += tokens * 0.000009; }
+
+// ---- The feed ----------------------------------------------------------------
+function stamp() { const t = Math.round(S.clock / 1000); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; }
+function feed(kind, html, cls = '') {
+  $('feedEmpty').hidden = true;
+  const li = document.createElement('li');
+  li.innerHTML = kind === 'head' ? `<span></span><div class="msg step-head">${html}</div>`
+    : `<span class="k">${ICON[kind] || ''}</span><div class="msg ${cls}">${html}<time>${stamp()}</time></div>`;
+  if (kind === 'head') li.firstElementChild.nextElementSibling.classList.add('step-head');
+  $('feed').append(li);
+  if (activeTab() === 'activity') { const sc = $('workScroll'); if (sc.scrollHeight - sc.scrollTop - sc.clientHeight < 160) sc.scrollTop = sc.scrollHeight; }
+}
+
+// ---- The script: what each step does ---------------------------------------
+// Each action is [milliseconds, function]. The run reads queued steers only between steps.
+function script(step) {
+  const A = [];
+  const tool = (ms, kind, text, tokens = 900) => A.push([ms, () => { step.nowLine = text.replace(/<[^>]+>/g, ''); renderPlan(); feed(kind, text); spend(tokens); }]);
+  const say = (ms, text) => A.push([ms, () => feed('say', `<span class="say">${text}</span>`)]);
+  const change = (ms, key) => A.push([ms, () => addChange(key)]);
+  switch (step.id) {
+    case 'read':
+      tool(700, 'search', 'Searching for <code>theme</code> and <code>color</code> in <code>src/</code>', 400);
+      tool(900, 'read', 'Reading <code>src/settings.html</code> (128 lines)', 1800);
+      tool(800, 'read', 'Reading <code>src/theme.css</code> (64 lines)', 1200);
+      tool(700, 'read', 'Reading <code>src/settings.js</code> (112 lines)', 1500);
+      say(900, 'Colors come from six custom properties on <code>:root</code>, and nothing else in the app hard-codes a color. A dark theme can be one block of new values.');
+      break;
+    case 'tokens':
+      tool(900, 'edit', 'Editing <code>src/theme.css</code>: a dark block for the six tokens', 2200);
+      change(300, 'tokens');
+      break;
+    case 'toggle':
+      tool(1000, 'edit', 'Editing <code>src/settings.html</code>: an Appearance row in Display', 2400);
+      change(300, 'toggle');
+      break;
+    case 'remember':
+      if (S.followSystem) {
+        say(600, 'Following the device by default, as you asked. The saved choice only overrides it.');
+        tool(1000, 'edit', 'Editing <code>src/settings.js</code>: follow the system unless a choice is saved', 2600);
+        change(300, 'rememberSystem');
+      } else {
+        tool(1000, 'edit', 'Editing <code>src/settings.js</code>: save the choice, apply it before paint', 2300);
+        change(300, 'remember');
+      }
+      break;
+    case 'checks':
+      tool(900, 'run', 'Running <code>npm test</code>', 1200);
+      A.push([1400, () => addCheck('Unit tests', 'pass', 'npm test', '✓ settings › renders Display card\n✓ settings › Appearance has three choices\n✓ settings › choice survives reload\n✓ theme › tokens defined for light and dark\n\n42 passed, 0 failed (1.8 s)')]);
+      tool(700, 'run', 'Running <code>npm run contrast</code>', 900);
+      A.push([1300, () => { addCheck('Contrast (WCAG AA)', 'fail', 'npm run contrast', 'dark  --muted on --card   #6d7874 on #17201e   3.6:1   ✗ needs 4.5:1\ndark  --ink on --card     #e6eeeb on #17201e  14.2:1   ✓\nlight --muted on --card   #66706b on #ffffff   5.1:1   ✓\n\n1 pair below 4.5:1'); feed('fail', 'Contrast check failed: secondary text on dark cards is 3.6:1. The project needs 4.5:1.', 'fail'); }]);
+      say(800, 'Going back to fix it before calling this step done.');
+      tool(900, 'edit', 'Editing <code>src/theme.css</code>: lighten <code>--muted</code> in the dark block', 1400);
+      A.push([300, () => { addChange('contrast'); S.muted = 'new'; renderPreview(); }]);
+      tool(700, 'run', 'Running <code>npm run contrast</code> again', 900);
+      A.push([1200, () => { addCheck('Contrast (WCAG AA)', 'pass', 'npm run contrast', 'dark  --muted on --card   #9aa6a2 on #17201e   6.1:1   ✓\ndark  --ink on --card     #e6eeeb on #17201e  14.2:1   ✓\nlight --muted on --card   #66706b on #ffffff   5.1:1   ✓\n\nEvery pair meets 4.5:1'); feed('pass', 'Contrast check passed: every text color meets 4.5:1 in both themes.', 'pass'); }]);
+      break;
+    case 'pr':
+      A.push([700, () => askApproval(step)]);
+      break;
+    default:
+      tool(900, 'edit', `Working on your step: ${esc(step.title)}`, 1600);
+      say(800, 'Done. Nothing in the repository needed to change for it beyond what is in Changes.');
+  }
+  return A;
+}
+
+// ---- Running ---------------------------------------------------------------
+let queue = [], tickAt = 0;
+function startRun() {
+  S.phase = 'run'; S.startedAt = performance.now();
+  $('runBtn').hidden = true; $('pauseBtn').hidden = false; $('stopBtn').hidden = false;
+  setStatus('run', 'Working');
+  feed('you', `<div class="you"><small>You approved the plan</small>${S.plan.filter(p => p.state !== 'skip').length} steps${S.plan.some(p => p.state === 'skip') ? `, ${S.plan.filter(p => p.state === 'skip').length} dropped` : ''}.</div>`);
+  renderPlan(); renderChips();
+  requestAnimationFrame(clockTick);
+  nextStep();
+}
+function clockTick(now) {
+  if (S.phase === 'run' && !S.paused) { S.clock += (now - (tickAt || now)) * S.speed; meters(); }
+  tickAt = now;
+  if (S.phase === 'run' || S.phase === 'wait') requestAnimationFrame(clockTick); else tickAt = 0;
+}
+function nextStep() {
+  if (S.queued) applySteer();
+  const i = S.plan.findIndex(p => p.state === 'todo');
+  if (i === -1) return finish();
+  S.cur = i; const step = S.plan[i];
+  step.state = 'now'; step.nowLine = '';
+  feed('head', `${i + 1}. ${esc(step.title)}`);
+  renderPlan();
+  queue = script(step);
+  pump();
+}
+function pump() {
+  clearTimeout(S.timer);
+  if (S.paused || S.phase !== 'run') return;
+  const next = queue.shift();
+  if (!next) return endStep();
+  S.timer = setTimeout(() => { next[1](); pump(); }, next[0] / S.speed);
+}
+function endStep() {
+  const step = S.plan[S.cur]; if (!step) return;
+  if (step.state === 'wait') return; // an approval holds the run
+  if (step.state === 'skip') { renderPlan(); return nextStep(); }
+  step.state = 'done'; step.nowLine = '';
+  S.checkpoints.push(step.id);
+  renderPlan();
+  nextStep();
+}
+
+// ---- Steering -------------------------------------------------------------
+const SUGGEST = ['Follow the system setting by default', 'Keep the pull request as a draft', 'Also check contrast in light mode'];
+function renderChips() {
+  const show = S.phase === 'run' || S.phase === 'plan';
+  $('chips').innerHTML = show ? SUGGEST.map(s => `<button class="chip">${esc(s)}</button>`).join('') : '';
+}
+$('chips').addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; $('steer').value = c.textContent; $('steer').focus(); });
+function sendSteer() {
+  const text = $('steer').value.trim(); if (!text) return;
+  $('steer').value = ''; autosize();
+  if (S.phase === 'plan') {
+    S.constraints.push(text); if (/system|device|os\b|auto/i.test(text)) markSystem();
+    feed('you', `<div class="you"><small>A note for the plan</small>${esc(text)}</div>`);
+    return;
+  }
+  if (S.phase === 'done' || S.phase === 'stopped') return;
+  S.queued = text;
+  $('queued').hidden = false;
+  $('queued').textContent = `Queued for the next step: "${text}". The agent finishes what it is doing first, so nothing is lost.`;
+  feed('you', `<div class="you"><small>You steered · applies at the next step</small>${esc(text)}</div>`);
+}
+function markSystem() {
+  S.followSystem = true;
+  const r = S.plan.find(p => p.id === 'remember');
+  if (r && r.state === 'todo') { r.sub = 'Follow the system unless a choice is saved'; r.steered = true; }
+  renderPlan();
+}
+function applySteer() {
+  const text = S.queued; S.queued = null; $('queued').hidden = true;
+  const lower = text.toLowerCase();
+  if (/system|device|os\b|auto/.test(lower)) {
+    const r = S.plan.find(p => p.id === 'remember');
+    if (r && r.state === 'todo') { markSystem(); feed('say', '<span class="say">Read your steer. The Remember step now follows the device by default; nothing already done changes.</span>'); }
+    else feed('say', '<span class="say">Read your steer. The Remember step is already done, so I added a step to change it.</span>'), addOwnStep('Follow the system setting by default', true);
+  } else if (/draft/.test(lower)) {
+    S.draft = true; const pr = S.plan.find(p => p.id === 'pr'); if (pr && pr.state === 'todo') { pr.sub = 'As a draft · asks you first'; pr.steered = true; }
+    feed('say', '<span class="say">Read your steer. The pull request will open as a draft.</span>');
+  } else {
+    S.constraints.push(text);
+    feed('say', `<span class="say">Read your steer and kept it for the remaining steps: "${esc(text)}".</span>`);
+  }
+  renderPlan();
+}
+function addOwnStep(title, steered) {
+  const at = S.plan.findIndex(p => p.id === 'pr' && p.state === 'todo');
+  S.plan.splice(at === -1 ? S.plan.length : at, 0, { id: 'own' + Date.now(), title, sub: 'Added by your steer', own: true, state: 'todo', steered });
+  if (/system/i.test(title)) S.followSystem = true;
+}
+$('sendSteer').addEventListener('click', sendSteer);
+const autosize = () => { const t = $('steer'); t.style.height = '40px'; t.style.height = Math.min(120, t.scrollHeight + 2) + 'px'; };
+$('steer').addEventListener('input', autosize);
+$('steer').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSteer(); } });
+
+$('runBtn').addEventListener('click', startRun);
+$('pauseBtn').addEventListener('click', () => {
+  S.paused = !S.paused;
+  $('pauseBtn').textContent = S.paused ? 'Resume' : 'Pause';
+  setStatus(S.paused ? 'wait' : 'run', S.paused ? 'Paused' : 'Working');
+  feed('you', `<div class="you"><small>You ${S.paused ? 'paused' : 'resumed'}</small>${S.paused ? 'The agent stops after the action it is in. Nothing is undone.' : 'Carrying on from where it stopped.'}</div>`);
+  if (!S.paused) pump();
+});
+$('stopBtn').addEventListener('click', () => dialog('Stop the agent?', '<p>It stops now. Every finished step stays, and you can review those changes. The step in progress is left unfinished.</p>', [
+  ['Keep working', null], ['Stop', () => stopRun(), 'primary'],
+]));
+function stopRun() {
+  clearTimeout(S.timer); queue = [];
+  const step = S.plan[S.cur]; if (step && step.state === 'now') { step.state = 'todo'; step.nowLine = ''; }
+  S.phase = 'stopped'; setStatus('stop', 'Stopped');
+  $('pauseBtn').hidden = true; $('stopBtn').hidden = true;
+  feed('you', '<div class="you"><small>You stopped the agent</small>Finished steps are kept. Nothing was pushed.</div>');
+  renderPlan(); renderChips(); renderSummary();
+}
+$('composer').querySelector('.speed').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  S.speed = +b.dataset.speed;
+  b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+});
+
+// ---- Approvals --------------------------------------------------------------
+function askApproval(step) {
+  step.state = 'wait'; step.nowLine = 'Waiting for you'; S.phase = 'wait';
+  setStatus('wait', 'Needs you'); renderPlan();
+  const title = 'Add a dark theme to Settings';
+  $('askSlot').innerHTML = `<div class="ask" role="alertdialog" aria-labelledby="askTitle" aria-describedby="askWhy">
+    <h3 id="askTitle">${ICON.lock}Push the branch and open a pull request?</h3>
+    <p id="askWhy">This leaves your machine: the team sees it and CI runs. It is the only action in this run that can't be taken back from here.</p>
+    <dl>
+      <dt>Commands</dt><dd><pre>git push origin dark-theme\ngh pr create${S.draft ? ' --draft' : ''} --title "<span id="prTitleEcho">${esc(title)}</span>"</pre></dd>
+      <dt>What it touches</dt><dd>The remote branch <code>dark-theme</code>, and a new pull request on tidewater/web</dd>
+      <dt>Undo</dt><dd><span class="irreversible">Can't be undone from here.</span> The PR can be closed later, but people may already have seen it.</dd>
+      <dt>Evidence</dt><dd>${S.checks.filter(c => c.state === 'pass').length} checks passing, ${S.changes.length} changes, ${Object.values(S.decisions).filter(d => d === 'accepted').length} accepted by you</dd>
+      <dt>Title</dt><dd><input id="prTitle" value="${esc(title)}" aria-label="Pull request title"></dd>
+    </dl>
+    <div class="actions"><button class="btn primary" id="approve">Push and open PR</button><button class="btn" id="reviewFirst">Review changes first</button><button class="btn quiet" id="myself">I'll do it myself</button></div>
+  </div>`;
+  $('prTitle').addEventListener('input', e => { $('prTitleEcho').textContent = e.target.value; });
+  $('approve').addEventListener('click', () => resolveApproval('yes'));
+  $('reviewFirst').addEventListener('click', () => selectTab('changes'));
+  $('myself').addEventListener('click', () => resolveApproval('self'));
+  feed('lock', 'Waiting for you to approve the push. Nothing leaves your machine until you do.');
+  if (activeTab() !== 'activity') $('cChanges').classList.add('alert');
+  selectTab('activity'); $('approve').focus({ preventScroll: true });
+  $('workScroll').scrollTop = 0;
+}
+function resolveApproval(answer) {
+  const step = S.plan[S.cur], title = $('prTitle') ? $('prTitle').value : '';
+  $('askSlot').innerHTML = ''; S.phase = 'run'; setStatus('run', 'Working');
+  if (answer === 'yes') {
+    feed('you', `<div class="you"><small>You approved</small>Push and open the pull request "${esc(title)}".</div>`);
+    queue = [
+      [800, () => { step.nowLine = 'git push origin dark-theme'; renderPlan(); feed('run', 'Running <code>git push origin dark-theme</code>'); spend(500); }],
+      [1000, () => { feed('run', `Running <code>gh pr create${S.draft ? ' --draft' : ''}</code>`); spend(600); }],
+      [900, () => { S.pushed = true; S.prTitle = title; feed('pass', `Opened ${S.draft ? 'draft ' : ''}pull request #214, "${esc(title)}".`, 'pass'); }],
+    ];
+    step.state = 'now';
+  } else {
+    feed('you', '<div class="you"><small>You\'ll push it yourself</small>The branch stays on your machine with every change committed.</div>');
+    step.state = 'skip'; step.sub = 'Left for you'; queue = [];
+  }
+  pump();
+}
+
+// ---- Changes -----------------------------------------------------------------
+function addChange(key) {
+  const c = { key, ...CHANGES[key] };
+  S.changes.push(c);
+  feed('edit', `Changed <code>${esc(c.file)}</code> <span style="color:var(--muted)">${diffStat(c)}</span>`);
+  renderChanges();
+  if (key !== 'tokens' || true) renderPreview();
+}
+function diffStat(c) { const a = c.lines.filter(l => l[0] === '+').length, d = c.lines.filter(l => l[0] === '-').length; return `+${a} −${d}`; }
+function renderChanges() {
+  $('cChanges').textContent = S.changes.length;
+  $('changesEmpty').hidden = S.changes.length > 0;
+  const byStep = new Map();
+  S.changes.forEach((c, i) => { const k = c.step; if (!byStep.has(k)) byStep.set(k, []); byStep.get(k).push([c, i]); });
+  $('changes').innerHTML = [...byStep].map(([stepId, list]) => {
+    const step = S.plan.find(p => p.id === stepId);
+    return `<section class="group"><h3>${esc(step ? step.title : stepId)} <span class="n">${list.length} change${list.length > 1 ? 's' : ''}</span></h3>${list.map(([c, i]) => {
+      const d = S.decisions[i];
+      const st = diffStat(c);
+      return `<article class="change" data-d="${d || ''}">
+        <div class="change-head"><span class="file">${esc(c.file)}</span><span class="stat"><span class="a">${st.split(' ')[0]}</span> <span class="d">${st.split(' ')[1]}</span></span><span class="spacer"></span>
+          ${d ? `<span class="verdict ${d}">${d === 'accepted' ? 'Accepted' : 'Sent back'}</span><button class="btn quiet" data-undo="${i}">Undo</button>`
+            : `<div class="decision"><button class="btn" data-send="${i}">Send back</button><button class="btn primary" data-accept="${i}">Accept</button></div>`}</div>
+        <div class="why"><b>Why</b>${esc(c.why)}</div>
+        <div class="diff" role="table" aria-label="Changes to ${esc(c.file)}">${c.lines.map(l => `<div class="${l[0] === '+' ? 'add' : l[0] === '-' ? 'del' : ''}" role="row"><span class="ln">${l[1]}</span><span class="sg">${l[0] === ' ' ? '' : l[0] === '-' ? '−' : '+'}</span><span class="tx">${esc(l[2])}</span></div>`).join('')}</div>
+        ${S.sending === i ? `<div class="sendback"><input id="sendNote" placeholder="What should change?" aria-label="What should change"><button class="btn primary" data-sendgo="${i}">Send</button></div>` : ''}
+      </article>`; }).join('')}</section>`;
+  }).join('');
+}
+$('changes').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.accept) { S.decisions[b.dataset.accept] = 'accepted'; renderChanges(); }
+  if (b.dataset.undo) { delete S.decisions[b.dataset.undo]; renderChanges(); }
+  if (b.dataset.send) { S.sending = +b.dataset.send; renderChanges(); $('sendNote').focus(); }
+  if (b.dataset.sendgo) {
+    const i = +b.dataset.sendgo, note = $('sendNote').value.trim() || 'Needs another look';
+    S.decisions[i] = 'sent'; S.sending = null; renderChanges();
+    const c = S.changes[i];
+    feed('you', `<div class="you"><small>You sent back ${esc(c.file)}</small>${esc(note)}</div>`);
+    if (S.phase === 'done' || S.phase === 'stopped') { S.phase = 'run'; setStatus('run', 'Working'); $('pauseBtn').hidden = false; $('stopBtn').hidden = false; $('summarySlot').innerHTML = ''; requestAnimationFrame(clockTick); }
+    addOwnStep(`Address your review of ${c.file}`, true);
+    const st = S.plan.find(p => p.title === `Address your review of ${c.file}`); st.sub = `"${note}"`;
+    renderPlan();
+    if (S.phase === 'run' && !queue.length && !S.plan.some(p => p.state === 'now')) nextStep();
+  }
+});
+
+// ---- Checks ------------------------------------------------------------------
+function addCheck(name, state, cmd, out) {
+  S.checks.push({ name, state, cmd, out });
+  const n = S.checks.length;
+  const latest = new Map(); S.checks.forEach(c => latest.set(c.name, c.state));
+  const failing = [...latest.values()].filter(s => s === 'fail').length;
+  $('cChecks').textContent = failing ? failing + ' failing' : latest.size + ' passing';
+  $('cChecks').classList.toggle('alert', failing > 0);
+  $('checksEmpty').hidden = true;
+  $('checks').insertAdjacentHTML('beforeend', `<li><details class="check" ${state === 'fail' ? 'open' : ''}><summary><span class="badge ${state}">${state === 'pass' ? 'Passed' : 'Failed'}</span><span class="name">${esc(name)}</span><span class="meta"><code>${esc(cmd)}</code> · run ${n}</span></summary><pre>${esc(out)}</pre></details></li>`);
+}
+
+// ---- Preview: the real settings page, before and after ---------------------
+function tw(after) {
+  const has = c => S.changes.some(x => x.key === c);
+  const toggle = after && has('toggle');
+  const choice = S.twChoice || (S.followSystem ? 'system' : 'light');
+  return `<header>Settings<small>Tidewater</small></header>
+    <div class="card"><div class="row"><span>Swell alerts<small>Tell me when it's 3 ft or more</small></span><span class="sw" aria-hidden="true"></span></div>
+    <div class="row"><span>Home break<small>Ocean Beach, North</small></span><span>›</span></div></div>
+    <div class="card"><div class="row"><span>Units<small>Wave height</small></span><span>ft</span></div>
+    ${toggle ? `<div class="row"><span>Appearance<small>${choice === 'system' ? 'Follows this device' : 'Saved for this browser'}</small></span><span class="seg" role="group" aria-label="Appearance">${['light', 'dark', 'system'].map(c => `<button data-tw="${c}" aria-pressed="${choice === c}">${c[0].toUpperCase() + c.slice(1)}</button>`).join('')}</span></div>` : ''}</div>`;
+}
+function renderPreview() {
+  const has = c => S.changes.some(x => x.key === c);
+  $('twBefore').innerHTML = tw(false);
+  const a = $('twAfter');
+  a.innerHTML = tw(true);
+  const choice = S.twChoice || (S.followSystem ? 'system' : 'light');
+  const dark = has('tokens') && (choice === 'dark' || (choice === 'system' && matchMedia('(prefers-color-scheme: dark)').matches) || (!has('toggle') && false));
+  a.toggleAttribute('data-dark', !!dark);
+  a.dataset.muted = S.muted;
+  $('afterCap').textContent = !has('tokens') ? 'After (not built yet)' : has('toggle') ? 'After · try the Appearance choice' : 'After · dark values, no switch yet';
+  $('contrastNote').textContent = dark ? (S.muted === 'old' ? 'Secondary text on cards: 3.6:1, under the 4.5:1 required.' : 'Secondary text on cards: 6.1:1.') : '';
+}
+$('twAfter').addEventListener('click', e => { const b = e.target.closest('button[data-tw]'); if (!b) return; S.twChoice = b.dataset.tw; renderPreview(); });
+
+// ---- Finishing -------------------------------------------------------------
+function finish() {
+  S.phase = 'done'; clearTimeout(S.timer);
+  setStatus('done', 'Ready for review');
+  $('pauseBtn').hidden = true; $('stopBtn').hidden = true;
+  renderPlan(); renderChips(); renderSummary();
+  feed('say', '<span class="say">Finished. The summary above lists what changed and the proof for each claim.</span>');
+  $('workScroll').scrollTop = 0;
+}
+function renderSummary() {
+  const done = S.plan.filter(p => p.state === 'done');
+  const passing = S.checks.filter(c => c.state === 'pass').map(c => c.name);
+  const failedOnce = S.checks.some(c => c.state === 'fail');
+  const accepted = Object.values(S.decisions).filter(d => d === 'accepted').length;
+  $('summarySlot').innerHTML = `<div class="summary">
+    <h3>${S.phase === 'stopped' ? 'Stopped' : 'What was done, with the proof'}</h3>
+    <ul>
+      <li>${done.length} of ${S.plan.filter(p => p.state !== 'skip').length} steps finished; ${S.changes.length} changes in ${new Set(S.changes.map(c => c.file)).size} files (see Changes).</li>
+      ${passing.length ? `<li>Checks passing: ${[...new Set(passing)].join(', ')}${failedOnce ? '. The contrast check failed once and was fixed; both runs are kept in Checks' : ''}.</li>` : '<li>No checks ran.</li>'}
+      ${S.followSystem ? '<li>The theme follows the device unless the person picks Light or Dark, as you steered.</li>' : ''}
+      <li>${S.pushed ? `Pushed <code>dark-theme</code> and opened ${S.draft ? 'draft ' : ''}pull request #214, "${esc(S.prTitle)}".` : 'Nothing was pushed: the branch is only on your machine.'}</li>
+      <li>You have accepted ${accepted} of ${S.changes.length} changes.</li>
+    </ul>
+    <div class="actions"><button class="btn primary" id="toChanges">Review changes</button><button class="btn" id="toPreview">See before and after</button><button class="btn quiet" id="again">Start over</button></div>
+  </div>`;
+  $('toChanges').onclick = () => selectTab('changes');
+  $('toPreview').onclick = () => selectTab('preview');
+  $('again').onclick = () => location.reload();
+}
+
+// ---- Checkpoints -----------------------------------------------------------
+function confirmReturn(i) {
+  const step = S.plan[i];
+  const later = S.plan.slice(i + 1).filter(p => p.state === 'done');
+  dialog(`Return to after "${step.title}"?`, `<p>The ${later.length} step${later.length === 1 ? '' : 's'} after it ${later.length === 1 ? 'is' : 'are'} undone and run again, with any steer you add now.</p>${S.pushed ? '<p class="irreversible">The push and pull request already left your machine and are not undone. The new run would push a second time.</p>' : ''}`, [
+    ['Cancel', null], ['Return here', () => returnTo(i), 'primary'],
+  ]);
+}
+function returnTo(i) {
+  const keepIds = S.plan.slice(0, i + 1).map(p => p.id);
+  S.plan.slice(i + 1).forEach(p => { if (p.state === 'done' || p.state === 'now') p.state = 'todo'; });
+  S.changes = S.changes.filter(c => keepIds.includes(c.step));
+  S.decisions = {}; S.checkpoints = S.checkpoints.filter(id => keepIds.includes(id));
+  if (!S.changes.some(c => c.key === 'contrast')) S.muted = 'old';
+  $('summarySlot').innerHTML = '';
+  feed('you', `<div class="you"><small>You returned to a checkpoint</small>Back to after "${esc(S.plan[i].title)}". Later steps run again.</div>`);
+  renderChanges(); renderPreview();
+  S.phase = 'run'; setStatus('run', 'Working'); $('pauseBtn').hidden = false; $('stopBtn').hidden = false;
+  renderChips(); requestAnimationFrame(clockTick); nextStep();
+}
+
+// ---- Tabs -------------------------------------------------------------------
+const TABS = ['activity', 'changes', 'checks', 'preview'];
+function activeTab() { return TABS.find(t => $('tab-' + t).getAttribute('aria-selected') === 'true'); }
+function selectTab(name, focus) {
+  TABS.forEach(t => {
+    const on = t === name;
+    $('tab-' + t).setAttribute('aria-selected', on); $('tab-' + t).tabIndex = on ? 0 : -1;
+    $('pane-' + t).hidden = !on;
+  });
+  if (name === 'changes') $('cChanges').classList.remove('alert');
+  if (name === 'preview') renderPreview();
+  if (focus) $('tab-' + name).focus();
+  $('workScroll').scrollTop = name === 'activity' ? $('workScroll').scrollHeight : 0;
+}
+document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[role="tab"]'); if (b) selectTab(b.id.slice(4)); });
+document.querySelector('.tabs').addEventListener('keydown', e => {
+  const i = TABS.indexOf(activeTab());
+  if (e.key === 'ArrowRight') selectTab(TABS[(i + 1) % TABS.length], true);
+  if (e.key === 'ArrowLeft') selectTab(TABS[(i + TABS.length - 1) % TABS.length], true);
+});
+
+// ---- Dialog -------------------------------------------------------------------
+function dialog(title, body, actions) {
+  const d = $('dialog');
+  $('dTitle').textContent = title; $('dBody').innerHTML = body;
+  $('dActions').innerHTML = '';
+  actions.forEach(([label, fn, cls]) => { const b = document.createElement('button'); b.className = 'btn ' + (cls || ''); b.textContent = label; b.onclick = () => { d.close(); fn && fn(); }; $('dActions').append(b); });
+  d.showModal(); $('dActions').lastElementChild.focus();
+}
+
+// ---- Theme of the page itself -----------------------------------------------
+$('themeBtn').addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+});
+
+renderPlan(); renderChips(); renderPreview(); meters();
+</script>
+</body>
+</html>
