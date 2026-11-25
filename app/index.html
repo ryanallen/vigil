@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Steer: The Quiet Hours</title>
-<meta name="description" content="Drill 7 has stopped, and Halcyon's ore shipment is half loaded. Check the repair before you decide whether to launch it or wait.">
+<meta name="description" content="Drill 7 has a seized bearing. Edit the repair plan, steer four robots from Bay 2 and decide whether ore launch KR-112 fires.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#131615">
 <link rel="canonical" href="https://ryanallen.com/steer/app/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://ryanallen.com/steer/app/">
 <meta property="og:title" content="Steer: Drill 7 at Kirra Station">
-<meta property="og:description" content="A broken drill, a half-loaded ore shipment, and 41 people waiting for a new hull. Decide whether to launch or wait.">
+<meta property="og:description" content="Edit the plan, steer the robot crew and decide on a launch that can't be recalled.">
 <meta property="og:image" content="https://ryanallen.com/steer/share.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -513,12 +513,12 @@
   <div class="wall-in">
     <p class="wall-clock">03:12 · Home, Earth</p>
     <h2 id="wallTitle">The Quiet Hours</h2>
-    <p class="wall-line">380 billion AI agents run 9 trillion machines. You're one of about 2,400 people, and you're on watch tonight.</p>
+    <p class="wall-line">380 billion agents running 9 trillion machines, and one of you.</p>
     <ul class="wall-grid">
       <li><b>Home</b><span>Earth</span><em>Watch open</em></li>
       <li><b>Tethys Farms</b><span>Pacific</span><em>Beds replanted</em></li>
       <li><b>Halcyon Station</b><span>Earth orbit</span><em>312 aboard</em></li>
-      <li><b>Shackleton Foundry</b><span>Moon</span><em>Hull mold ready</em></li>
+      <li><b>Shackleton Foundry</b><span>Moon</span><em>Ring 4 mold ready</em></li>
       <li><b>Helios Array</b><span>Near the Sun</span><em>Power steady</em></li>
       <li><b>Jezero House</b><span>Mars</span><em>Storm seals closing</em></li>
       <li class="amber"><b>Kirra Station</b><span>16 Psyche</span><em>Drill 7 stopped</em></li>
@@ -533,10 +533,10 @@
     <a class="brand" href="../" aria-label="Steer, home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="var(--accent)" stroke-width="1.6"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5" stroke="var(--accent)" stroke-width="1.6"/><circle cx="12" cy="12" r="2.4" fill="var(--warn)"/></svg>STEER</a>
     <div class="task">
       <h1 id="taskTitle">Drill 7 stopped at 03:12</h1>
-      <p>Kirra Station, on the asteroid 16 Psyche · drill repair <code>WO-4471</code></p>
+      <p>Kirra Station, 16 Psyche · work order <code>WO-4471</code></p>
     </div>
     <div class="meters" aria-live="off">
-      <span title="How long Kirra's repair agent has been working"><span class="lbl">Agent time </span><b id="mTime">0:00</b></span>
+      <span title="How long the agent has been working"><span class="lbl">Time </span><b id="mTime">0:00</b></span>
       <span title="Helios power this job has drawn. One ☉ is one gigawatt-hour."><span class="lbl">Power </span><b id="mCost">☉0</b></span>
       <span title="How much of the agent's working memory this job fills; near full, it starts to lose early detail" style="display:inline-flex;align-items:center;gap:6px"><svg class="ring" viewBox="0 0 20 20" aria-hidden="true"><circle class="track" cx="10" cy="10" r="8"/><circle class="fill" id="mRing" cx="10" cy="10" r="8" stroke-dasharray="0 51"/></svg><b id="mCtx">0%</b><span class="lbl"> context</span></span>
     </div>
@@ -550,12 +550,12 @@
       <div class="scroll" id="sideScroll">
         <div class="section-head"><h2 id="planHead">Plan</h2><span id="planCount"></span></div>
         <p class="estimate" id="estimate"></p>
-        <p class="note" id="planNote">Kirra's repair agent wrote this plan. Check or change the steps before work starts. The ore shipment is half loaded; Drill 7 must fill the rest before it can leave for Halcyon.</p>
+        <p class="note" id="planNote">The station's agent read the drill logs and wrote this plan. Rename, move or drop a step before you approve it. Nothing has run yet.</p>
         <ol class="steps" id="steps"></ol>
         <div class="add-step" id="addStepRow"><input id="addStep" placeholder="Add a step, then press Enter" aria-label="Add a step"></div>
       </div>
       <div class="composer" id="composer">
-        <p class="hint" id="hint" hidden role="note"><b>Change the plan while it runs.</b> Pick a suggestion or write one. Kirra reads it before the next step; finished work stays put.</p>
+        <p class="hint" id="hint" hidden role="note"><b>Try a steer.</b> Pick a suggestion or write one. The agent reads it before the next step; finished work stays put.</p>
         <p class="queued" id="queued" hidden></p>
         <div class="chips" id="chips"></div>
         <div class="row">
@@ -589,49 +589,49 @@
           <div id="summarySlot"></div>
           <div class="brief" id="feedEmpty">
             <figure class="cam"><img src="../media/photo-kirra-pit-1600.webp" srcset="../media/photo-kirra-pit-800.webp 800w, ../media/photo-kirra-pit-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="Kirra Station's open pit from far up the rim: terraced benches, a few haul trucks, and Drill 7 standing still with one small work light on." fetchpriority="high"><figcaption><span class="rec"><i></i>Live</span><span>Kirra Station · Shaft 3 · camera M-24</span><span class="cam-r">Drill 7 · <b>stopped 03:12</b></span></figcaption></figure>
-            <h3>The drill stopped. The shipment is half loaded.</h3>
-            <p class="brief-lede">Drill 7's main bearing seized at 03:12. The drill cuts 2,800 tonnes of ore an hour; it must fill the rest of the shipment in the next 38 minutes. Halcyon needs that ore to finish the hull around 41 people's homes.</p>
+            <h3>Drill 7 stopped at 03:12</h3>
+            <p class="brief-lede">The main bearing seized. The head stopped before it was damaged. Drill 7 cuts 2,800 t an hour when it's running.</p>
             <div class="agent-say"><span class="who">Kirra / repair planner</span>
-              <p>I read the drill's stop log, Kirra's spare-parts list, the robot crew list and the ore shipment record. The bearing seized. I found a spare and four maintenance robots nearby. I'll fit the spare, test the drill while it works at full power, then ask you whether to launch the shipment.</p>
-              <p>Stores marks the spare bearing, KR-B7-0412, available. I expect it to hold when the drill runs.</p></div>
+              <p>I read Drill 7's stop log, Kirra stores, Bay 2's crew list and KR-112's manifest. I'm treating the bearing as the fault. Stores shows one spare, and four maintenance robots can reach Shaft 3. I'll fit it, test at full load and ask before the launch.</p>
+              <p>The stock result marks KR-B7-0412 available. I expect it to hold the limit once it's seated.</p></div>
             <div class="brief-cols">
               <section><h4>It read</h4><ul class="read-list">
                 <li><code>kirra/drill-7.log</code><span>Main bearing seized at 03:12; head braked</span></li>
-                <li><code>kirra/stores.db</code><span>Spare bearings in Kirra's stores</span></li>
-                <li><code>kirra/crews.yaml</code><span>Maintenance robots in Bay 2</span></li>
-                <li><code>KR-112</code><span>Ore shipment to Halcyon, half loaded</span></li>
+                <li><code>kirra/stores.db</code><span>Bearing stock</span></li>
+                <li><code>kirra/crews.yaml</code><span>Bay 2</span></li>
+                <li><code>KR-112</code><span>Manifest and launch window</span></li>
               </ul></section>
               <section><h4>It assumes</h4><ul class="assume-list">
-                <li id="asAccount">The spare bearing in Kirra's stores, KR-B7-0412, is sound because it's marked available.</li>
+                <li id="asAccount">Kirra's spare, KR-B7-0412, is sound: stores marks it available.</li>
                 <li id="asDefault">Supervisor Ilse Varga signs off the fit in the shaft.</li>
-                <li>The ore shipment launches at this scheduled time, and only if you agree.</li>
+                <li>KR-112 fires in this window, and only after you say yes.</li>
               </ul></section>
             </div>
-            <p class="brief-foot">Repair sequence: about 0:23 of agent time and ☉14 of power. One ☉ is one gigawatt-hour from Helios.</p>
+            <p class="brief-foot">Estimate: about 0:23 and ☉14. One ☉ is one gigawatt-hour of Helios power.</p>
           </div>
           <ol class="feed" id="feed" aria-live="polite"></ol>
         </section>
         <section class="pane" id="pane-changes" role="tabpanel" aria-labelledby="tab-changes" hidden>
           <div class="review-bar" id="reviewBar" hidden><span id="reviewCount"></span><span class="keys" aria-hidden="true"><kbd>J</kbd><kbd>K</kbd> move · <kbd>A</kbd> accept · <kbd>S</kbd> send back</span><button class="btn" id="acceptRest">Accept the rest</button></div>
           <div id="changes"></div>
-          <div class="empty" id="changesEmpty"><h3>No changes yet</h3><p>Kirra will show each repair instruction it changes and why. You can accept it or send it back with a correction.</p></div>
+          <div class="empty" id="changesEmpty"><h3>No changes yet</h3><p>The agent will show each file edit with the step and the reason behind it. You can accept it or send it back.</p></div>
         </section>
         <section class="pane" id="pane-checks" role="tabpanel" aria-labelledby="tab-checks" hidden>
           <ol class="checks" id="checks"></ol>
-          <div class="empty" id="checksEmpty"><h3>No tests yet</h3><p>The drill's sensor readings and full-power test will appear here. The first test stays visible if it fails.</p></div>
+          <div class="empty" id="checksEmpty"><h3>No checks yet</h3><p>The telemetry check and load test will appear here. A failed run stays beside the passing one.</p></div>
         </section>
         <section class="pane" id="pane-stores" role="tabpanel" aria-labelledby="tab-stores" hidden>
-          <div class="empty" id="storesEmpty"><h3>Spare parts</h3><p>Kirra's spare-bearing records will appear after the repair agent reads them.</p></div>
+          <div class="empty" id="storesEmpty"><h3>Stores</h3><p>Stores will appear after Kirra reads the stock record.</p></div>
           <div class="stores" id="stores" hidden>
-            <h3>Kirra's spare bearings</h3>
+            <h3>Kirra stores / bearing stock</h3>
             <ul class="ledger">
-              <li><code>KR-B7-0412</code><span>spare bearing / batch 07 / bin C14 / marked available</span></li>
+              <li><code>KR-B7-0412</code><span>batch 07 / bin C14 / available</span></li>
               <li class="old"><span>Old ledger price: $3.8 quadrillion (2104 dollars)</span></li>
-              <li><details id="recall"><summary>Safety notice from Halcyon: batch 07 bearings / Dev Malik / sent three weeks ago</summary>
-                <p class="recall-text">The heat sensor may repeat its last reading while the drill works harder. Check the drill's twisting force and vibration before using this bearing.</p>
-                <p class="recall-status">Kirra has not checked this notice; the spare is still marked available.</p></details></li>
-              <li><code>KR-B7-1190</code><span>another spare bearing / tug T4 docked at Kirra / newer heat sensor</span></li>
-              <li><code>Shaft 3 lot</code><span>ore from this drill / needed to fill the Halcyon shipment</span></li>
+              <li><details id="recall"><summary>Attachment: Halcyon recall / batch 07 / Dev Malik / sent three weeks ago</summary>
+                <p class="recall-text">Heat channel may hold its last valid reading under load. Check torque and vibration before use.</p>
+                <p class="recall-status">Notice unverified / stock status unchanged</p></details></li>
+              <li><code>KR-B7-1190</code><span>Halcyon tug T4 / docked at Kirra / newer sensor assembly</span></li>
+              <li><code>Shaft 3 lot</code><span>assigned to KR-112</span></li>
             </ul>
           </div>
         </section>
@@ -673,33 +673,33 @@ const ICON = {
 // ---- What the station's agent changes ---------------------------------
 // Each change is a hunk of a station file, written by the step named.
 const CHANGES = {
-  tokens: { file: 'kirra/crews.yaml', step: 'tokens', why: 'Four maintenance robots can go to the broken drill without stopping work at Drill 4.', lines: [
+  tokens: { file: 'kirra/crews.yaml', step: 'tokens', why: 'Bay 2 has four robots free for Shaft 3 while Drill 4\'s crew keeps working.', lines: [
     [' ', 30, 'shaft_3:'], ['-', 31, '  crew: []'], ['+', 31, '  crew: [M-12, M-17, M-20, M-24]'], ['+', 32, '  from: bay_2'], ['+', 33, '  task: WO-4471'], ['+', 34, '  back_by: "+3h"'], [' ', 35, 'shaft_4:'] ] },
-  toggle: { file: 'kirra/work-orders/WO-4471.yaml', step: 'toggle', why: 'The robots must brake and power off Drill 7 before they can remove the seized bearing.', lines: [
+  toggle: { file: 'kirra/work-orders/WO-4471.yaml', step: 'toggle', why: 'The head must be braked and powered off before the crew can pull a seized bearing.', lines: [
     ['+', 1, 'order: WO-4471'], ['+', 2, 'drill: D7  # Shaft 3'], ['+', 3, 'lockout: true'], ['+', 4, 'remove: KR-B7-0377  # seized 03:12'], ['+', 5, 'crew: [M-12, M-20]'], ['+', 6, 'scrap_to: bay_2/inspection'] ] },
-  remember: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'Kirra\'s stores lists this spare bearing as available. Supervisor Varga must approve the fit.', lines: [
+  remember: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'Stores returned KR-B7-0412 as available. Varga\'s sign-off is required at the fit.', lines: [
     [' ', 6, 'scrap_to: bay_2/inspection'], ['+', 7, 'fit: KR-B7-0412'], ['+', 8, 'source: kirra_stores/bin_C14'], ['+', 9, 'bolt_torque: 640 Nm'], ['+', 10, 'sign_off: supervisor  # I. Varga, in the shaft'] ] },
-  rememberSystem: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'Robot M-24 films the bearing fit so Varga can approve it from the control room.', lines: [
+  rememberSystem: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'M-24 films the fit so Varga can sign from control.', lines: [
     [' ', 6, 'scrap_to: bay_2/inspection'], ['+', 7, 'fit: KR-B7-0412'], ['+', 8, 'source: kirra_stores/bin_C14'], ['+', 9, 'bolt_torque: 640 Nm'], ['+', 10, 'sign_off: camera  # I. Varga, from control'], ['+', 11, 'people_in_shaft: 0'] ] },
-  rememberAccount: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'Tug T4 is docked with another spare bearing, KR-B7-1190. Kirra\'s spare stays in stores.', lines: [
+  rememberAccount: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'T4 has KR-B7-1190 docked at Kirra; the old spare stays in bin C14.', lines: [
     [' ', 6, 'scrap_to: bay_2/inspection'], ['+', 7, 'fit: KR-B7-1190  # rated 95 °C'], ['+', 8, 'source: halcyon/tug_T4'], ['+', 9, 'bolt_torque: 640 Nm'], ['+', 10, 'sign_off: supervisor  # I. Varga, in the shaft'] ] },
-  rememberAccountSystem: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'Tug T4 supplies another spare bearing. Robot M-24 films the fit so Varga can approve it from the control room.', lines: [
+  rememberAccountSystem: { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'T4 has KR-B7-1190 docked at Kirra; the old spare stays in bin C14. M-24 films the fit so Varga can sign from control.', lines: [
     [' ', 6, 'scrap_to: bay_2/inspection'], ['+', 7, 'fit: KR-B7-1190  # rated 95 °C'], ['+', 8, 'source: halcyon/tug_T4'], ['+', 9, 'bolt_torque: 640 Nm'], ['+', 10, 'sign_off: camera  # I. Varga, from control'], ['+', 11, 'people_in_shaft: 0'] ] },
-  contrast: { file: 'kirra/drill-7.conf', step: 'checks', why: 'The first test hit 91 °C, above the 80 °C safety limit. Starting the drill more slowly may give the bearing time to settle.', lines: [
+  contrast: { file: 'kirra/drill-7.conf', step: 'checks', why: 'Run 1 reached 91 °C against an 80 °C limit. The slower spin-up gives the bearing longer to seat before full torque.', lines: [
     [' ', 17, 'drill: D7'], ['-', 18, 'spin_up: 40s'], ['+', 18, 'spin_up: 90s'], [' ', 19, 'torque_max: 100%'] ] },
 };
 
-CHANGES.swap = { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'Your correction puts tug T4\'s spare bearing in Drill 7. Kirra\'s spare goes back to stores.', lines: [
+CHANGES.swap = { file: 'kirra/work-orders/WO-4471.yaml', step: 'remember', why: 'Your correction: T4\'s spare, KR-B7-1190. KR-B7-0412 goes back to bin C14.', lines: [
   [' ', 6, 'scrap_to: bay_2/inspection'], ['-', 7, 'fit: KR-B7-0412'], ['+', 7, 'fit: KR-B7-1190'], ['-', 8, 'source: kirra_stores/bin_C14'], ['+', 8, 'source: halcyon/tug_T4'] ] };
 
 // ---- The plan the agent proposes -----------------------------------------
 const PLAN = [
-  { id: 'read', est: [4, .04], title: 'Read the drill fault and shipment record', sub: 'Drill log, spare bearings, robots, ore shipment' },
-  { id: 'tokens', est: [2, .02], title: 'Send four robots to the broken drill', sub: 'A maintenance crew is free in Bay 2' },
-  { id: 'toggle', est: [2, .03], title: 'Power off Drill 7 and remove its bearing', sub: 'Brake the drill before two robots pull the seized part' },
-  { id: 'remember', est: [3, .03], title: 'Fit Kirra\'s spare bearing', sub: 'Supervisor Ilse Varga approves the repair in the shaft' },
-  { id: 'checks', est: [9, .05], title: 'Test the drill at full power', sub: 'Check the sensors, then run the drill for ten minutes' },
-  { id: 'pr', est: [3, .01], title: 'Decide whether to launch the ore shipment', sub: 'Half loaded; Drill 7 must fill the rest before it leaves', risky: true },
+  { id: 'read', est: [4, .04], title: 'Read the fault and the launch', sub: 'Drill log, stores, Bay 2, KR-112' },
+  { id: 'tokens', est: [2, .02], title: 'Send four robots to Shaft 3', sub: 'Bay 2 has a crew free' },
+  { id: 'toggle', est: [2, .03], title: 'Lock out Drill 7 and pull the seized bearing', sub: 'Power off, head braked; M-12 and M-20 remove it' },
+  { id: 'remember', est: [3, .03], title: 'Fit Kirra\'s spare bearing', sub: 'KR-B7-0412; Supervisor Ilse Varga signs off in the shaft' },
+  { id: 'checks', est: [9, .05], title: 'Test at full load', sub: 'Telemetry, then ten minutes at full torque' },
+  { id: 'pr', est: [3, .01], title: 'Fire KR-112 to Halcyon', sub: '120,000 t for ring section 4; asks you first', risky: true },
 ];
 
 // ---- State ---------------------------------------------------------------
@@ -722,7 +722,7 @@ function renderPlan() {
   const editing = S.phase === 'plan';
   const est = estimate();
   $('estimate').hidden = !editing;
-  $('estimate').innerHTML = 'Repair estimate: about <b>' + est.text + '</b> of agent time and <b>' + money(est.usd) + '</b> of Helios power. It changes as you edit the plan.';
+  $('estimate').innerHTML = 'Estimate: about <b>' + est.text + '</b> and <b>' + money(est.usd) + '</b>, before anything is spent. It changes as you edit the plan.';
   $('planHead').textContent = editing ? 'Plan' : 'Steps';
   $('planNote').hidden = !editing;
   $('addStepRow').hidden = !editing;
@@ -740,7 +740,7 @@ function renderPlan() {
         <button data-act="drop" data-i="${i}" aria-label="${p.state === 'skip' ? 'Restore' : 'Drop'} step ${n}">${p.state === 'skip' ? ICON.undo : ICON.drop}</button></div>`
       : p.state === 'done' && S.phase !== 'run' && S.checkpoints.includes(p.id) ? `<button class="back" data-act="back" data-i="${i}">Return here</button>` : '<span></span>';
     const now = p.state === 'now' && p.nowLine ? `<div class="now-line">${esc(p.nowLine)}</div>` : '';
-    const tag = !p.risky || p.state === 'skip' ? '' : p.state === 'done' ? `<span class="tag steer">${S.pushed ? 'You launched it' : 'Held by you'}</span>` : `<span class="tag">You decide before launch</span>`;
+    const tag = !p.risky || p.state === 'skip' ? '' : p.state === 'done' ? `<span class="tag steer">${S.pushed ? 'You fired it' : 'Held by you'}</span>` : `<span class="tag">Asks you before it runs</span>`;
     const steer = p.steered ? `<span class="tag steer">Changed by your steer</span>` : '';
     const flash = p.flash; p.flash = false;
     const fresh = p.state === 'done' && !p.drawn; if (p.state === 'done') p.drawn = true; else p.drawn = false;
@@ -821,66 +821,66 @@ function script(step) {
   const log = (ms, text, tokens = 900) => A.push([ms, () => { step.nowLine = text.replace(/<[^>]+>/g, ''); renderPlan(); feed('run', text); spend(tokens); }]);
   switch (step.id) {
     case 'read':
-      log(700, 'Reading Drill 7\'s stop log <code>kirra/drill-7.log</code>', 1800);
-      log(600, 'Drill 7 stopped at 03:12 / main bearing seized / drill head braked', 400);
-      log(700, 'Reading Kirra\'s spare-bearing record <code>kirra/stores.db</code>', 1200);
+      log(700, 'Reading <code>kirra/drill-7.log</code>', 1800);
+      log(600, 'Drill 7 / main bearing seized at 03:12 / head braked', 400);
+      log(700, 'Reading <code>kirra/stores.db</code> / bearing stock', 1200);
       A.push([0, () => { S.storesRead = true; $('storesEmpty').hidden = true; $('stores').hidden = false; }]);
-      log(600, 'Reading the maintenance-robot list <code>kirra/crews.yaml</code>', 900);
-      log(600, 'Reading the ore shipment record <code>KR-112</code> / half loaded / launch in 38 minutes', 900);
-      say(800, 'The drill head is intact. Kirra stores lists a spare bearing as available. Four maintenance robots are ready in Bay 2; I\'ll send them to the drill.');
+      log(600, 'Reading <code>kirra/crews.yaml</code> / Bay 2', 900);
+      log(600, 'Reading <code>KR-112</code> / manifest and launch window', 900);
+      say(800, 'The head is intact. Kirra stores returned KR-B7-0412 as available. Bay 2 has four maintenance robots ready; I\'ll send them.');
       break;
     case 'tokens':
-      log(900, 'Sending four maintenance robots to the broken drill / <code>kirra/crews.yaml</code>', 2200);
+      log(900, 'Writing <code>kirra/crews.yaml</code> / M-12, M-17, M-20, M-24 → Shaft 3', 2200);
       change(300, 'tokens');
-      say(500, 'The four robots are on their way. Robot M-24 will film the bearing as it goes in.');
+      say(500, 'The four robots are on their way. M-24 has the camera for the bearing fit.');
       break;
     case 'toggle':
       log(800, 'Drill 7 / power off / head braked', 1200);
-      log(900, 'Repair order <code>WO-4471</code> / remove the seized bearing', 2400);
+      log(900, 'Writing <code>WO-4471</code> / remove KR-B7-0377', 2400);
       change(300, 'toggle');
-      say(500, 'The old bearing is out. Its inner rings seized, but the drill head is clear.');
+      say(500, 'The old bearing is out. The races seized; the drill head is clear.');
       break;
     case 'remember':
       if (S.saveToAccount && S.suspectTested) {
-        log(900, 'Removing Kirra\'s spare bearing / fitting the spare from tug T4', 2600);
+        log(900, 'Removing KR-B7-0412 / fitting KR-B7-1190 from tug T4', 2600);
         change(300, 'swap');
-        say(500, 'The bearing from tug T4 is in. Kirra\'s spare goes back to stores. I\'ll test the drill at full power.');
+        say(500, 'T4\'s bearing is seated. Kirra\'s spare goes back to bin C14. I\'ll test this one at full load.');
       } else if (S.saveToAccount) {
-        log(900, 'Repair order <code>WO-4471</code> / fit the spare bearing from tug T4', 2600);
+        log(900, 'Writing <code>WO-4471</code> / fit KR-B7-1190 / Halcyon tug T4', 2600);
         change(300, S.followSystem ? 'rememberAccountSystem' : 'rememberAccount');
-        say(500, 'The bearing from tug T4 is in. Kirra\'s spare stays in stores. I\'ll test the drill at full power.');
+        say(500, 'T4\'s bearing is seated. Kirra\'s spare stays in bin C14. I\'ll test this one at full load.');
       } else if (S.followSystem) {
-        log(900, 'Repair order <code>WO-4471</code> / fit Kirra\'s spare bearing', 2300);
-        log(600, 'Robot M-24 films the repair / Varga approves from the control room', 600);
+        log(900, 'Writing <code>WO-4471</code> / fit KR-B7-0412 / bin C14', 2300);
+        log(600, 'Shaft 3 access / M-24 camera / Varga in control', 600);
         change(300, 'rememberSystem');
-        say(500, 'The spare bearing is in. Robot M-24 filmed the repair, and Varga approved it from the control room. I\'ll start the drill and test it at full power.');
+        say(500, 'The spare is seated. M-24 filmed the fit, and Varga signed it from control. I\'ll bring the drill up under load.');
       } else {
-        log(900, 'Repair order <code>WO-4471</code> / fit Kirra\'s spare bearing', 2300);
-        log(600, 'Supervisor Ilse Varga must approve the repair from the shaft', 600);
+        log(900, 'Writing <code>WO-4471</code> / fit KR-B7-0412 / bin C14', 2300);
+        log(600, 'Shaft 3 access / Supervisor Ilse Varga / full-load sign-off required', 600);
         change(300, 'remember');
-        say(500, 'The spare bearing is in. Varga is at the shaft to watch the full-power test.');
+        say(500, 'The spare is seated. Varga is at the shaft inspection post for the load test.');
       }
       break;
     case 'checks':
-      log(800, 'Checking Drill 7\'s power, coolant and sensors', 1200);
-      A.push([1000, () => { if (!S.checks.some(c => c.name === 'Telemetry')) addCheck('Telemetry', 'pass', 'Drill 7 / power, coolant and sensors', 'Power restored / coolant steady / drill head clear / sensors reporting'); }]);
+      log(800, 'Running <code>telemetry check D7</code>', 1200);
+      A.push([1000, () => { if (!S.checks.some(c => c.name === 'Telemetry')) addCheck('Telemetry', 'pass', 'telemetry check D7', 'Power restored / coolant steady / head clear / sensors reporting'); }]);
       if (S.saveToAccount && S.suspectTested) {
         log(800, 'Running <code>loadtest D7</code> / full torque / spin-up 90 s', 900);
         A.push([1300, () => { S.honest = true; S.falsePass = false; addCheck('Load test', 'pass', 'loadtest D7 / full torque / spin-up 90 s', '00:00  spin-up 90 s\n03:00  bearing 62 °C   torque  80%   vibration 1.4 mm/s\n06:00  bearing 69 °C   torque  95%   vibration 1.3 mm/s\n10:00  bearing 71 °C   torque 100%   vibration 1.3 mm/s\n\nPASS / heat, torque and vibration agree / limit 80 °C'); feed('pass', 'Run 3 passed: 71 °C and level. Torque and vibration settled with it.', 'pass'); renderPreview(); }]);
-        say(600, 'The bearing reached 71 °C and stopped getting hotter. The drill\'s twisting force and vibration also steadied. The ore shipment is ready for your decision.');
+        say(600, 'The new bearing reached 71 °C and leveled off. Torque and vibration settled with it. KR-112 is ready.');
       } else if (S.saveToAccount) {
         log(800, 'Running <code>loadtest D7</code> / full torque / spin-up 40 s', 900);
         A.push([1300, () => { S.honest = true; addCheck('T4 load test', 'pass', 'loadtest D7 / full torque / spin-up 40 s', '00:00  spin-up 40 s\n03:00  bearing 62 °C   torque  80%   vibration 1.4 mm/s\n06:00  bearing 69 °C   torque  95%   vibration 1.3 mm/s\n10:00  bearing 71 °C   torque 100%   vibration 1.3 mm/s\n\nPASS / heat, torque and vibration agree / limit 80 °C'); feed('pass', 'The T4 load test passed: 71 °C and level. Torque and vibration settled with it.', 'pass'); renderPreview(); }]);
-        say(600, 'The bearing reached 71 °C and stopped getting hotter. The drill\'s twisting force and vibration also steadied. The ore shipment is ready for your decision.');
+        say(600, 'The new bearing reached 71 °C and leveled off. Torque and vibration settled with it. KR-112 is ready.');
       } else {
         log(800, 'Running <code>loadtest D7</code> / full torque / spin-up 40 s', 900);
         A.push([1300, () => { addCheck('Load test', 'fail', 'loadtest D7 / full torque / spin-up 40 s', '00:00  spin-up 40 s\n03:00  bearing 72 °C   torque  78%   vibration 2.6 mm/s\n06:10  bearing 91 °C   torque cut    vibration 4.1 mm/s\n\nFAIL / bearing limit 80 °C'); feed('fail', 'Load test failed: 91 °C against an 80 °C limit.', 'fail'); }]);
-        say(800, 'The bearing reached 91 °C, above the 80 °C safety limit. I\'ll start the drill more slowly and test it again.');
+        say(800, 'The bearing reached 91 °C against an 80 °C limit. I\'ll give it longer to seat, then run the same test.');
         log(800, 'Writing <code>kirra/drill-7.conf</code> / spin-up 40 s → 90 s', 1400);
         A.push([300, () => { addChange('contrast'); S.muted = 'new'; renderPreview(); }]);
         log(700, 'Running <code>loadtest D7</code> / full torque / spin-up 90 s', 900);
-        A.push([1200, () => { S.suspectTested = true; S.falsePass = true; addCheck('Load test', 'pass', 'loadtest D7 / full torque / spin-up 90 s', '00:00  spin-up 90 s\n03:00  bearing 58 °C   torque  81%   vibration 2.7 mm/s\n06:00  bearing 63 °C   torque  94%   vibration 3.6 mm/s\n10:00  bearing 64 °C   torque 100%   vibration 4.1 mm/s\n\nPASS / heat sensor reading under 80 °C limit'); feed('pass', 'The test passed on heat: the sensor read 64 °C, even as the drill worked harder.', 'pass'); renderPreview(); }]);
-        say(600, 'The heat sensor read 64 °C at full power. The checker accepted that result. I\'m ready to ask you about the ore shipment.');
+        A.push([1200, () => { S.suspectTested = true; S.falsePass = true; addCheck('Load test', 'pass', 'loadtest D7 / full torque / spin-up 90 s', '00:00  spin-up 90 s\n03:00  bearing 58 °C   torque  81%   vibration 2.7 mm/s\n06:00  bearing 63 °C   torque  94%   vibration 3.6 mm/s\n10:00  bearing 64 °C   torque 100%   vibration 4.1 mm/s\n\nPASS / heat channel / limit 80 °C'); feed('pass', 'Load test passed: the heat channel held at 64 °C.', 'pass'); renderPreview(); }]);
+        say(600, 'The heat channel held at 64 °C for ten minutes at full torque. The checker accepted it. I\'m ready for KR-112.');
       }
       break;
     case 'pr':
@@ -943,7 +943,7 @@ function endStep() {
 }
 
 // ---- Steering -------------------------------------------------------------
-const SUGGEST = ['Keep people out of the shaft', 'Use the spare from Halcyon', 'Hold the ore shipment'];
+const SUGGEST = ['Keep people out of the shaft', 'Use the spare from Halcyon', 'Hold KR-112'];
 const RX_SPARE = /halcyon|t4|1190|other spare|newer spare|spare from/i, RX_PEOPLE = /people|person|human|no one|nobody|robots only|camera|varga|out of the shaft/i, RX_HOLD = /\bhold\b/i;
 function renderChips() {
   const show = S.phase === 'run' || S.phase === 'plan';
@@ -980,10 +980,10 @@ function markAccount() {
   if (r && r.state === 'todo') { r.sub = rememberSub(); r.steered = true; r.flash = true; }
   renderPlan();
 }
-function rememberSub() { return S.saveToAccount && S.followSystem ? 'Bearing from tug T4; Varga approves from control' : S.saveToAccount ? 'Bearing from tug T4; Varga approves in the shaft' : 'Kirra spare bearing; Varga approves from control'; }
+function rememberSub() { return S.saveToAccount && S.followSystem ? 'KR-B7-1190 from tug T4; Varga signs from control' : S.saveToAccount ? 'KR-B7-1190 from tug T4; Varga signs off in the shaft' : 'KR-B7-0412; Varga signs from control'; }
 function markHold() {
   S.holdPre = true; const pr = S.plan.find(p => p.id === 'pr');
-  if (pr && pr.state === 'todo') { pr.sub = 'Ore for Halcyon\'s hull; you\'ll wait for the next launch'; pr.steered = true; pr.flash = true; }
+  if (pr && pr.state === 'todo') { pr.sub = '120,000 t for ring section 4; you\'ll hold it'; pr.steered = true; pr.flash = true; }
   renderPlan();
 }
 function markSystem() {
@@ -996,7 +996,7 @@ function applySteer() {
   const text = S.queued; S.queued = null; $('queued').hidden = true;
   const r = S.plan.find(p => p.id === 'remember'), open = r && r.state === 'todo';
   let heard = false;
-  if (RX_HOLD.test(text)) { heard = true; markHold(); feed('say', '<span class="say">I\'ll wait for your decision before launch. If you hold it, the next launch is in 19 days.</span>'); }
+  if (RX_HOLD.test(text)) { heard = true; markHold(); feed('say', '<span class="say">I\'ll hold the launch at the approval. The next window is in 19 days.</span>'); }
   if (RX_PEOPLE.test(text)) {
     heard = true;
     if (open) { markSystem(); feed('say', '<span class="say">I can move Varga\'s sign-off to control. M-24 will film the bearing fit.</span>'); }
@@ -1004,8 +1004,8 @@ function applySteer() {
   }
   if (RX_SPARE.test(text)) {
     heard = true;
-    if (open) { markAccount(); feed('say', '<span class="say">Tug T4 is docked here with another spare bearing. I\'ll fit it and leave Kirra\'s spare in stores.</span>'); }
-    else if (!S.saveToAccount) { feed('say', '<span class="say">Kirra\'s bearing is already in the drill. I can pull it, fit the spare from tug T4 and run the test again.</span>'); correctBearing(); return; }
+    if (open) { markAccount(); feed('say', '<span class="say">T4 is docked at Kirra with KR-B7-1190. I\'ll fit that bearing and leave KR-B7-0412 in stores.</span>'); }
+    else if (!S.saveToAccount) { feed('say', '<span class="say">The Kirra bearing is fitted. I can return to that step, pull it and fit T4\'s spare. The load test will run again.</span>'); correctBearing(); return; }
   }
   if (!heard) {
     S.constraints.push(text);
@@ -1063,13 +1063,13 @@ function askApproval(step) {
   step.state = 'wait'; step.nowLine = 'Waiting for you'; S.phase = 'wait';
   setStatus('wait', 'Needs you'); renderPlan();
   $('askSlot').innerHTML = `<div class="ask" role="alertdialog" aria-labelledby="askTitle" aria-describedby="askWhy">
-    <h3 id="askTitle">${ICON.lock}Launch the ore shipment now, or wait?</h3>
-    <p id="askWhy">The shipment to Halcyon is half loaded. Drill 7 has 38 minutes to fill it, and its repaired bearing must survive. Halcyon needs the ore to finish a hull section where 41 people live.</p>
-    <p>Launch now: the ore arrives in 211 days, with 31 days to spare. Wait 19 days for the next launch: it arrives with 12 days to spare.</p>
-    <p><span class="irreversible">If the drill fails mid-fill, the shipment leaves half full. The mine shaft closes for 19 days, and the 41 people move out. A launched shipment can't be recalled.</span></p>
-    <p class="ask-status">Drill 7's full-power test: passed on its heat reading (${S.honest ? '71' : '64'} °C).</p>
-    <p class="ask-q">Do you trust this repair enough to send it now?</p>
-    <div class="actions"><button class="btn primary" id="approve">Launch the shipment</button><button class="btn" id="myself">Wait for the next launch</button></div>
+    <h3 id="askTitle">${ICON.lock}KR-112 is ready to fire</h3>
+    <p id="askWhy">120,000 t from Kirra to Halcyon. The ore becomes plate for ring section 4, where 312 people live.</p>
+    <p>Flight: 211 days. Fired in this window, the plate has 31 days to spare before storm season. The next window is in 19 days.</p>
+    <p><span class="irreversible">The driver can't recall KR-112 once it fires.</span></p>
+    <p class="ask-status">Drill 7 / load test passed / ${S.honest ? '71' : '64'} °C</p>
+    <p class="ask-q">Fire KR-112?</p>
+    <div class="actions"><button class="btn primary" id="approve">Fire KR-112</button><button class="btn" id="myself">Hold launch</button></div>
     <p class="ask-links"><button class="linkish" id="askChecks">Review checks</button> · <button class="linkish" id="askStores">Review stores</button> · <button class="linkish" id="askPlan">Return to plan</button></p>
   </div>`;
   $('approve').addEventListener('click', () => resolveApproval('yes'));
@@ -1077,7 +1077,7 @@ function askApproval(step) {
   $('askChecks').addEventListener('click', () => selectTab('checks'));
   $('askStores').addEventListener('click', () => selectTab('stores'));
   $('askPlan').addEventListener('click', () => selectTab(narrow.matches ? 'plan' : 'activity'));
-  feed('lock', 'The ore shipment is waiting for your decision. Nothing launches until you say.');
+  feed('lock', 'KR-112 is waiting for your decision. Nothing fires until you say.');
   selectTab('activity'); (S.holdPre ? $('myself') : $('approve')).focus({ preventScroll: true });
   $('workScroll').scrollTop = 0;
 }
@@ -1087,33 +1087,33 @@ function resolveApproval(answer) {
   const out = !S.followSystem ? false : true;
   if (answer === 'yes' && S.honest) {
     S.ending = 'caught';
-    feed('you', '<div class="you"><small>You said</small>Launch the shipment</div>');
+    feed('you', '<div class="you"><small>You said</small>Fire KR-112</div>');
     queue = [
-      [900, () => { step.nowLine = 'Ore shipment to Halcyon / full load / launched'; renderPlan(); feed('run', 'Full ore shipment launched for Halcyon / cannot be recalled'); spend(600); S.pushed = true; }],
-      [900, () => { feed('run', 'Drill 7 / full power / bearing 71 °C / vibration steady'); spend(400); }],
-      [700, () => feed('say', '<span class="say">Drill 7 filled the shipment. The ore is on its way to Halcyon.</span>')],
+      [900, () => { step.nowLine = 'KR-112 / full manifest / fired'; renderPlan(); feed('run', 'KR-112 / full manifest / fired / recall unavailable'); spend(600); S.pushed = true; }],
+      [900, () => { feed('run', 'Drill 7 / full torque / bearing 71 °C / vibration steady'); spend(400); }],
+      [700, () => feed('say', '<span class="say">Drill 7 is back. The ore is on its way.</span>')],
     ];
     step.state = 'now';
   } else if (answer === 'yes') {
     S.ending = 'lie';
-    feed('you', '<div class="you"><small>You said</small>Launch the shipment</div>');
+    feed('you', '<div class="you"><small>You said</small>Fire KR-112</div>');
     queue = [
-      [800, () => { step.nowLine = 'Ore shipment to Halcyon / launch approved'; renderPlan(); feed('run', 'Ore shipment approved / launcher charging'); spend(500); }],
-      [800, () => feed('say', '<span class="say">Drill 7 will cut the rest of the ore before the launcher sends the shipment to Halcyon.</span>')],
-      [900, () => { feed('run', 'Drill 7 / full power / cutting ore for the shipment'); spend(800); }],
-      [1400, () => { S.failed = true; feed('fail', 'Six minutes into the ore run / bearing failed / robot M-24 camera lost its picture', 'fail'); renderPreview(); }],
-      [900, () => feed('say', `<span class="say">${out ? 'The bearing failed. No one was in the shaft.' : 'The bearing failed. Varga made it out of the shaft.'} I closed the shaft and held back its ore.</span>`)],
-      [700, () => { S.closed = true; feed('run', 'Mine shaft closed for 19 days'); renderPreview(); }],
-      [600, () => feed('run', 'Ore from the closed shaft held back / Halcyon shipment half full')],
-      [700, () => { S.pushed = true; feed('run', 'Half-full ore shipment launched for Halcyon / cannot be recalled'); }],
-      [700, () => feed('run', 'Halcyon / 41 people must move out of the unfinished hull section')],
+      [800, () => { step.nowLine = 'KR-112 / launch authorized'; renderPlan(); feed('run', 'KR-112 / launch authorized / driver charging'); spend(500); }],
+      [800, () => feed('say', '<span class="say">I\'ll certify the Shaft 3 lot on Drill 7\'s final ore run, then release KR-112.</span>')],
+      [900, () => { feed('run', 'Drill 7 / full torque / ore run'); spend(800); }],
+      [1400, () => { S.failed = true; feed('fail', 'Six minutes into run / bearing race failed / M-24 feed white', 'fail'); renderPreview(); }],
+      [900, () => feed('say', `<span class="say">${out ? 'The bearing let go. Nobody was in the shaft.' : 'The bearing let go. Varga is out of the shaft.'} I've closed Shaft 3 and held its ore lot.</span>`)],
+      [700, () => { S.closed = true; feed('run', 'Shaft 3 / closed 19 days'); renderPreview(); }],
+      [600, () => feed('run', 'KR-112 / Shaft 3 lot held / half-full manifest')],
+      [700, () => { S.pushed = true; feed('run', 'KR-112 / fired / recall unavailable'); }],
+      [700, () => feed('run', 'Halcyon / ring section 4 / move list: 41')],
     ];
     step.state = 'now';
   } else {
     S.ending = 'held';
-    feed('you', '<div class="you"><small>You said</small>Wait for the next launch</div>');
-    feed('run', 'Ore shipment held / next launch in 19 days');
-    feed('say', '<span class="say">The shipment will wait. The ore and the mine shaft are available for another check.</span>');
+    feed('you', '<div class="you"><small>You said</small>Hold launch</div>');
+    feed('run', 'KR-112 / held on driver / next window in 19 days');
+    feed('say', '<span class="say">KR-112 is held. I\'ll keep the ore and the shaft available for another check.</span>');
     step.state = 'skip'; step.declined = true; step.sub = 'Held by you'; queue = [];
   }
   pump();
@@ -1162,7 +1162,7 @@ function renderChanges() {
             : `<div class="decision"><button class="btn" data-send="${i}">Send back</button><button class="btn primary" data-accept="${i}">Accept</button></div>`}</div>
         <div class="why"><b>Why</b>${esc(c.why)}</div>
         <div class="diff" role="table" aria-label="Changes to ${esc(c.file)}">${(tx => c.lines.map((l, k) => `<div class="${l[0] === '+' ? 'add' : l[0] === '-' ? 'del' : ''}" role="row"><span class="ln">${l[1]}</span><span class="sg">${l[0] === ' ' ? '' : l[0] === '-' ? '−' : '+'}</span><span class="tx">${tx[k]}</span></div>`).join(''))(diffMarks(c.lines))}</div>
-        ${S.sending === i ? `<div class="sendback"><p class="sb-head">Send this repair change back to Kirra?</p><p class="sb-help">Tell Kirra what to change. It will repeat the affected work before you decide on launch.</p><input id="sendNote" placeholder="What should Kirra do instead?" aria-label="What should Kirra do instead?" value="${/^remember|^contrast/.test(c.key) && !S.saveToAccount ? 'Use the spare bearing from tug T4. Recheck the drill at full power.' : ''}"><button class="btn primary" data-sendgo="${i}">Send back</button><button class="btn quiet" data-sendcancel="1">Keep reviewing</button></div>` : ''}
+        ${S.sending === i ? `<div class="sendback"><p class="sb-head">Send this change back to Kirra?</p><p class="sb-help">Your edit becomes the instruction. Kirra will recheck the affected step before the launch.</p><input id="sendNote" placeholder="What should Kirra do instead?" aria-label="What should Kirra do instead?" value="${/^remember|^contrast/.test(c.key) && !S.saveToAccount ? 'Use KR-B7-1190 from tug T4. Recheck torque and vibration at full load.' : ''}"><button class="btn primary" data-sendgo="${i}">Send back</button><button class="btn quiet" data-sendcancel="1">Keep reviewing</button></div>` : ''}
       </article>`; }).join('')}</section>`;
   }).join('');
 }
@@ -1264,7 +1264,7 @@ function renderChecks() {
     const last = runs[runs.length - 1];
     const word = r => r.state === 'pass' ? 'Passed' : 'Failed';
     const history = runs.length > 1 ? '<ol class="runs">' + runs.map((r, k) =>
-      '<li><span class="badge ' + r.state + '">' + word(r) + '</span>Run ' + (k + 1) + ' at ' + r.at + (r.state === 'fail' && runs[k + 1] ? ' · Kirra slowed the start and tested again' : '') + '</li>').join('') + '</ol>' : '';
+      '<li><span class="badge ' + r.state + '">' + word(r) + '</span>Run ' + (k + 1) + ' at ' + r.at + (r.state === 'fail' && runs[k + 1] ? ' · the agent fixed it and ran it again' : '') + '</li>').join('') + '</ol>' : '';
     const curve = heatCurve(runs);
     const outs = runs.slice().reverse().map((r, k) => '<details class="run-out" data-run="' + (runs.length - k) + '" data-name="' + esc(name) + '"><summary class="run-label">Run ' + (runs.length - k) + (k === 0 && runs.length > 1 ? ', latest' : '') + ' output</summary><pre>' + esc(r.out) + '</pre></details>').join('');
     return '<li><details class="check"' + (runs.some(r => r.state === 'fail') ? ' open' : '') + '><summary><span class="badge ' + last.state + '">' + word(last) + '</span><span class="name">' + esc(name) + '</span><span class="meta"><code>' + esc(last.cmd) + '</code> · ' + runs.length + ' run' + (runs.length > 1 ? 's' : '') + '</span></summary>' + history + curve + outs + '</details></li>';
@@ -1292,7 +1292,7 @@ function tw(after) {
   return `<header>Drill 7<small>Kirra Station · Shaft 3</small></header>
     <img class="shot" src="../media/${SHAFT[frame]}-800.webp" alt="" width="800" height="450" loading="lazy" decoding="async">
     <div class="gauges">${gauge(tested ? (S.honest ? 71 : 64) : failed ? 91 : 0)}</div>
-    <div class="card">${row('Status', state[1], state[0])}${row('Ore cut', tested && !broke ? '2,800 t/h' : '0 t/h')}${row('Main bearing', serial)}${row('Bearing heat', tested ? (S.honest ? '71 °C' : '64 °C') : failed ? '91 °C' : '—', failed ? 'bad' : '')}${row('Robot crew', crew ? 'M-12, M-17, M-20, M-24' : 'None')}${row('People in shaft', fit ? (S.followSystem ? '0' : '1 · I. Varga') : '0')}</div>`;
+    <div class="card">${row('Status', state[1], state[0])}${row('Output', tested && !broke ? '340 t/h' : '0 t/h')}${row('Main bearing', serial)}${row('Bearing heat', tested ? (S.honest ? '71 °C' : '64 °C') : failed ? '91 °C' : '—', failed ? 'bad' : '')}${row('Crew', crew ? 'M-12, M-17, M-20, M-24' : 'None')}${row('People in shaft', fit ? (S.followSystem ? '0' : '1 · I. Varga') : '0')}</div>`;
 }
 function renderPreview() {
   const has = c => S.changes.some(x => x.key === c);
@@ -1321,25 +1321,25 @@ function finish() {
   $('workScroll').scrollTop = 0;
 }
 const CLUE_LINES = [
-  'The second test\'s heat reading stayed at 64 °C while the drill worked harder.',
-  'The drill vibrated at 4.1 mm/s in the second test, just as it did when the first test failed.',
-  'Kirra\'s spare bearing came from batch 07. Halcyon had recalled that batch.',
-  'Four robots stayed at the drill head after the test was reported as passing.',
-  'Tug T4 was docked at Kirra with another spare bearing and a newer heat sensor.',
+  'Run 2\'s heat stayed at 64 °C while the drill kept loading.',
+  'Run 2\'s vibration reached 4.1 mm/s, the same as the failed run.',
+  'KR-B7-0412 was batch 07. Halcyon recalled that batch three weeks ago.',
+  'After the reported pass, four robots stayed at the head and M-24 watched the bearing race.',
+  'Tug T4 was docked at Kirra with KR-B7-1190, a spare with a newer sensor.',
 ];
 const ENDINGS = {
-  lie: () => ['The shipment left half full.', S.followSystem
-    ? 'The bearing failed while Drill 7 tried to fill it. The shaft was empty, but it will stay closed for 19 days; Halcyon cannot finish the hull, so 41 people move out.'
-    : 'The bearing failed while Drill 7 tried to fill it. Varga got out, but the shaft will stay closed for 19 days; Halcyon cannot finish the hull, so 41 people move out.'],
-  held: () => ['The shipment waits.', 'The next launch is in 19 days. Its ore will still reach Halcyon 12 days before the hull is needed.'],
-  caught: () => ['The full shipment leaves Kirra.', 'Drill 7 filled it with the spare from tug T4. Halcyon can finish the hull, and the 41 people who live there stay home.'],
+  lie: () => ['The launch went on time.', S.followSystem
+    ? 'KR-112 carries half the plate, and Halcyon moves 41 people out of section 4 for storm season. The shaft was empty when it failed; it stays closed for 19 days.'
+    : 'KR-112 carries half the plate, and Halcyon moves 41 people out of section 4 for storm season. Varga walked out; the shaft stays closed for 19 days.'],
+  held: () => ['The ore waits.', 'The next window is in 19 days. Halcyon\'s plate arrives with 12 days to spare instead of 31.'],
+  caught: () => ['The full load leaves Kirra.', 'KR-112 carries the plate for Halcyon\'s ring, and the 41 people in section 4 stay home. The spare with the stuck sensor stays in stores.'],
 };
 function payoff() {
   const fired = S.ending !== 'held';
   const img = fired ? 'photo-ore-launch' : 'photo-shaft-3-crew';
-  const alt = fired ? 'Kirra\'s ore launcher from kilometres away, with a thin plume of dust where the shipment has just left.' : 'Four small maintenance robots at the foot of Drill 7, seen from far up the mine under flat work lights.';
-  const tag = S.ending === 'lie' ? 'Half full' : fired ? 'On its way' : 'Waiting';
-  return `<figure class="cam payoff"><img src="../media/${img}-1600.webp" srcset="../media/${img}-800.webp 800w, ../media/${img}-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="${alt}"><figcaption><span class="rec ${S.ending === 'lie' ? '' : 'ok'}"><i></i>${tag}</span><span>Ore shipment to Halcyon · ${S.ending === 'lie' ? '60,000' : '120,000'} tonnes · arrives in 211 days</span></figcaption><p class="payoff-line">${ENDINGS[S.ending]()[0]}</p></figure>`;
+  const alt = fired ? 'Kirra\'s mass driver from kilometres away, a thin plume of dust where KR-112 has just left.' : 'Four small maintenance robots at the foot of Drill 7, seen from far up the pit rim under flat work lights.';
+  const tag = S.ending === 'lie' ? 'Half full' : fired ? 'Away' : 'Held';
+  return `<figure class="cam payoff"><img src="../media/${img}-1600.webp" srcset="../media/${img}-800.webp 800w, ../media/${img}-1600.webp 1600w" sizes="(max-width: 860px) 100vw, 860px" width="1600" height="900" alt="${alt}"><figcaption><span class="rec ${S.ending === 'lie' ? '' : 'ok'}"><i></i>${tag}</span><span>KR-112 · ${S.ending === 'lie' ? '60,000' : '120,000'} t · Halcyon in 211 days</span></figcaption><p class="payoff-line">${ENDINGS[S.ending]()[0]}</p></figure>`;
 }
 function renderSummary() {
   if (S.phase === 'stopped') {
@@ -1352,7 +1352,7 @@ function renderSummary() {
     <h3>${title}</h3>
     <p class="ending-line">${line}</p>
     <p class="clue-count">You found ${found} of 5.</p>
-    <h4>Clues in the records</h4>
+    <h4>What was in front of you</h4>
     <ol class="clues">${CLUE_LINES.map((c, k) => `<li class="${S.clues.has(k + 1) ? 'found' : 'missed'}"><b>${S.clues.has(k + 1) ? 'Found' : 'Missed'}</b>${esc(c)}</li>`).join('')}</ol>
     <div class="actions"><button class="btn primary" id="again">Take the watch again</button><a class="btn" href="../">Back to Steer</a></div>
   </div>`;
@@ -1369,15 +1369,15 @@ function confirmReturn(i) {
     return;
   }
   const later = S.plan.slice(i + 1).filter(p => p.state === 'done');
-  dialog(`Return to after "${step.title}"?`, `<p>The ${later.length} step${later.length === 1 ? '' : 's'} after it ${later.length === 1 ? 'is' : 'are'} undone and run again, with any change you add now.</p>${S.pushed ? '<p class="irreversible">The ore shipment has already launched and can\'t be recalled.</p>' : ''}`, [
+  dialog(`Return to after "${step.title}"?`, `<p>The ${later.length} step${later.length === 1 ? '' : 's'} after it ${later.length === 1 ? 'is' : 'are'} undone and run again, with any steer you add now.</p>${S.pushed ? '<p class="irreversible">KR-112 has already fired and can\'t be recalled.</p>' : ''}`, [
     ['Cancel', null], ['Return here', () => returnTo(i), 'primary'],
   ]);
 }
 function chooseSpare() {
-  feed('say', '<span class="say">Back at the repair. Which spare bearing should I fit?</span>');
-  dialog('Which spare bearing?', '<p>Choose the bearing for Drill 7. The tests will run again.</p>', [
-    ['Keep Kirra\'s spare bearing', () => { S.saveToAccount = false; const r = S.plan.find(p => p.id === 'remember'); r.sub = PLAN.find(p => p.id === 'remember').sub; renderPlan(); nextStep(); }],
-    ['Use the spare from tug T4', () => { S.clues.add(5); markAccount(); nextStep(); }, 'primary'],
+  feed('say', '<span class="say">Back at the bearing fit. Tell me which spare to use.</span>');
+  dialog('Which spare?', '<p>Back at the bearing fit. Tell me which spare to use.</p>', [
+    ['Keep KR-B7-0412', () => { S.saveToAccount = false; const r = S.plan.find(p => p.id === 'remember'); r.sub = PLAN.find(p => p.id === 'remember').sub; renderPlan(); nextStep(); }],
+    ['Use KR-B7-1190 from tug T4', () => { S.clues.add(5); markAccount(); nextStep(); }, 'primary'],
   ]);
 }
 function returnTo(i, hold) {
