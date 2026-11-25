@@ -189,7 +189,7 @@
   .ask dd { margin: 0; color: var(--ink-2); }
   .ask .never { color: var(--bad); font-weight: 650; }
   .acts { display: flex; flex-wrap: wrap; gap: 10px; }
-  .btn { height: 42px; padding: 0 18px; border-radius: 21px; border: 1px solid var(--line-2); background: rgb(255 255 255 / .04); color: var(--ink); font: 600 14.5px var(--sans); cursor: default; }
+  .btn { display: inline-flex; align-items: center; height: 42px; padding: 0 18px; border-radius: 21px; border: 1px solid var(--line-2); background: rgb(255 255 255 / .04); color: var(--ink); font: 600 14.5px var(--sans); cursor: default; }
   .btn.fire { background: var(--amber); border-color: var(--amber); color: #1a0f02; box-shadow: 0 0 30px -4px rgb(255 179 71 / .6); }
 
   .runs { display: grid; gap: 10px; }
@@ -385,7 +385,7 @@
         <dt>When</dt><dd>The window closes in 38 minutes. The next one is in 19 days.</dd>
         <dt>Undo</dt><dd><span class="never">Can't be recalled once fired.</span> Halcyon Station catches it in 211 days.</dd>
       </dl>
-      <div class="acts"><button class="btn fire" tabindex="-1">Fire the launch</button><button class="btn" tabindex="-1">Show me the load test</button><button class="btn" tabindex="-1">Hold</button></div>
+      <div class="acts"><span class="btn fire">Fire the launch</span><span class="btn">Show me the load test</span><span class="btn">Hold</span></div>
     </div>
   </div>
 </section>
@@ -428,7 +428,7 @@
         <div class="add"><span class="ln">19</span><span>+</span>spin_up: <mark>90</mark>s</div>
         <div><span class="ln">20</span><span></span>torque_max: 100%</div>
       </div>
-      <div class="verdict"><button class="btn" tabindex="-1">Send back</button><button class="btn fire" style="background:var(--ion);border-color:var(--ion);box-shadow:0 0 30px -4px rgb(111 214 255 / .6)" tabindex="-1">Accept</button></div>
+      <div class="verdict"><span class="btn">Send back</span><span class="btn fire" style="background:var(--ion);border-color:var(--ion);box-shadow:0 0 30px -4px rgb(111 214 255 / .6)">Accept</span></div>
     </div>
   </div>
 </section>
@@ -535,7 +535,7 @@ const FLEET = [
 const grid = $('fleetGrid');
 grid.innerHTML = FLEET.map((f, i) => {
   const tag = f.need ? 'a' : 'article';
-  return `<${tag} class="sys reveal${i % 3 ? ' d' + (i % 3) : ''}${f.need ? ' need' : ''}" ${f.need ? 'href="app/"' : ''} data-s="${f.need ? 'need' : f.done ? 'done' : 'run'}" id="sys-${f.id}"${f.art ? ` style="--art:url(media/${f.art}.webp)"` : ''}>
+  return `<${tag} class="sys reveal${i % 3 ? ' d' + (i % 3) : ''}${f.need ? ' need' : ''}" ${f.need ? 'href="app/" aria-label="Kirra Station needs you: Drill 7 is down. Open it in Steer"' : ''} data-s="${f.need ? 'need' : f.done ? 'done' : 'run'}" id="sys-${f.id}"${f.art ? ` style="--art:url(media/${f.art}.webp)"` : ''}>
     <div class="top"><span class="where">${f.where}</span><span class="st"><i></i>${f.need ? 'Needs you' : f.done ? 'Done' : 'Working'}</span></div>
     <h3>${f.name}</h3>
     <p class="now">${f.now}</p>
