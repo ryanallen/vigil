@@ -7,6 +7,15 @@
 <meta name="description" content="A playable interface for working with an AI agent: edit its plan, watch it work, steer it mid-run, approve what can't be undone, and review its changes with the evidence beside them.">
 <meta name="color-scheme" content="light dark">
 <link rel="canonical" href="https://ryanallen.com/steer/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ryanallen.com/steer/">
+<meta property="og:title" content="Steer: watch, steer and review an AI agent's work">
+<meta property="og:description" content="A playable interface: edit the agent's plan, watch it work, steer it mid-run, approve what can't be undone, and review its changes with the evidence beside them.">
+<meta property="og:image" content="https://ryanallen.com/steer/share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="author" content="Ryan Allen">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Crect width=%2724%27 height=%2724%27 rx=%276%27 fill=%27%232f5bd3%27/%3E%3Cpath d=%27M7 17 17 7M10 7h7v7%27 fill=%27none%27 stroke=%27white%27 stroke-width=%272.4%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
 <style>
   :root {
@@ -137,6 +146,9 @@
   .chip:hover { border-color: var(--accent); color: var(--accent); }
   .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
   .controls .spacer { flex: 1; }
+  .hint { position: relative; margin: 0 0 10px; padding: 9px 11px; border-radius: 10px; background: var(--ink); color: var(--bg); font-size: 12.5px; line-height: 1.45; animation: arrive .4s var(--ease) both; }
+  .hint b { font-weight: 650; }
+  .hint::after { content: ""; position: absolute; left: 22px; bottom: -5px; width: 10px; height: 10px; background: var(--ink); transform: rotate(45deg); }
   .queued { margin: 0 0 8px; padding: 7px 10px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-size: 12.5px; }
   .speed { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
   .speed button { border: 0; background: transparent; padding: 0 8px; height: 28px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -334,6 +346,7 @@
         <div class="add-step" id="addStepRow"><input id="addStep" placeholder="Add a step, then press Enter" aria-label="Add a step"></div>
       </div>
       <div class="composer" id="composer">
+        <p class="hint" id="hint" hidden role="note"><b>Try it.</b> Steer the agent now: pick a suggestion or write your own. It reads your note before its next step and keeps what it has done.</p>
         <p class="queued" id="queued" hidden></p>
         <div class="chips" id="chips"></div>
         <div class="row">
@@ -592,6 +605,9 @@ function nextStep() {
   const i = S.plan.findIndex(p => p.state === 'todo');
   if (i === -1) return finish();
   S.cur = i; const step = S.plan[i];
+  const shown = (() => { try { return localStorage.getItem('steer-hint') === '1'; } catch { return true; } })();
+  if (step.id === 'tokens' && !S.steered && !shown) { $('hint').hidden = false; try { localStorage.setItem('steer-hint', '1'); } catch {} }
+  if (step.id === 'remember' || step.id === 'checks') $('hint').hidden = true;
   step.state = 'now'; step.nowLine = '';
   feed('head', `${i + 1}. ${esc(step.title)}`);
   renderPlan();
@@ -631,7 +647,7 @@ function sendSteer() {
     return;
   }
   if (S.phase === 'done' || S.phase === 'stopped') return;
-  S.queued = text;
+  S.queued = text; S.steered = true; $('hint').hidden = true;
   $('queued').hidden = false;
   $('queued').textContent = `Queued for the next step: "${text}". The agent finishes what it is doing first, so nothing is lost.`;
   feed('you', `<div class="you"><small>You steered · applies at the next step</small>${esc(text)}</div>`);
