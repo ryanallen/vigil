@@ -194,6 +194,26 @@
   .thinking i { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); animation: pulse 1s infinite; }
   .thinking i:nth-child(2) { animation-delay: .15s; } .thinking i:nth-child(3) { animation-delay: .3s; }
 
+  /* The brief before a run */
+  .brief { max-width: 860px; }
+  .brief h3 { margin: 0 0 4px; font-size: 16px; }
+  .brief-lede { margin: 0 0 18px; color: var(--ink-2); max-width: 640px; }
+  .brief-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .brief section { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+  .brief h4 { margin: 0 0 8px; color: var(--muted); font-size: 11.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; }
+  .brief ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+  .read-list li { display: grid; gap: 1px; }
+  .read-list li > code { font: 600 12.5px var(--mono); }
+  .read-list span { color: var(--muted); font-size: 13px; }
+  .assume-list li { position: relative; padding-left: 16px; }
+  .assume-list li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+  .assume-list li.fixed { color: var(--muted); }
+  .assume-list li.fixed::before { background: var(--accent); }
+  .assume-list li.fixed s { text-decoration-thickness: 1px; }
+  .assume-list li.fixed em { display: block; color: var(--accent); font-style: normal; font-weight: 600; font-size: 12.5px; }
+  .brief + .feed:not(:empty) { margin-top: 18px; }
+  .brief-foot { margin: 16px 0 0; color: var(--muted); font-size: 13px; }
+
   /* Approval card */
   .ask { max-width: 860px; margin: 0 0 18px; padding: 16px 18px; border: 1px solid var(--warn); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow); }
   .ask h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 15px; }
@@ -381,8 +401,26 @@
         <section class="pane" id="pane-activity" role="tabpanel" aria-labelledby="tab-activity">
           <div id="askSlot"></div>
           <div id="summarySlot"></div>
+          <div class="brief" id="feedEmpty">
+            <h3>Before you approve</h3>
+            <p class="brief-lede">What the agent looked at to write the plan, and what it is assuming. If an assumption is wrong, say so in the steer box or change the plan: nothing has run yet.</p>
+            <div class="brief-cols">
+              <section><h4>It read</h4><ul class="read-list">
+                <li><code>src/settings.html</code><span>The Display card has Units; no theme control yet</span></li>
+                <li><code>src/theme.css</code><span>Six color tokens on <code>:root</code>, light only</span></li>
+                <li><code>src/settings.js</code><span>Settings are saved in this browser</span></li>
+                <li><code>package.json</code><span><code>npm test</code> and <code>npm run contrast</code> exist</span></li>
+              </ul></section>
+              <section><h4>It assumes</h4><ul class="assume-list">
+                <li>Dark should reuse the brand teal, lighter, rather than a new accent.</li>
+                <li id="asAccount">The choice is saved per browser, not to the account.</li>
+                <li id="asDefault">Light stays the default until someone picks Dark.</li>
+                <li>A pull request is how this team ships, and it should ask before opening one.</li>
+              </ul></section>
+            </div>
+            <p class="brief-foot">When you approve the plan, every action shows here in words, as it happens.</p>
+          </div>
           <ol class="feed" id="feed" aria-live="polite"></ol>
-          <div class="empty" id="feedEmpty"><h3>Nothing has run yet</h3><p>Read the plan on the left and change it if you want. When you approve it, every action the agent takes shows here, in words, as it happens.</p></div>
         </section>
         <section class="pane" id="pane-changes" role="tabpanel" aria-labelledby="tab-changes" hidden>
           <div id="changes"></div>
@@ -439,6 +477,10 @@ const CHANGES = {
     ['+', 88, 'const saved = localStorage.getItem("theme") || "light";'], ['+', 89, 'applyTheme(saved);'], ['+', 90, ''], ['+', 91, 'function applyTheme(choice) {'], ['+', 92, '  document.documentElement.dataset.theme = choice;'], ['+', 93, '  localStorage.setItem("theme", choice);'], ['+', 94, '}'] ] },
   rememberSystem: { file: 'src/settings.js', step: 'remember', why: 'Follows the device unless the person picks Light or Dark, as you asked; the choice is applied before the page paints, so a reload never flashes the wrong theme.', lines: [
     ['+', 88, 'const saved = localStorage.getItem("theme") || "system";'], ['+', 89, 'const dark = matchMedia("(prefers-color-scheme: dark)");'], ['+', 90, 'applyTheme(saved);'], ['+', 91, 'dark.addEventListener("change", () => applyTheme(saved));'], ['+', 92, ''], ['+', 93, 'function applyTheme(choice) {'], ['+', 94, '  const on = choice === "dark" || (choice === "system" && dark.matches);'], ['+', 95, '  document.documentElement.dataset.theme = on ? "dark" : "light";'], ['+', 96, '  localStorage.setItem("theme", choice);'], ['+', 97, '}'] ] },
+  rememberAccount: { file: 'src/settings.js', step: 'remember', why: 'Saved to the account, as you asked, so the theme follows the person to every device; the last choice is also kept in this browser so the page paints right before the account loads.', lines: [
+    ['+', 88, 'const saved = localStorage.getItem("theme") || "light";'], ['+', 89, 'applyTheme(saved);'], ['+', 90, 'account.get("theme").then(choice => choice && applyTheme(choice));'], ['+', 91, ''], ['+', 92, 'function applyTheme(choice) {'], ['+', 93, '  document.documentElement.dataset.theme = choice;'], ['+', 94, '  localStorage.setItem("theme", choice);'], ['+', 95, '  account.set("theme", choice);'], ['+', 96, '}'] ] },
+  rememberAccountSystem: { file: 'src/settings.js', step: 'remember', why: 'Saved to the account and following the device until someone picks, as you asked; the browser keeps a copy so the page paints right before the account loads.', lines: [
+    ['+', 88, 'const saved = localStorage.getItem("theme") || "system";'], ['+', 89, 'const dark = matchMedia("(prefers-color-scheme: dark)");'], ['+', 90, 'applyTheme(saved);'], ['+', 91, 'account.get("theme").then(choice => choice && applyTheme(choice));'], ['+', 92, ''], ['+', 93, 'function applyTheme(choice) {'], ['+', 94, '  const on = choice === "dark" || (choice === "system" && dark.matches);'], ['+', 95, '  document.documentElement.dataset.theme = on ? "dark" : "light";'], ['+', 96, '  localStorage.setItem("theme", choice);'], ['+', 97, '  account.set("theme", choice);'], ['+', 98, '}'] ] },
   contrast: { file: 'src/theme.css', step: 'checks', why: 'The contrast check failed: secondary text on dark cards was 3.6:1, under the 4.5:1 the project requires. Lightened it to 6.1:1.', lines: [
     [' ', 22, '  --ink: #e6eeeb;'], ['-', 23, '  --muted: #6d7874;'], ['+', 23, '  --muted: #9aa6a2;'], [' ', 24, '  --line: #26312e;'] ] },
 };
@@ -535,7 +577,7 @@ function spend(tokens) { S.tokens += tokens; S.cost += tokens * 0.000009; }
 // ---- The feed ----------------------------------------------------------------
 function stamp() { const t = Math.round(S.clock / 1000); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; }
 function feed(kind, html, cls = '') {
-  $('feedEmpty').hidden = true;
+  if (S.phase !== 'plan') $('feedEmpty').hidden = true;
   const li = document.createElement('li');
   li.innerHTML = kind === 'head' ? `<span></span><div class="msg step-head">${html}</div>`
     : kind === 'you' ? `<span class="k">${ICON.you}</span><div class="msg ${cls}">${html.replace('</small>', ` · ${stamp()}</small>`)}</div>`
@@ -569,7 +611,11 @@ function script(step) {
       change(300, 'toggle');
       break;
     case 'remember':
-      if (S.followSystem) {
+      if (S.saveToAccount) {
+        say(600, 'Saving the choice to the account, as you asked; the browser keeps a copy so the first paint is right.');
+        tool(1100, 'edit', 'Editing <code>src/settings.js</code>: save to the account, keep a local copy', 2700);
+        change(300, S.followSystem ? 'rememberAccountSystem' : 'rememberAccount');
+      } else if (S.followSystem) {
         say(600, 'Following the device by default, as you asked. The saved choice only overrides it.');
         tool(1000, 'edit', 'Editing <code>src/settings.js</code>: follow the system unless a choice is saved', 2600);
         change(300, 'rememberSystem');
@@ -602,6 +648,7 @@ function script(step) {
 // ---- Running ---------------------------------------------------------------
 let queue = [], tickAt = 0;
 function startRun() {
+  $('feedEmpty').hidden = true;
   S.phase = 'run'; S.startedAt = performance.now(); S.estimateAtStart = estimate();
   $('runBtn').hidden = true; $('pauseBtn').hidden = false; $('stopBtn').hidden = false;
   setStatus('run', 'Working');
@@ -648,7 +695,7 @@ function endStep() {
 }
 
 // ---- Steering -------------------------------------------------------------
-const SUGGEST = ['Follow the system setting by default', 'Keep the pull request as a draft', 'Also check contrast in light mode'];
+const SUGGEST = ['Follow the system setting by default', 'Save the choice to the account', 'Keep the pull request as a draft'];
 function renderChips() {
   const show = S.phase === 'run' || S.phase === 'plan';
   $('chips').innerHTML = show ? SUGGEST.map(s => `<button class="chip">${esc(s)}</button>`).join('') : '';
@@ -658,7 +705,9 @@ function sendSteer() {
   const text = $('steer').value.trim(); if (!text) return;
   $('steer').value = ''; autosize();
   if (S.phase === 'plan') {
-    S.constraints.push(text); if (/system|device|os\b|auto/i.test(text)) markSystem();
+    S.constraints.push(text);
+    if (/account|sync|across devices|every device/i.test(text)) markAccount();
+    else if (/system|device|os\b|auto/i.test(text)) markSystem();
     feed('you', `<div class="you"><small>A note for the plan</small>${esc(text)}</div>`);
     return;
   }
@@ -668,16 +717,28 @@ function sendSteer() {
   $('queued').textContent = `Queued for the next step: "${text}". The agent finishes what it is doing first, so nothing is lost.`;
   feed('you', `<div class="you"><small>You steered · applies at the next step</small>${esc(text)}</div>`);
 }
-function markSystem() {
-  S.followSystem = true;
+function correct(id, now) { const li = $(id); if (li && !li.classList.contains('fixed')) { li.classList.add('fixed'); li.innerHTML = '<s>' + li.textContent + '</s><em>You corrected this: ' + now + '</em>'; } }
+function markAccount() {
+  S.saveToAccount = true; correct('asAccount', 'saved to the account.');
   const r = S.plan.find(p => p.id === 'remember');
-  if (r && r.state === 'todo') { r.sub = 'Follow the system unless a choice is saved'; r.steered = true; r.flash = true; }
+  if (r && r.state === 'todo') { r.sub = rememberSub(); r.steered = true; r.flash = true; }
+  renderPlan();
+}
+function rememberSub() { return S.saveToAccount && S.followSystem ? 'Saved to the account; follows the device until someone picks' : S.saveToAccount ? 'Saved to the account, so it follows you' : 'Follow the system unless a choice is saved'; }
+function markSystem() {
+  S.followSystem = true; correct('asDefault', 'it follows the device until someone picks.');
+  const r = S.plan.find(p => p.id === 'remember');
+  if (r && r.state === 'todo') { r.sub = rememberSub(); r.steered = true; r.flash = true; }
   renderPlan();
 }
 function applySteer() {
   const text = S.queued; S.queued = null; $('queued').hidden = true;
   const lower = text.toLowerCase();
-  if (/system|device|os\b|auto/.test(lower)) {
+  if (/account|sync|across devices|every device/.test(lower)) {
+    const r = S.plan.find(p => p.id === 'remember');
+    if (r && r.state === 'todo') { r.sub = 'Saved to the account, so it follows you'; r.steered = true; r.flash = true; S.saveToAccount = true; feed('say', '<span class="say">Read your steer. The choice will be saved to the account instead of this browser.</span>'); }
+    else feed('say', '<span class="say">Read your steer, but the Remember step is already done. Return to it from its checkpoint to redo it.</span>');
+  } else if (/system|device|os\b|auto/.test(lower)) {
     const r = S.plan.find(p => p.id === 'remember');
     if (r && r.state === 'todo') { markSystem(); feed('say', '<span class="say">Read your steer. The Remember step now follows the device by default; nothing already done changes.</span>'); }
     else feed('say', '<span class="say">Read your steer. The Remember step is already done, so I added a step to change it.</span>'), addOwnStep('Follow the system setting by default', true);
@@ -896,6 +957,7 @@ function renderSummary() {
       <li>${done.length} of ${S.plan.filter(p => p.state !== 'skip').length} steps finished; ${S.changes.length} changes in ${new Set(S.changes.map(c => c.file)).size} files (see Changes).</li>
       ${passing.length ? `<li>Checks passing: ${[...new Set(passing)].join(', ')}${failedOnce ? '. The contrast check failed once and was fixed; both runs are kept in Checks' : ''}.</li>` : '<li>No checks ran.</li>'}
       ${S.followSystem ? '<li>The theme follows the device unless the person picks Light or Dark, as you steered.</li>' : ''}
+      ${S.saveToAccount ? '<li>The choice is saved to the account, as you steered, with a copy in the browser for the first paint.</li>' : ''}
       <li>${S.pushed ? `Pushed <code>dark-theme</code> and opened ${S.draft ? 'draft ' : ''}pull request #214, "${esc(S.prTitle)}".` : 'Nothing was pushed: the branch is only on your machine.'}</li>
       <li>You have accepted ${accepted} of ${S.changes.length} changes.</li>
     </ul>
