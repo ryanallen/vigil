@@ -69,7 +69,7 @@ const PLACES = [
   ['Home', 'Earth', 'storm expected', homeWatch],
 ];
 // A place can be watched once its photographs are in; until then it stays on the wall, quiet.
-const READY = new Set([homeWatch]);
+const READY = new Set([homeWatch, tethys]);
 if (new URLSearchParams(location.search).has('all')) PLACES.forEach(p => READY.add(p[3]));   // for checking stories before their photos are in
 if (new URLSearchParams(location.search).has('fast')) PLACES.forEach(p => { p[3].pace = 0.04; }); // for checking a whole night quickly
 const home = document.getElementById('home'), watch = document.getElementById('watch');

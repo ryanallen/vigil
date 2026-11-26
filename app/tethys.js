@@ -8,6 +8,8 @@ export default {
   lag: 0,
   pace: 2.5,
   media: 'tethys',
+  // Photos that play as seamless video loops (media/watch-tethys-<ID>-loop.mp4, first and last frame the photo).
+  loops: ['M01', 'U01', 'B01', 'R01', 'L01', 'H01'],
   hint: { pointer: 'Point and hold to focus. Switch cameras along the bottom.', touch: 'Tap and hold to focus. Switch cameras below.' },
   cameras: {
     mast: { name: 'High mast' }, outer: { name: 'Outer bed' }, bow: { name: 'Skiff bow' },
@@ -42,15 +44,15 @@ export default {
   },
   // Coordinates are fractions of the full 16:9 photograph from its upper left.
   reveals: [
-    { id: 'T1', photo: 'M01', x: 0.77, y: 0.64, r: 0.05, text: 'Buoy seven is thirty metres beyond the last row. Its light is below the surface.', unlock: ['Go to the buoy', 'buoy'] },
-    { id: 'T2', photo: 'U01', x: 0.52, y: 0.56, r: 0.08, text: 'Two mooring chains hang at the same angle. The water is running as expected.' },
-    { id: 'T3', photo: 'R01', x: 0.47, y: 0.58, r: 0.08, text: 'The seal is intact. Salt has dried on the outside, but the inside is clean.' },
-    { id: 'T4', photo: 'U03', x: 0.69, y: 0.78, r: 0.09, text: 'The edge is straight. Five broad sides meet below the chain.' },
-    { id: 'T5', photo: 'R02', x: 0.72, y: 0.38, r: 0.08, text: 'Dara has drawn an arch with a broken top left corner.' },
-    { id: 'T6', photo: 'B04', x: 0.31, y: 0.62, r: 0.08, text: 'Sora has drawn the same arch, including the break at the top left.' },
-    { id: 'T7', photo: 'U04', x: 0.26, y: 0.48, r: 0.09, text: 'The leaves lean toward the exposed stone. The flow meter reads the other way.' },
-    { id: 'T8', photo: 'L02', x: 0.66, y: 0.42, r: 0.09, text: 'A seam runs up the stone, across a lintel and down again. The wall is a closed door.' },
-    { id: 'T9', photo: 'M04', x: 0.81, y: 0.53, r: 0.07, text: 'The avenue is not sloping down to the sea. Water is draining away from it.' },
+    { id: 'T1', photo: 'M01', x: 0.770, y: 0.650, r: 0.05, text: 'Buoy seven is thirty metres beyond the last row. Its light is below the surface.', unlock: ['Go to the buoy', 'buoy'] },
+    { id: 'T2', photo: 'U01', x: 0.500, y: 0.620, r: 0.08, text: 'Two mooring chains hang at the same angle. The water is running as expected.' },
+    { id: 'T3', photo: 'R01', x: 0.420, y: 0.520, r: 0.08, text: 'The seal is intact. Salt has dried on the outside, but the inside is clean.' },
+    { id: 'T4', photo: 'U03', x: 0.690, y: 0.730, r: 0.09, text: 'The edge is straight. Five broad sides meet below the chain.' },
+    { id: 'T5', photo: 'R02', x: 0.620, y: 0.410, r: 0.08, text: 'Dara has drawn an arch with a broken top left corner.' },
+    { id: 'T6', photo: 'B04', x: 0.540, y: 0.610, r: 0.08, text: 'Sora has drawn the same arch, including the break at the top left.' },
+    { id: 'T7', photo: 'U04', x: 0.250, y: 0.480, r: 0.09, text: 'The leaves lean toward the exposed stone. The flow meter reads the other way.' },
+    { id: 'T8', photo: 'L02', x: 0.650, y: 0.320, r: 0.09, text: 'A seam runs up the stone, across a lintel and down again. The wall is a closed door.' },
+    { id: 'T9', photo: 'M04', x: 0.830, y: 0.530, r: 0.07, text: 'The avenue is not sloping down to the sea. Water is draining away from it.' },
   ],
   endings: {
     door: { title: 'The road is under water again.', text: 'Sora is back at the farm. The far mooring is still paying out toward a place the chart has never named.', controls: [['Watch Tethys again', 'restart'], ['Return to the wall', 'wall']] },
