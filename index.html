@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vigil</title>
+<meta name="theme-color" content="#5b6575">
+<link rel="canonical" href="https://ryanallen.com/vigil/">
+<style>
+  html, body { margin: 0; height: 100%; background: #2e343b; }
+  body { overflow: hidden; }
+  /* The house is the hero: the photo is shown large, placed so the lit house sits near the middle of the screen. */
+  figure { position: fixed; margin: 0; overflow: hidden; }
+  img, canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  canvas { opacity: 0; transition: opacity 1.2s ease; }
+  canvas.on { opacity: 1; }
+</style>
+</head>
+<body>
+<figure>
+  <img src="media/photo-home-earth-2400.webp" width="2400" height="1351" alt="A lone house with one lit window far across dusk moorland." fetchpriority="high">
+</figure>
+<script type="module">
+// The photograph as a live 3D view: depth parallax with the pointer or a phone's tilt, and focus that racks to what
+// you point at while the rest goes soft. The plain image stays underneath for first paint and as the fallback.
+import { mount } from './app/depthview.js';
+const fig = document.querySelector('figure'), img = fig.querySelector('img');
+// Where the house is in the photo (fractions of the 16:9 frame), and how large the photo is drawn against the screen.
+// The depth view draws the photo at 1/0.9 of its frame around the centre, so the house's place in the frame is pushed out by that.
+const P = [0.69, 0.585], HOUSE = P.map(v => (v - 0.5) / 0.9 + 0.5), AT = [0.5, 0.5];
+const zoom = () => innerWidth / innerHeight > 1 ? 2.6 : 1.6;
+function frame() {
+  const W = innerWidth, H = innerHeight, w = Math.max(W, H * 16 / 9) * zoom(), h = w * 9 / 16;
+  const x = Math.min(0, Math.max(W - w, W * AT[0] - w * HOUSE[0])), y = Math.min(0, Math.max(H - h, H * AT[1] - h * HOUSE[1]));
+  Object.assign(fig.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+}
+frame(); addEventListener('resize', frame);
+const c = document.createElement('canvas'); c.setAttribute('aria-hidden', 'true'); fig.append(c);
+const v = mount(c);
+if (v) {
+  const size = 2400;
+  await v.show(`media/photo-home-earth-${size}.webp`, 'media/photo-home-earth-depth.webp');
+  c.classList.add('on');
+} else c.remove();
+</script>
+</body>
+</html>
