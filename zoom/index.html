@@ -44,7 +44,7 @@ void main(){ wp = pos; c = col; tu = tuv; gl_Position = proj * view * vec4(pos, 
 const FS = `#version 300 es
 precision highp float;
 in vec3 wp; in vec3 c; in vec2 tu; uniform sampler2D photo, tWall, tRoof, tGround, tWin, tSide, tPatch;
-uniform mat3 uR; uniform vec3 uC; uniform float uF; uniform vec2 uSize; uniform vec4 avg[3]; uniform vec4 win; uniform float houseW;
+uniform mat3 uR; uniform vec3 uC; uniform float uF; uniform vec2 uSize; uniform vec4 avg[3]; uniform vec4 win; uniform float houseW, s0;
 out vec4 o;
 vec3 detail(int m, out vec3 a){
   vec3 n = normalize(cross(dFdx(wp), dFdy(wp)));
@@ -55,6 +55,9 @@ vec3 detail(int m, out vec3 a){
 void main(){
   vec3 q = uR * (wp - uC);
   vec2 px = vec2(uSize.x * .5 + uF * q.x / q.z, uSize.y * .5 - uF * q.y / q.z), uv = px / uSize;
+  // Derivatives first, in uniform control flow: a texture read after a per-pixel branch has no defined mip level and comes out blurred.
+  vec2 gx = dFdx(uv), gy = dFdy(uv); float fw = max(fwidth(px.x), fwidth(px.y)) / s0;
+  vec3 sharp = textureGrad(photo, uv, gx, gy).rgb;
   int m = int(c.y + .5);
   if (m == 3) {                                   // the gable window: Codex's frame, warm lit glass behind it
     vec2 wu = vec2((wp.x - win.x) / (win.y - win.x), 1. - (wp.y - win.z) / (win.w - win.z));
@@ -65,14 +68,14 @@ void main(){
   }
   if (m == 4 || m == 5) {                         // the long side's three openings and the stained patch under the gable's peak
     vec3 t = m == 4 ? texture(tSide, tu).rgb : texture(tPatch, tu).rgb;
-    float k2 = smoothstep(1.1, .35, max(fwidth(px.x), fwidth(px.y)));
+    float k2 = smoothstep(.8, .3, fw);
     float edge = m == 5 ? smoothstep(0., .18, min(min(tu.x, 1. - tu.x), min(tu.y, 1. - tu.y))) * .7 : 1.;
-    o = vec4(mix(texture(photo, uv).rgb, t * (m == 4 ? .8 : .7), k2), m == 5 ? mix(1., edge, k2) : 1.); return;
+    o = vec4(mix(sharp, t * (m == 4 ? .8 : .7), k2), m == 5 ? mix(1., edge, k2) : 1.); return;
   }
   vec3 a, d = detail(m, a);
-  float k = smoothstep(1.1, .35, max(fwidth(px.x), fwidth(px.y)));   // 0 while the photo is sharp enough
+  float k = smoothstep(.8, .3, fw);   // 0 until the camera is well closer than the photo's
   if (c.x > .5) { o = vec4(d * vec3(.62, .66, .72) / a * (c.z > 0. ? c.z : .55), 1.); return; }
-  vec3 sharp = texture(photo, uv).rgb, soft = textureLod(photo, uv, m == 0 ? 3.5 : 1.5).rgb;
+  vec3 soft = textureLod(photo, uv, m == 0 ? 4. : 1.5).rgb;
   o = vec4(mix(sharp, soft * d / a, k), 1.);
 }`;
 const prog = program(VS, FS);
@@ -89,6 +92,13 @@ const tv = new Float32Array(await (await fetch('terrain.f32')).arrayBuffer()), t
 const nv = tv.length / 5, tp = new Float32Array(nv * 3);
 for (let i = 0; i < nv; i++) tp.set(tv.subarray(i * 5, i * 5 + 3), i * 3);
 const terrain = mesh(tp, new Float32Array(nv * 3), ti);
+const SP = [], SI = [], NS = 48;
+for (let i = 0; i <= NS; i++) for (let j = 0; j <= NS * 2; j++) {
+  const th = Math.PI * i / NS, ph = Math.PI * j / NS, R_ = 30000;
+  SP.push(C0[0] + R_ * Math.sin(th) * Math.cos(ph), C0[1] + R_ * Math.cos(th), C0[2] + R_ * Math.sin(th) * Math.sin(ph));
+  if (i < NS && j < NS * 2) { const a_ = i * (NS * 2 + 1) + j, b_ = a_ + NS * 2 + 1; SI.push(a_, b_, a_ + 1, a_ + 1, b_, b_ + 1); }
+}
+const backdrop = mesh(new Float32Array(SP), new Float32Array(SP.length), new Uint32Array(SI));
 
 // The house from the fit: walls, gables, roof with overhang, chimney, shed, posts. Faces the photograph saw keep its colour.
 const { w, L, wall: h, ridge: r } = J, P = [], Cc = [], I = [], T = [];
@@ -131,7 +141,7 @@ async function texture(src) {
   return t;
 }
 const photoTex = await texture('photo.webp'), cleanTex = await texture(q.has('noclean') ? 'photo.webp' : 'clean.webp');
-terrain.tex = cleanTex; house.tex = photoTex;
+terrain.tex = cleanTex; house.tex = photoTex; backdrop.tex = cleanTex;
 async function tiled(src) {               // a repeating Codex texture, and its average colour for the detail transfer
   const t = await texture(src); gl.bindTexture(gl.TEXTURE_2D, t);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
@@ -150,15 +160,22 @@ function lookRot(fwd) { const z = norm(fwd), x = norm(cross([0, 1, 0], z)), y = 
 let t = +(q.get('t') || 0), target = t, mx = 0, my = 0;
 addEventListener('wheel', e => { target = Math.min(1, Math.max(0, target + e.deltaY * .0006)); }, { passive: true });
 addEventListener('pointermove', e => { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; });
+// The flight glides down from the photograph's height to the window's, so the camera never skims the ground the photograph saw from
+// above. It turns from the photograph's view to face the window as it goes.
+const sstep = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
 function camera(t) {
-  const e = Math.min(1, Math.max(0, (t - .5) / .5)) ** 2 * (3 - 2 * Math.min(1, Math.max(0, (t - .5) / .5)));        // position eases in log-distance so the approach feels even
-  const d0 = Math.hypot(...sub(C0, END)), d = d0 * Math.pow(STOP / d0, t); const dir = norm(sub(C0, END));
-  const along = add(END, sc(dir, d - STOP)), straight = add(WC, [0, 0, -d]);
-  const pos = add(sc(along, 1 - e), sc(straight, e));
-  const fwd = norm(add(sc(F0, 1 - e), sc(norm(sub(WC, pos)), e)));
-  const Rm = lookRot(add(fwd, [mx * .01 * (1 - e * .6), -my * .006, 0]));
-  return { pos, R: t === 0 && !mx && !my ? R0 : Rm, fovScale: 1 };
+  const H0 = [C0[0] - END[0], C0[2] - END[2]], d0 = Math.hypot(...H0), hd = [H0[0] / d0, H0[1] / d0];
+  const r = (d0 * Math.pow(STOP / d0, t) - STOP) * d0 / (d0 - STOP);           // ground distance still to go, even in log scale
+  const straighten = sstep(.55, 1, t);
+  const side = [END[0] + hd[0] * r, END[2] + hd[1] * r], front = [END[0], END[2] - r];
+  let pos = [side[0] + (front[0] - side[0]) * straighten, END[1] + (C0[1] - END[1]) * Math.sqrt(r / d0), side[1] + (front[1] - side[1]) * straighten];   // height falls with the square root of the distance left: a steady glide down
+  const aim = sstep(0, .4, t);
+  const fwd = norm(add(sc(R0[2], 1 - aim), sc(norm(sub(WC, pos)), aim))), up0 = norm(add(sc(R0[1], 1 - aim), sc([0, 1, 0], aim)));
+  const x = norm(cross(up0, fwd)), y = cross(fwd, x), d = Math.hypot(...sub(WC, pos));
+  pos = add(pos, add(sc(x, mx * d * .004), sc(y, -my * d * .0025)));          // parallax from the pointer, scaled to the distance
+  return { pos, R: [x, y, fwd] };
 }
+const s0 = () => { const aspect = cv.width / cv.height, fx = Math.max(2 * F / PW, 2 * F / PH / aspect); return PW / (cv.width * fx * PW / (2 * F)); };
 function resize() { const s = Math.min(devicePixelRatio, 2); cv.width = innerWidth * s; cv.height = innerHeight * s; gl.viewport(0, 0, cv.width, cv.height); }
 resize(); addEventListener('resize', resize);
 const U = n => gl.getUniformLocation(prog, n);
@@ -170,7 +187,7 @@ function frame() {
   for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) v[j * 4 + i] = (i === 2 ? -1 : 1) * R[i][j]; v[12 + i] = (i === 2 ? -1 : 1) * tr[i]; }
   v[15] = 1;
   // Projection: the photo's focal length, the photo's frame covering the screen (cover fit), near plane small for the window.
-  const aspect = cv.width / cv.height, fx = Math.max(2 * F / PW, 2 * F / PH / aspect), fy = fx * aspect, n = .05, fz = 40000;
+  const aspect = cv.width / cv.height, fx = Math.max(2 * F / PW, 2 * F / PH / aspect), fy = fx * aspect, n = .05, fz = 80000;
   const p = new Float32Array([fx, 0, 0, 0, 0, fy, 0, 0, 0, 0, -(fz + n) / (fz - n), -1, 0, 0, -2 * fz * n / (fz - n), 0]);
   gl.clearColor(.36, .4, .46, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.useProgram(prog); gl.uniformMatrix4fv(U('view'), false, v); gl.uniformMatrix4fv(U('proj'), false, p);
@@ -178,6 +195,8 @@ function frame() {
   gl.uniform4fv(U('avg'), [...tGround.avg, ...tWall.avg, ...tRoof.avg]); gl.uniform4f(U('win'), J.window.x0, J.window.x1, J.window.y0, J.window.y1); gl.uniform1f(U('houseW'), J.w);
   [['tGround', tGround], ['tWall', tWall], ['tRoof', tRoof], ['tWin', tWin], ['tSide', tSide], ['tPatch', tPatch]].forEach(([n, t_], i) => { gl.activeTexture(gl.TEXTURE1 + i); gl.bindTexture(gl.TEXTURE_2D, t_); gl.uniform1i(U(n), 1 + i); });
   gl.uniform1i(U('photo'), 0); gl.activeTexture(gl.TEXTURE0);
+  gl.uniform1f(U('s0'), s0());
+  gl.depthMask(false); gl.bindTexture(gl.TEXTURE_2D, backdrop.tex); gl.bindVertexArray(backdrop.vao); gl.drawElements(gl.TRIANGLES, backdrop.n, backdrop.type, 0); gl.depthMask(true);
   for (const m of [terrain, house]) { gl.bindTexture(gl.TEXTURE_2D, m.tex); gl.bindVertexArray(m.vao); gl.drawElements(gl.TRIANGLES, m.n, m.type, 0); }
   requestAnimationFrame(frame);
 }
