@@ -54,16 +54,16 @@ export async function mountEngine(canvas) {
       vec3 f = texture(tWin, mix(vec2(.053, .045), vec2(.944, .954), wu)).rgb; float frame = smoothstep(.06, .16, max(f.r, max(f.g, f.b)));
       vec3 glass = vec3(1., .6, .26) * (.7 + .35 * (1. - length(wu - vec2(.45, .62))));   // lamp-lit from low inside
       glass = mix(glass, vec3(.55, .6, .68), .12 * smoothstep(.55, .0, wu.y));               // the dusk sky faintly on the upper panes
-      o = vec4(mix(glass, f * .45, frame), 1.); return;
+      o = vec4(mix(sharp, mix(glass, f * .45, frame), smoothstep(.35, .12, fw)), 1.); return;
     }
     if (m == 4 || m == 5) {                         // the long side's three openings and the stained patch under the gable's peak
       vec3 t = m == 4 ? texture(tSide, tu).rgb : texture(tPatch, tu).rgb;
-      float k2 = smoothstep(.8, .3, fw);
+      float k2 = smoothstep(.35, .12, fw);
       float edge = m == 5 ? smoothstep(0., .18, min(min(tu.x, 1. - tu.x), min(tu.y, 1. - tu.y))) * .7 : 1.;
       o = vec4(mix(sharp, t * (m == 4 ? .8 : .7), k2), m == 5 ? mix(1., edge, k2) : 1.); return;
     }
     vec3 a, d = detail(m, a);
-    float k = smoothstep(.8, .3, fw);   // 0 until the camera is well closer than the photo's
+    float k = smoothstep(.35, .12, fw);   // 0 until the camera is well closer than the photo's
     if (c.x > .5) { o = vec4(d * vec3(.62, .66, .72) / a * (c.z > 0. ? c.z : .55), 1.); return; }
     vec3 soft = textureLod(photo, uv, m == 0 ? 4. : 1.5).rgb;
     o = vec4(mix(sharp, soft * d / a, k), 1.);
@@ -110,8 +110,7 @@ export async function mountEngine(canvas) {
   quad([w / 2, r + .05, -o], [w / 2, r + .05, L + o], [-o, h - o * .55, L + o], [-o, h - o * .55, -o], true, 2);
   const W_ = J.window; quad([W_.x0, W_.y0, -.03], [W_.x1, W_.y0, -.03], [W_.x1, W_.y1, -.03], [W_.x0, W_.y1, -.03], false, 3); // far slope
   const [chx, chy, chz, chw] = J.chimney; box(chx - chw / 2, r - .3, chz - chw / 2, chx + chw / 2, chy, chz + chw / 2, [1, 1, 1, 0, 0, 0]);
-  shade = .16; const [sx, sy] = J.shed; box(sx, 0, -1.2, 0, sy, -.05, [1, 0, 1, 1, 0, 0]);
-  for (const [px, py, pz] of J.posts) box(px - .06, py, pz - .06, px + .06, py + 1.1, pz + .06, [1, 1, 1, 0, 0, 0]);
+  // The shed and the fence posts stay as the photograph has them, on the ground it was traced from.
   shade = 0;
   // The three openings on the long side (plane x = w) and the stain under the gable's peak, each with its piece of Codex's texture.
   const RUNS = [[.186, .281], [.453, .548], [.719, .814]];
@@ -130,8 +129,8 @@ export async function mountEngine(canvas) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     return t;
   }
-  const photoTex = await texture('../media/photo-home-earth-2400.webp'), cleanTex = await texture('clean.webp'), dmapTex = await texture('../media/photo-home-earth-depth.webp');
-  terrain.tex = cleanTex; house.tex = photoTex; backdrop.tex = cleanTex;
+  const photoTex = await texture('../media/photo-home-earth-2400.webp'), dmapTex = await texture('../media/photo-home-earth-depth.webp');
+  terrain.tex = photoTex; house.tex = photoTex; backdrop.tex = photoTex;
   async function tiled(src) {               // a repeating Codex texture, and its average colour for the detail transfer
     const t = await texture(src); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
@@ -160,8 +159,10 @@ void main(){
   float byDepth = max(0., abs(depth - focus) - band) * 7.;
   float byScreen = smoothstep(.12, .55, abs(f.y - fpt.y)) * 2.2;
   float lod = clamp(max(byDepth, byScreen), 0., 3.4) + pull;
-  float L = max(0., lod + lodAdd);
-  vec2 px = exp2(lod + lodAdd) / vec2(textureSize(col, 0));
+  // Blur radius in screen pixels: what the live page's blur would be, less its sharpest pixel, so what is in focus stays as sharp
+  // as this render is, and only what is out of focus softens.
+  float rad = (exp2(lod) - 1.) * exp2(lodAdd), L = log2(1. + rad);
+  vec2 px = (1. + rad) / vec2(textureSize(col, 0));
   vec3 c = textureLod(col, uv, L).rgb * .36;
   c += textureLod(col, uv + px * vec2( .9,  .3), L).rgb * .16;
   c += textureLod(col, uv + px * vec2(-.3,  .9), L).rgb * .16;
