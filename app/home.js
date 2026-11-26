@@ -7,6 +7,8 @@ export default {
   lag: 0,
   pace: 2.5,
   media: 'home',
+  // Photos that play as seamless video loops (media/watch-home-<ID>-loop.mp4, first and last frame the photo).
+  loops: ['D01', 'F01', 'G01', 'P01'],
   hint: { pointer: 'Point and hold to focus. Switch cameras along the bottom.', touch: 'Tap and hold to focus. Switch cameras below.' },
   cameras: {
     desk: { name: 'Desk' }, field: { name: 'Field' }, garden: { name: 'Garden' }, power: { name: 'Power cabinet' },
@@ -35,30 +37,35 @@ export default {
   // lamp's pool on the desk and through the garden window, the garden floodlight on the outside wall and grass, the
   // camera lamp that fills the desk camera's view.
   sources: {
-    desk: ['D01', 'D02', 'D03', 'D04'].map(photo => ({ photo, x: 0.62, y: 0.52, r: 0.22, a: 0.6 })).concat(['G01', 'G02', 'G03', 'G04'].map(photo => ({ photo, x: 0.49, y: 0.6, r: 0.17, a: 0.7 }))),
-    garden: ['G03', 'G04'].map(photo => ({ photo, x: 0.38, y: 0.62, r: 0.6, a: 0.55 })),
-    camera: ['D01', 'D02', 'D03', 'D04'].map(photo => ({ photo, x: 0.5, y: 0.5, r: 0.95, a: 0.45 })),
+    desk: ['D01', 'D02', 'D03', 'D04'].map(photo => ({ photo, x: 0.555, y: 0.44, r: 0.11, a: 0.65 }))
+      .concat(['P01', 'P02', 'P03'].map(photo => ({ photo, x: 0.76, y: 0.47, r: 0.1, a: 0.65 })))
+      .concat(['G01', 'G02', 'G03', 'G04'].map(photo => ({ photo, x: 0.68, y: 0.65, r: 0.06, a: 0.7 }))),
+    garden: ['G03', 'G04'].map(photo => ({ photo, x: 0.66, y: 0.84, r: 0.16, a: 0.6 })),
+    camera: ['D01', 'D02', 'D03', 'D04'].map(photo => ({ photo, x: 0.45, y: 0.55, r: 0.4, a: 0.4 })),
   },
+  // Live light on each photo, in the same 0-1 space as the reveals: the tower's red light until it goes out at 03:16,
+  // the desk lamp, the feed glass, the house robot's charging light, the power cabinet's indicators, the window's glow.
   lights: {
-    D01: [{ x: 0.62, y: 0.52, r: 0.13, a: 0.05, kind: 'flicker', src: 'desk' }, { x: 0.76, y: 0.65, r: 0.09, a: 0.06, kind: 'pulse' }, { x: 0.43, y: 0.585, r: 0.018, a: 0.7, kind: 'blink' }, { x: 0.868, y: 0.245, r: 0.012, a: 1.2, kind: 'blink' }],
-    D02: [{ x: 0.62, y: 0.52, r: 0.13, a: 0.05, kind: 'flicker', src: 'desk' }, { x: 0.76, y: 0.65, r: 0.09, a: 0.06, kind: 'pulse' }, { x: 0.43, y: 0.585, r: 0.018, a: 0.7, kind: 'blink' }],
+    D01: [{ x: 0.555, y: 0.43, r: 0.06, a: 0.06, kind: 'flicker', src: 'desk' }, { x: 0.62, y: 0.5, r: 0.05, a: 0.06, kind: 'pulse' }, { x: 0.42, y: 0.4, r: 0.012, a: 0.7, kind: 'blink' }, { x: 0.735, y: 0.42, r: 0.014, a: 0.5, kind: 'pulse' }, { x: 0.94, y: 0.03, r: 0.01, a: 1.2, kind: 'blink' }],
+    D02: [{ x: 0.555, y: 0.43, r: 0.06, a: 0.06, kind: 'flicker', src: 'desk' }, { x: 0.62, y: 0.5, r: 0.05, a: 0.06, kind: 'pulse' }, { x: 0.42, y: 0.4, r: 0.012, a: 0.7, kind: 'blink' }, { x: 0.735, y: 0.42, r: 0.014, a: 0.5, kind: 'pulse' }],
     F01: [{ x: 0.845, y: 0.245, r: 0.012, a: 1.2, kind: 'blink' }],
-    G01: [{ x: 0.49, y: 0.6, r: 0.16, a: 0.04, kind: 'flicker', src: 'desk' }, { x: 0.935, y: 0.38, r: 0.012, a: 1.2, kind: 'blink' }],
-    G02: [{ x: 0.49, y: 0.6, r: 0.16, a: 0.04, kind: 'flicker', src: 'desk' }],
-    P01: [0.85, 0.87, 0.89].map(x => ({ x, y: 0.47, r: 0.012, a: 0.45, kind: 'pulse' })),
+    G01: [{ x: 0.68, y: 0.65, r: 0.05, a: 0.05, kind: 'flicker', src: 'desk' }, { x: 0.95, y: 0.03, r: 0.01, a: 1.2, kind: 'blink' }],
+    G02: [{ x: 0.68, y: 0.65, r: 0.05, a: 0.05, kind: 'flicker', src: 'desk' }],
+    G03: [{ x: 0.66, y: 0.84, r: 0.12, a: 0.05, kind: 'flicker', src: 'garden' }],
+    P01: [{ x: 0.86, y: 0.4, r: 0.016, a: 0.5, kind: 'pulse' }, { x: 0.76, y: 0.47, r: 0.06, a: 0.05, kind: 'flicker', src: 'desk' }],
   },
   // Coordinates are fractions of the full 16:9 photograph from its upper left, set on the thing in each photo.
   reveals: [
-    { id: 'O1', photo: 'F01', x: 0.845, y: 0.245, r: 0.06, text: 'A plain service tower. One small maintenance light burns near the top.' },
-    { id: 'O2', photo: 'F03', x: 0.845, y: 0.24, r: 0.05, text: 'The upper opening has no shutter. It is black behind the frame.' },
-    { id: 'O3', photo: 'F04', x: 0.845, y: 0.24, r: 0.07, text: "There is a shape inside the opening. Its edge has no relation to the tower's straight frame." },
-    { id: 'O4', photo: 'G02', x: 0.45, y: 0.63, r: 0.07, text: 'The desk lamp is reflected once. The chair inside is empty.' },
-    { id: 'O5', photo: 'P03', x: 0.77, y: 0.47, r: 0.08, text: 'The three lights draw more than the battery can give. One has to go dark.' },
-    { id: 'O6', photo: 'F06', x: 0.845, y: 0.24, r: 0.08, text: 'The dark opening looks wider. Its metal frame has not moved.' },
-    { id: 'O7', photo: 'G03', x: 0.49, y: 0.7, r: 0.08, text: 'Nothing sits in the chair while the garden light is on.' },
-    { id: 'O8', photo: 'G04', x: 0.49, y: 0.7, r: 0.09, text: 'The chair is occupied in this picture. No door has opened.' },
-    { id: 'O9', photo: 'D03', x: 0.72, y: 0.3, r: 0.10, text: 'The glass holds a second shape at the height of a person. The room behind it is empty.' },
-    { id: 'O10', photo: 'D04', x: 0.2, y: 0.86, r: 0.08, text: 'The darkness under the door moves against the hall light.' },
+    { id: 'O1', photo: 'F01', x: 0.740, y: 0.250, r: 0.06, text: 'A plain service tower. One small maintenance light burns near the top.' },
+    { id: 'O2', photo: 'F03', x: 0.740, y: 0.250, r: 0.05, text: 'The upper opening has no shutter. It is black behind the frame.' },
+    { id: 'O3', photo: 'F04', x: 0.740, y: 0.250, r: 0.07, text: "There is a shape inside the opening. Its edge has no relation to the tower's straight frame." },
+    { id: 'O4', photo: 'G02', x: 0.720, y: 0.650, r: 0.07, text: 'The desk lamp is reflected once. The chair inside is empty.' },
+    { id: 'O5', photo: 'P03', x: 0.740, y: 0.420, r: 0.08, text: 'The three lights draw more than the battery can give. One has to go dark.' },
+    { id: 'O6', photo: 'F06', x: 0.740, y: 0.250, r: 0.08, text: 'The dark opening looks wider. Its metal frame has not moved.' },
+    { id: 'O7', photo: 'G03', x: 0.700, y: 0.680, r: 0.08, text: 'Nothing sits in the chair while the garden light is on.' },
+    { id: 'O8', photo: 'G04', x: 0.700, y: 0.680, r: 0.09, text: 'The chair is occupied in this picture. No door has opened.' },
+    { id: 'O9', photo: 'D03', x: 0.600, y: 0.290, r: 0.10, text: 'The glass holds a second shape at the height of a person. The room behind it is empty.' },
+    { id: 'O10', photo: 'D04', x: 0.310, y: 0.570, r: 0.08, text: 'The darkness under the door moves against the hall light.' },
   ],
   endings: {
     window: { title: 'There is someone in the glass.', text: 'The room behind the camera is empty. The second shape remains in the window after your lamp goes out.', controls: [['Watch Home again', 'restart'], ['Return to the wall', 'wall']] },

@@ -11,7 +11,8 @@ void main() { uv = p * 0.5 + 0.5; uv.y = 1.0 - uv.y; gl_Position = vec4(p, 0.0, 
 const FS = `#version 300 es
 precision highp float;
 in vec2 uv; out vec4 o;
-uniform sampler2D c0, d0, c1, d1;
+uniform sampler2D c0, d0, c1, d1, v1;
+uniform float useV;   // the live picture plays a video loop: its sharp image comes from v1, its soft levels from the photo
 uniform vec2 cam, scale, fpt;
 uniform float mixv, pull, strength, band, tilt, tm;
 // Live light on the current photo: up to eight soft regions (x, y, radius, strength) that flicker, pulse or blink on
@@ -45,7 +46,7 @@ vec2 march(sampler2D d, vec2 q) {
 // The miniature look, done here rather than in the photograph: a band of sharpness across the depth under the pointer,
 // and a band across the screen at the pointer's height; past either, the picture goes soft, more the further it is.
 // The photos themselves are sharp front to back, so focus can rack to anything, near rocks included.
-vec3 shade(sampler2D c, sampler2D d, vec2 q) {
+vec3 shade(sampler2D c, sampler2D d, vec2 q, float vid) {
   vec2 s = march(d, q);
   float depth = texture(d, s).r;
   float focus = texture(d, (fpt - 0.5) * scale + 0.5).r;
@@ -59,11 +60,12 @@ vec3 shade(sampler2D c, sampler2D d, vec2 q) {
   col += textureLod(c, s + px * vec2(-0.3,  0.9), lod).rgb * 0.16;
   col += textureLod(c, s + px * vec2(-0.9, -0.3), lod).rgb * 0.16;
   col += textureLod(c, s + px * vec2( 0.3, -0.9), lod).rgb * 0.16;
+  if (vid > 0.5) col = mix(texture(v1, s).rgb, col, clamp(lod / 1.4, 0.0, 1.0));
   return col;
 }
 void main() {
   vec2 q = (uv - 0.5) * scale + 0.5;
-  vec3 a = shade(c0, d0, q), b = shade(c1, d1, q);
+  vec3 a = shade(c0, d0, q, 0.0), b = shade(c1, d1, q, useV);
   vec3 col = mix(a, lit(b, q), mixv);
   float v = smoothstep(0.95, 0.35, length((uv - 0.5) * vec2(1.0, 0.8)));
   o = vec4(col * mix(0.86, 1.0, v), 1.0);
@@ -81,7 +83,7 @@ export function mount(canvas) {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
   const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   const U = n => gl.getUniformLocation(pr, n);
-  ['c0', 'd0', 'c1', 'd1'].forEach((n, i) => gl.uniform1i(U(n), i));
+  ['c0', 'd0', 'c1', 'd1', 'v1'].forEach((n, i) => gl.uniform1i(U(n), i));
 
   const solid = v => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([v, v, v, 255])); return t; };
   const black = solid(0), flat = solid(128);
@@ -95,6 +97,17 @@ export function mount(canvas) {
     return t;
   };
   const load = url => new Promise(res => { if (!url) return res(null); const i = new Image(); i.decoding = 'async'; i.onload = () => res(i); i.onerror = () => res(null); i.src = url; });
+  // A loop instead of a still: a muted video that repeats, uploaded to its texture every frame; the depth map stays the
+  // photo's, since the loops move little and begin and end on that photo.
+  const loadVideo = url => new Promise(res => {
+    const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.crossOrigin = 'anonymous';
+    v.oncanplay = () => { v.oncanplay = null; v.play().catch(() => {}); res(v); }; v.onerror = () => res(null); v.src = url;
+  });
+  let movie = null, movieFresh = false, movieUp = false;
+  const vtex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, vtex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const onVideoFrame = v => { const f = () => { if (movie !== v) return; movieFresh = true; v.requestVideoFrameCallback ? v.requestVideoFrameCallback(f) : setTimeout(f, 42); }; f(); };
 
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let a = { c: black, d: flat }, b = a, mix = 1, fadeAt = 0, aspect = 16 / 9;
@@ -134,9 +147,13 @@ export function mount(canvas) {
     gl.uniform1f(U('tm'), t);
     gl.uniform1i(U('LN'), lights.length);
     if (lights.length) { gl.uniform4fv(U('L'), lights.flatMap(l => [l.x, l.y, l.r, l.a])); gl.uniform1fv(U('LK'), lights.map(l => ({ flicker: 0, pulse: 1, blink: 2, steady: 3 })[l.kind] ?? 0)); }
+    // the loop's newest frame goes up only when the video has one, into its own texture with no mip levels
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, vtex);
+    if (movie && movieFresh && movie.readyState >= 2) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, movie); movieFresh = false; movieUp = true; }
+    gl.uniform1f(U('useV'), movie && movieUp && mix >= 1 ? 1 : 0);
     [a.c, a.d, b.c, b.d].forEach((x, i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, x); });
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    if (!still || mix < 1 || pull > 0 || camGoal) raf = requestAnimationFrame(frame);
+    if (!still || mix < 1 || pull > 0 || camGoal || movie) raf = requestAnimationFrame(frame);
   };
   const kick = () => { if (!raf) { last = 0; raf = requestAnimationFrame(frame); } };
 
@@ -164,12 +181,15 @@ export function mount(canvas) {
     // Where focus sits, in the photo's own 0–1 space, and whether it has settled there.
     focus() { return { x: (fp[0] - 0.5) * sc[0] + 0.5, y: (fp[1] - 0.5) * sc[1] + 0.5, settled: !!fpGoal && Math.hypot(fp[0] - fpGoal[0], fp[1] - fpGoal[1]) < 0.02 }; },
     // lights: [{ x, y, r, a, kind: 'flicker' | 'pulse' | 'blink' }] in the photo's own 0–1 space
-    async show(colour, depth, lit = []) {
-      const key = colour + '|' + depth; lights = lit.slice(0, 8); if (key === want) return; want = key;
+    // loop: a video URL that plays in place of the still once it can, starting on the same picture
+    async show(colour, depth, lit = [], loop = null) {
+      const key = colour + '|' + depth + '|' + loop; lights = lit.slice(0, 8); if (key === want) return; want = key;
       const [ci, di] = await Promise.all([load(colour), load(depth)]);
       if (want !== key || !ci) return;
       aspect = ci.width / ci.height;
       const n = { c: texOf(ci), d: di ? texOf(di) : flat };
+      if (movie) { movie.pause(); movie.removeAttribute('src'); movie.load(); movie = null; movieUp = false; }
+      if (loop && !still) loadVideo(loop).then(v => { if (!v || want !== key) return; movie = v; movieUp = false; onVideoFrame(v); kick(); });
       if (a.c === black) { a = b = n; mix = 1; }
       else { a = mix < 0.5 ? a : b; b = n; mix = 0; fadeAt = performance.now(); pull = 1.6; }
       kick();

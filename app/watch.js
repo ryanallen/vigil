@@ -8,6 +8,7 @@ import { mount as air } from './atmos.js';
 
 let pre = '';   // a story's photos are media/watch-<story>-<ID>; Kirra's, the first, are media/watch-<ID>
 const media = (id, w) => new URL(`../media/watch-${pre}${id}-${w}.webp`, import.meta.url).href;
+const loopOf = id => new URL(`../media/watch-${pre}${id}-loop.mp4`, import.meta.url).href;
 const depthOf = id => new URL(`../media/watch-${pre}${id}-depth.webp`, import.meta.url).href;
 const size = () => Math.min(innerWidth, 1600) * Math.min(2, devicePixelRatio || 1) > 1000 ? 1600 : 800;
 const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -16,6 +17,7 @@ const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const touch = matchMedia('(hover: none)').matches;
 // How to look, the same in every watch: details are marked by pings that open when the pointer rests on them.
 const HINT = { pointer: 'Rest the pointer on a ping to read what is there. Switch cameras along the bottom.', touch: 'Tap a ping to read what is there. Switch cameras below.' };
+const NOLOOP = new URLSearchParams(location.search).has('noloops');   // for measuring the page without its video loops
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 export function run(S, root, { onWall } = {}) {
@@ -47,7 +49,7 @@ export function run(S, root, { onWall } = {}) {
     current = id; fresh.delete(id);
     if (changed) { root.classList.remove('cutting'); void root.offsetWidth; root.classList.add('cutting'); }
     const p = photoOf[id];
-    if (view) view.show(media(p, size()), depthOf(p), litFor(p)); else $('.cam-fallback').src = media(p, size());
+    if (view) view.show(media(p, size()), depthOf(p), litFor(p), (S.loops || []).includes(p) && !NOLOOP ? loopOf(p) : null); else $('.cam-fallback').src = media(p, size());
     stamp(); drawStrip(); drawPings();
   }
   // The camera's own time: Kirra's clock, a link's length behind Home's.
