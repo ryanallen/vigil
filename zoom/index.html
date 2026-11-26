@@ -28,8 +28,8 @@
 // The live page as it is (the photograph with depth, focus racked to the pointer, the tilt-shift look), and a zoom on top: the wheel,
 // a drag or the arrow keys magnify it about the lit window until the photograph runs out of detail, then the 3D view of the house
 // takes over through the same look and carries on in along its line of sight to the window. ?z= (0-1) sets the zoom.
-import { mount } from './depthview-zoom.js?v=1795666716';
-import { mountEngine } from './engine.js?v=1795666716';
+import { mount } from './depthview-zoom.js?v=1795704836';
+import { mountEngine } from './engine.js?v=1795704836';
 const fig = document.querySelector('figure'), img = fig.querySelector('img'), words = document.querySelector('.words'), nearCv = document.getElementById('near');
 const P = [0.69, 0.585], HOUSE = P.map(v => (v - 0.5) / 0.9 + 0.5), AT = [0.69, 0.6];
 let rect = [0, 0, innerWidth, innerHeight];
@@ -63,7 +63,7 @@ function tick() {
   s += (goal - s) * .08; if (Math.abs(goal - s) < 1e-4) s = goal;
   const z = Math.pow(ZH, Math.min(1, s / HAND)), dolly = Math.max(0, (s - HAND) / (1 - HAND));
   v.zoom(z, centre);
-  words.style.opacity = String(Math.max(0, 1 - s / .12));
+  words.style.opacity = String(Math.max(0, 1 - s / .04));
   const show = eng ? Math.min(1, Math.max(0, (s - (HAND - .06)) / .06)) : 0;
   nearCv.style.opacity = String(show);
   if (show > 0) { const st = v.state(); eng.draw({ z, dolly, fig: rect, fp: st.fp, cam: st.cam, sc: st.sc }); }
