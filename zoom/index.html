@@ -28,8 +28,8 @@
 // The live page as it is (the photograph with depth, focus racked to the pointer, the tilt-shift look), and a zoom on top: the wheel,
 // a drag or the arrow keys magnify it about the lit window until the photograph runs out of detail, then the 3D view of the house
 // takes over through the same look and carries on in along its line of sight to the window. ?z= (0-1) sets the zoom.
-import { mount } from './depthview-zoom.js?v=1795666408';
-import { mountEngine } from './engine.js?v=1795666408';
+import { mount } from './depthview-zoom.js?v=1795666716';
+import { mountEngine } from './engine.js?v=1795666716';
 const fig = document.querySelector('figure'), img = fig.querySelector('img'), words = document.querySelector('.words'), nearCv = document.getElementById('near');
 const P = [0.69, 0.585], HOUSE = P.map(v => (v - 0.5) / 0.9 + 0.5), AT = [0.69, 0.6];
 let rect = [0, 0, innerWidth, innerHeight];

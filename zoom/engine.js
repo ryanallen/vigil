@@ -5,7 +5,7 @@
 // drift, so the hand-over from the flat photograph to this does not show. Past the hand-over the camera moves in along its own
 // line of sight to the lit window; where the photograph runs out of pixels, Codex's textures take over in the photograph's colours.
 // mountEngine(canvas) -> { draw(view), centre } or null without WebGL2.
-const V = '1795666408';
+const V = '1795666716';
 export async function mountEngine(canvas) {
   const cv = canvas, gl = cv.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: false });
   if (!gl) return null;
@@ -32,7 +32,8 @@ export async function mountEngine(canvas) {
   // c.y: material (0 ground, 1 wall, 2 roof, 3 window frame and glass).
   const FS = `#version 300 es
   precision highp float;
-  in vec3 wp; in vec3 c; in vec2 tu; uniform sampler2D photo, tWall, tRoof, tGround, tWin, tSide, tPatch;
+  in vec3 wp; in vec3 c; in vec2 tu; uniform sampler2D photo, tWall, tRoof, tGround, tWin, tSide, tPatch, tWallH;
+  uniform vec3 uEye, uLamp;
   uniform mat3 uR; uniform vec3 uC; uniform float uF; uniform vec2 uSize; uniform vec4 avg[3]; uniform vec4 win; uniform float houseW, s0;
   uniform sampler2D dmap;
   layout(location = 0) out vec4 o; layout(location = 1) out vec4 od;
@@ -40,7 +41,10 @@ export async function mountEngine(canvas) {
     vec3 n = normalize(cross(dFdx(wp), dFdy(wp)));
     if (m == 0) { a = avg[0].rgb; return texture(tGround, wp.xz / 2.).rgb; }
     if (m == 2) { a = avg[2].rgb; return texture(tRoof, vec2(wp.z, length(vec2(wp.x - houseW * .5, wp.y))) / 2.).rgb; }
-    a = avg[1].rgb; return texture(tWall, (abs(n.z) > abs(n.x) ? wp.xy : wp.zy) / 2.).rgb;
+    // Whitewash over rough stone: Codex's wall with its height map lit from the dusk sky above, so the relief reads up close.
+    vec2 wu = (abs(n.z) > abs(n.x) ? wp.xy : wp.zy) / 2.;
+    float h0 = texture(tWallH, wu).r, hu = texture(tWallH, wu + vec2(0., .004)).r, hs = texture(tWallH, wu + vec2(.004, 0.)).r;
+    a = avg[1].rgb; return texture(tWall, wu).rgb * clamp(1. + (hu - h0) * 3. + (hs - h0) * 1.2, .6, 1.3);
   }
   void main(){
     vec3 q = uR * (wp - uC);
@@ -50,12 +54,27 @@ export async function mountEngine(canvas) {
     vec3 sharp = textureGrad(photo, uv, gx, gy).rgb;
     od = vec4(textureLod(dmap, clamp(uv, 0., 1.), 0.).r);
     int m = int(c.y + .5);
+    float near = smoothstep(.35, .12, fw);          // 0 while the photograph has the detail, 1 once the camera is well past it
+    vec3 nrm = normalize(cross(dFdx(wp), dFdy(wp))); nrm *= sign(dot(nrm, uEye - wp));
+    if (m == 6 || m == 7 || m == 9) {               // the room behind the window, lit only by the desk lamp
+      vec3 wallAlb = vec3(.80, .76, .68) * texture(tWall, (abs(nrm.z) > abs(nrm.x) ? wp.xy : wp.zy) / 2.).rgb / avg[1].rgb;
+      vec3 alb = m == 7 ? vec3(.30, .21, .14) : (c.z > 1.5 ? vec3(.34, .25, .17) : c.z > .5 ? vec3(.42, .33, .24) : wallAlb);
+      vec3 l = uLamp - wp; float dl = length(l);
+      vec3 lit = vec3(1., .6, .28) * (7. * max(0., dot(nrm, l / dl)) / (1. + dl * dl * .35) + .55);   // the lamp, and its light thrown back round the small whitewashed room
+      o = vec4(m == 9 ? vec3(1., .78, .45) * 1.6 : alb * lit, 1.); return;
+    }
+    if (m == 8) {                                   // the stone reveal round the window: whitewash, warm toward the room
+      vec3 a8, d8 = detail(1, a8); float inward = clamp(wp.z / .4, 0., 1.);
+      vec3 col = d8 / a8 * vec3(.62, .65, .7) * mix(.55, .9, inward) + vec3(.35, .2, .08) * inward * inward;
+      o = vec4(mix(sharp, col, near), 1.); return;
+    }
     if (m == 3) {                                   // the gable window: Codex's frame, warm lit glass behind it
       vec2 wu = vec2((wp.x - win.x) / (win.y - win.x), 1. - (wp.y - win.z) / (win.w - win.z));
       vec3 f = texture(tWin, mix(vec2(.053, .045), vec2(.944, .954), wu)).rgb; float frame = smoothstep(.06, .16, max(f.r, max(f.g, f.b)));
-      vec3 glass = vec3(1., .6, .26) * (.7 + .35 * (1. - length(wu - vec2(.45, .62))));   // lamp-lit from low inside
-      glass = mix(glass, vec3(.55, .6, .68), .12 * smoothstep(.55, .0, wu.y));               // the dusk sky faintly on the upper panes
-      o = vec4(mix(sharp, mix(glass, f * .45, frame), smoothstep(.35, .12, fw)), 1.); return;
+      // Old glass: the room shows through it, the dusk sky faint on the upper panes; far off it is the photograph's window.
+      vec4 glass = vec4(vec3(.55, .6, .68), .1 + .14 * smoothstep(.6, .0, wu.y));
+      vec4 near4 = mix(glass, vec4(f * .45, 1.), frame);
+      o = mix(vec4(sharp, 1.), near4, near); return;
     }
     if (m == 4 || m == 5) {                         // the long side's three openings and the stained patch under the gable's peak
       vec3 t = m == 4 ? texture(tSide, tu).rgb : texture(tPatch, tu).rgb;
@@ -102,14 +121,36 @@ export async function mountEngine(canvas) {
     quad([x1, y0, z1], [x0, y0, z1], [x0, y1, z1], [x1, y1, z1], !seen[4]);
   }
   const o = .25;
-  quad([0, 0, 0], [w, 0, 0], [w, h, 0], [0, h, 0]);                 // gable wall (seen)
+  // The gable wall, with the window's opening through it.
+  const W_ = J.window, DEP = .4, GZ = .28;
+  quad([0, 0, 0], [w, 0, 0], [w, W_.y0, 0], [0, W_.y0, 0]); quad([0, W_.y1, 0], [w, W_.y1, 0], [w, h, 0], [0, h, 0]);
+  quad([0, W_.y0, 0], [W_.x0, W_.y0, 0], [W_.x0, W_.y1, 0], [0, W_.y1, 0]); quad([W_.x1, W_.y0, 0], [w, W_.y0, 0], [w, W_.y1, 0], [W_.x1, W_.y1, 0]);
+  // The reveal: the stone's thickness round the opening.
+  quad([W_.x0, W_.y0, 0], [W_.x0, W_.y0, DEP], [W_.x0, W_.y1, DEP], [W_.x0, W_.y1, 0], false, 8); quad([W_.x1, W_.y0, DEP], [W_.x1, W_.y0, 0], [W_.x1, W_.y1, 0], [W_.x1, W_.y1, DEP], false, 8);
+  quad([W_.x0, W_.y0, 0], [W_.x1, W_.y0, 0], [W_.x1, W_.y0, DEP], [W_.x0, W_.y0, DEP], false, 8); quad([W_.x0, W_.y1, DEP], [W_.x1, W_.y1, DEP], [W_.x1, W_.y1, 0], [W_.x0, W_.y1, 0], false, 8);
+  // The room behind it (whitewashed, a timber ceiling, a plank floor), the watch desk under the window with its lamp, and the
+  // empty chair pushed back.
+  const RX0 = DEP, RX1 = w - DEP, RZ0 = DEP, RZ1 = L - DEP, RY0 = .05, RY1 = 2.3;
+  shade = 0; quad([RX0, RY0, RZ1], [RX1, RY0, RZ1], [RX1, RY1, RZ1], [RX0, RY1, RZ1], false, 6); quad([RX0, RY0, RZ0], [RX0, RY0, RZ1], [RX0, RY1, RZ1], [RX0, RY1, RZ0], false, 6);
+  quad([RX1, RY0, RZ1], [RX1, RY0, RZ0], [RX1, RY1, RZ0], [RX1, RY1, RZ1], false, 6);
+  shade = 2; quad([RX0, RY0, RZ0], [RX1, RY0, RZ0], [RX1, RY0, RZ1], [RX0, RY0, RZ1], false, 6);
+  shade = 1; quad([RX0, RY1, RZ1], [RX1, RY1, RZ1], [RX1, RY1, RZ0], [RX0, RY1, RZ0], false, 6);
+  const DX = (W_.x0 + W_.x1) / 2; shade = 0;
+  const blk = (x0, y0, z0, x1, y1, z1, m) => { quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1], false, m); quad([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], false, m);
+    quad([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], false, m); quad([x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], false, m); quad([x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], false, m); };
+  blk(DX - .95, .71, RZ0, DX + .95, .76, RZ0 + .62, 7);
+  for (const [lx, lz] of [[-.92, .02], [.86, .02], [-.92, .54], [.86, .54]]) blk(DX + lx, RY0, RZ0 + lz, DX + lx + .06, .71, RZ0 + lz + .06, 7);
+  blk(DX - .62, .76, RZ0 + .2, DX - .5, .78, RZ0 + .32, 7); blk(DX - .575, .78, RZ0 + .245, DX - .545, 1.02, RZ0 + .275, 7); blk(DX - .63, 1.02, RZ0 + .2, DX - .47, 1.1, RZ0 + .32, 9);
+  blk(DX + .1, .44, RZ0 + 1.05, DX + .55, .48, RZ0 + 1.5, 7); blk(DX + .1, .48, RZ0 + 1.46, DX + .55, .95, RZ0 + 1.5, 7);
+  for (const [cx_, cz_] of [[.12, 1.07], [.49, 1.07], [.12, 1.44], [.49, 1.44]]) blk(DX + cx_, RY0, RZ0 + cz_, DX + cx_ + .04, .44, RZ0 + cz_ + .04, 7);
+  // The glass and frame, set back in the reveal; drawn after everything else, so the room shows through it.
+  const glass = { P: [W_.x0, W_.y0, GZ, W_.x1, W_.y0, GZ, W_.x1, W_.y1, GZ, W_.x0, W_.y1, GZ], C: [0, 3, 0, 0, 3, 0, 0, 3, 0, 0, 3, 0], T: [0, 1, 1, 1, 1, 0, 0, 0], I: [0, 1, 2, 0, 2, 3] };
   quad([w, 0, 0], [w, 0, L], [w, h, L], [w, h, 0]);                 // long side (seen)
   quad([w, 0, L], [0, 0, L], [0, h, L], [w, h, L], true);           // back gable
   quad([0, 0, L], [0, 0, 0], [0, h, 0], [0, h, L], true);           // far long side
   tri([0, h, 0], [w, h, 0], [w / 2, r, 0]); tri([w, h, L], [0, h, L], [w / 2, r, L], true);
   quad([w + o, h - o * .55, -o], [w + o, h - o * .55, L + o], [w / 2, r + .05, L + o], [w / 2, r + .05, -o], false, 2);   // near roof slope
   quad([w / 2, r + .05, -o], [w / 2, r + .05, L + o], [-o, h - o * .55, L + o], [-o, h - o * .55, -o], true, 2);
-  const W_ = J.window; quad([W_.x0, W_.y0, -.03], [W_.x1, W_.y0, -.03], [W_.x1, W_.y1, -.03], [W_.x0, W_.y1, -.03], false, 3); // far slope
   const [chx, chy, chz, chw] = J.chimney; box(chx - chw / 2, r - .3, chz - chw / 2, chx + chw / 2, chy, chz + chw / 2, [1, 1, 1, 0, 0, 0]);
   // The shed and the fence posts stay as the photograph has them, on the ground it was traced from.
   shade = 0;
@@ -120,6 +161,8 @@ export async function mountEngine(canvas) {
   });
   if (J.patch) { const [x0, y0, x1, y1] = J.patch; quad([x0, y0, -.02], [x1, y0, -.02], [x1, y1, -.02], [x0, y1, -.02], false, 5, [.027, .988, .969, .033]); }
   const house = mesh(new Float32Array(P), new Float32Array(Cc), new Uint16Array(I), new Float32Array(T));
+  const pane = mesh(new Float32Array(glass.P), new Float32Array(glass.C), new Uint16Array(glass.I), new Float32Array(glass.T));
+  const LAMP = [DX - .55, 1.04, RZ0 + .26];
 
   // The moor takes the clean plate (the photograph with the house, shed, posts and light spill painted out) so the ground
   // behind the house is there when the house moves against it; the house takes the photograph itself.
@@ -131,7 +174,7 @@ export async function mountEngine(canvas) {
     return t;
   }
   const photoTex = await texture('../media/photo-home-earth-2400.webp'), dmapTex = await texture('../media/photo-home-earth-depth.webp');
-  terrain.tex = photoTex; house.tex = photoTex; backdrop.tex = photoTex;
+  terrain.tex = photoTex; house.tex = photoTex; backdrop.tex = photoTex; pane.tex = photoTex;
   async function tiled(src) {               // a repeating Codex texture, and its average colour for the detail transfer
     const t = await texture(src); gl.bindTexture(gl.TEXTURE_2D, t);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
@@ -139,7 +182,7 @@ export async function mountEngine(canvas) {
     const im = new Image(); im.src = src; await im.decode(); const c2 = new OffscreenCanvas(1, 1).getContext('2d'); c2.drawImage(im, 0, 0, 1, 1);
     const [r_, g_, b_] = c2.getImageData(0, 0, 1, 1).data; t.avg = [r_ / 255, g_ / 255, b_ / 255, 1]; return t;
   }
-  const tGround = await tiled('tex/moor_ground.webp?v=' + V), tWall = await tiled('tex/wall.webp?v=' + V), tRoof = await tiled('tex/roof.webp?v=' + V), tWin = await texture('tex/gable_window.webp?v=' + V), tSide = await texture('tex/side_openings.webp?v=' + V), tPatch = await texture('tex/gable_apex_patch.webp?v=' + V);
+  const tGround = await tiled('tex/moor_ground.webp?v=' + V), tWall = await tiled('tex/wall.webp?v=' + V), tRoof = await tiled('tex/roof.webp?v=' + V), tWin = await texture('tex/gable_window.webp?v=' + V), tSide = await texture('tex/side_openings.webp?v=' + V), tPatch = await texture('tex/gable_apex_patch.webp?v=' + V), tWallH = await tiled('tex/wall_height.webp?v=' + V);
 
 
   const win = J.window, WC = [(win.x0 + win.x1) / 2, (win.y0 + win.y1) / 2, 0];
@@ -222,12 +265,14 @@ void main(){
     gl.useProgram(prog); gl.uniformMatrix4fv(U('view'), false, v); gl.uniformMatrix4fv(U('proj'), false, p);
     gl.uniformMatrix3fv(U('uR'), true, R0.flat()); gl.uniform3fv(U('uC'), C0); gl.uniform1f(U('uF'), F); gl.uniform2f(U('uSize'), PW, PH);
     gl.uniform4fv(U('avg'), [...tGround.avg, ...tWall.avg, ...tRoof.avg]); gl.uniform4f(U('win'), win.x0, win.x1, win.y0, win.y1); gl.uniform1f(U('houseW'), J.w);
-    [['tGround', tGround], ['tWall', tWall], ['tRoof', tRoof], ['tWin', tWin], ['tSide', tSide], ['tPatch', tPatch], ['dmap', dmapTex]].forEach(([nm, t_], i) => { gl.activeTexture(gl.TEXTURE1 + i); gl.bindTexture(gl.TEXTURE_2D, t_); gl.uniform1i(U(nm), 1 + i); });
+    [['tGround', tGround], ['tWall', tWall], ['tRoof', tRoof], ['tWin', tWin], ['tSide', tSide], ['tPatch', tPatch], ['dmap', dmapTex], ['tWallH', tWallH]].forEach(([nm, t_], i) => { gl.activeTexture(gl.TEXTURE1 + i); gl.bindTexture(gl.TEXTURE_2D, t_); gl.uniform1i(U(nm), 1 + i); });
     gl.uniform1i(U('photo'), 0); gl.activeTexture(gl.TEXTURE0);
     // Photograph pixels per screen pixel at the hand-over: the textures take over only well past that.
     gl.uniform1f(U('s0'), PW * ax * 2 / cv.width);
     gl.depthMask(false); gl.bindTexture(gl.TEXTURE_2D, backdrop.tex); gl.bindVertexArray(backdrop.vao); gl.drawElements(gl.TRIANGLES, backdrop.n, backdrop.type, 0); gl.depthMask(true);
+    gl.uniform3fv(U('uEye'), pos); gl.uniform3fv(U('uLamp'), LAMP);
     for (const m of [terrain, house]) { gl.bindTexture(gl.TEXTURE_2D, m.tex); gl.bindVertexArray(m.vao); gl.drawElements(gl.TRIANGLES, m.n, m.type, 0); }
+    gl.depthMask(false); gl.bindTexture(gl.TEXTURE_2D, pane.tex); gl.bindVertexArray(pane.vao); gl.drawElements(gl.TRIANGLES, pane.n, pane.type, 0); gl.depthMask(true);
     gl.bindTexture(gl.TEXTURE_2D, colTex); gl.generateMipmap(gl.TEXTURE_2D);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, cv.width, cv.height); gl.disable(gl.DEPTH_TEST); gl.disable(gl.BLEND);
     gl.useProgram(post); gl.bindVertexArray(qv);
