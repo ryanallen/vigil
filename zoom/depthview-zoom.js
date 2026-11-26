@@ -1,3 +1,4 @@
+import { createSky } from './sky.js?v=5';
 // A photograph that behaves like a 3D space: its depth map shifts near parts more than far ones as the camera moves,
 // and focus follows the depth under the pointer, so what you point at racks sharp and the rest falls soft: the
 // tilt-shift miniature look, made live from sharp photographs.
@@ -118,63 +119,34 @@ vec3 shade(sampler2D c, sampler2D d, vec2 q, float vid) {
   if (cH > 0.001) col = tile(hc2, sw2, hr2, s, col, raw, soft, tw, zoom, 1.0, lod);
   return col;
 }
-// The sky: an overcast deck of cloud drifting on one wind, marched through a slab 1.2-2.6 km up along each pixel's ray from
-// the photograph's own fitted camera, and laid over the photograph's sky as light and shade on its colour, so it is the same
-// evening, moving. Never black, grey bellies, grey-gold where the low sun reaches the edges.
-uniform float cloudsOn;
+// The sky (sky.js): its cloud, drawn at half resolution (over the sky: the cloud's light and cover; over the moor: the
+// shadow it casts), and the sun's shafts swept out from it.
+uniform float skyOn; uniform sampler2D cloudT, rayT;
 const mat3 CAM = mat3(0.828835, -0.023750, 0.558988, -0.000549, 0.999064, 0.043263, -0.559492, -0.036165, 0.828046);
-float h13(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
-float noise3(vec3 x) {
-  vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(mix(h13(i), h13(i + vec3(1, 0, 0)), f.x), mix(h13(i + vec3(0, 1, 0)), h13(i + vec3(1, 1, 0)), f.x), f.y),
-             mix(mix(h13(i + vec3(0, 0, 1)), h13(i + vec3(1, 0, 1)), f.x), mix(h13(i + vec3(0, 1, 1)), h13(i + 1.0), f.x), f.y), f.z);
-}
-const float CL0 = 1.2, CL1 = 2.6;
-float cloudD(vec3 p) {
-  float h = (p.y - CL0) / (CL1 - CL0);
-  vec3 q = p + vec3(tm2 * 0.045, 0.0, tm2 * 0.018);                          // one wind for every scale
-  float cov = noise3(q * vec3(0.42, 0.7, 0.42) + vec3(3.1, 0.0, 7.7)) * 0.5 + 0.5;
-  float prof = smoothstep(0.02, 0.2, h) * (1.0 - smoothstep(0.55, 1.0, h));
-  vec3 r = q * 1.9 + vec3(0.0, tm2 * 0.002, 0.0);
-  float f = noise3(r) * 0.55 + noise3(r * 2.3 + vec3(1.7, 9.2, 3.1)) * 0.3 + noise3(r * 5.1 + vec3(7.0, 2.0, 5.0)) * 0.15;
-  return clamp((cov * 0.95 + f * 0.75 - 0.9) * 2.6, 0.0, 1.0) * prof;
-}
-vec4 clouds(vec3 rd) {
-  if (rd.y <= 0.004) return vec4(0.0);
-  vec3 ro = vec3(0.0, 0.02, 0.0);
-  float t0 = (CL0 - ro.y) / rd.y, t1 = min((CL1 - ro.y) / rd.y, 60.0);
-  const int N = 12; float dt = (t1 - t0) / float(N);
-  float j = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
-  vec3 sun = normalize(vec3(0.8, 0.08, 0.2));
-  vec3 C = vec3(0.0); float T = 1.0;
-  for (int i = 0; i < N; i++) {
-    vec3 p = ro + rd * (t0 + (float(i) + j) * dt);
-    float d = cloudD(p);
-    if (d > 0.004) {
-      float beer = exp(-cloudD(p + sun * 0.4) * 1.6), powder = 1.0 - exp(-d * 4.0);
-      float hgt = (p.y - CL0) / (CL1 - CL0);
-      vec3 col = mix(vec3(0.62, 0.62, 0.68), vec3(0.95, 0.93, 0.98), hgt) + vec3(0.5, 0.36, 0.26) * beer * powder * 0.5;
-      float a = 1.0 - exp(-d * dt * 1.8);
-      C += T * a * col; T *= 1.0 - a; if (T < 0.03) break;
-    }
-  }
-  return vec4(C, 1.0 - T);
-}
 void main() {
   vec2 q = (uv - 0.5) * scale + 0.5;
   q = zc + (q - zc) / zoom;
   // the second picture is drawn only while one fades into another
   vec3 b = shade(c1, d1, q, useV);
   vec3 col = mixv < 1.0 ? mix(shade(c0, d0, q, 0.0), lit(b, q), mixv) : lit(b, q);
-  if (cloudsOn > 0.5) {
+  if (skyOn > 0.5) {
+    vec2 tc = vec2(uv.x, 1.0 - uv.y);
+    // the half-resolution cloud, softened over a few of its texels so its march leaves no pattern
+    vec2 ct = 1.0 / vec2(textureSize(cloudT, 0));
+    vec4 cl = (texture(cloudT, tc) * 2.0 + texture(cloudT, tc + ct * vec2(1.0, 0.5)) + texture(cloudT, tc - ct * vec2(1.0, 0.5))
+             + texture(cloudT, tc + ct * vec2(-0.5, 1.0)) + texture(cloudT, tc - ct * vec2(-0.5, 1.0))) / 6.0;
+    float ray = texture(rayT, tc).r;
     float skyA = hon0 > 0.5 ? 1.0 - textureLod(hc0, q, 0.0).a : smoothstep(0.06, 0.02, texture(d1, q).r);
-    if (skyA > 0.01) {
-      vec3 rd = normalize(CAM * vec3((q.x - 0.5) * 1672.0 / 2296.89, -(q.y - 0.5) * 941.0 / 2296.89, 1.0));
-      vec4 cl = clouds(rd);
-      vec3 base = textureLod(c1, q, 4.5).rgb;                                // the photograph's sky, its colour and gradient
-      float m = (dot(cl.rgb, vec3(0.333)) + (1.0 - cl.a) * 0.62) / 0.75;       // the deck's light and shade about its mean
-      col = mix(col, base * clamp(1.0 + (m - 1.0) * 1.5, 0.55, 1.35), skyA);
-    }
+    vec3 rd = normalize(CAM * vec3((q.x - 0.5) * 1672.0 / 2296.89, -(q.y - 0.5) * 941.0 / 2296.89, 1.0));
+    // the sky: the photograph's own colour and gradient behind the deck, the deck over it
+    vec3 base = textureLod(c1, q, 5.0).rgb;
+    vec3 sky = base * (1.0 - cl.a) + cl.rgb * 0.85;
+    // the moor: the cloud's shadow passing over it (only where the cloud pass looked down at the ground)
+    float shadow = rd.y <= 0.0 ? cl.r : 1.0;
+    vec3 land = col * mix(0.72, 1.06, shadow);
+    col = mix(land, sky, skyA);
+    // the sun's shafts, over the sky and falling across the moor
+    col += min(ray, 1.5) * vec3(1.0, 0.8, 0.62) * mix(0.07, 0.11, skyA);
   }
   float v = smoothstep(0.95, 0.35, length((uv - 0.5) * vec2(1.0, 0.8)));
   // a fine still grain, heavier in the shadows, so the rendered moor carries the photograph's own film texture
@@ -189,14 +161,15 @@ export function mount(canvas) {
   if (!gl) return null;
   const sh = (t, s) => { const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); return x; };
   const pr = gl.createProgram();
-  gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr);
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.bindAttribLocation(pr, 0, 'p'); gl.linkProgram(pr);
   if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return null;
   gl.useProgram(pr);
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
   const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   const U = n => gl.getUniformLocation(pr, n);
-  ['c0', 'd0', 'c1', 'd1', 'v1', 'hc0', 'hc1', 'hc2', 'cp', 'sw0', 'sw1', 'sw2'].forEach((n, i) => gl.uniform1i(U(n), i));
+  ['c0', 'd0', 'c1', 'd1', 'v1', 'hc0', 'hc1', 'hc2', 'cp', 'sw0', 'sw1', 'sw2', 'cloudT', 'rayT'].forEach((n, i) => gl.uniform1i(U(n), i));
+  let sky;
   let clean = null;
   const tiles = [{ t: null, r: [0, 0, 0, 0], w: null }, { t: null, r: [0, 0, 0, 0], w: null }, { t: null, r: [0, 0, 0, 0], w: null }];
 
@@ -281,7 +254,16 @@ export function mount(canvas) {
       gl.uniform4f(U('hr' + i), ...T.r); gl.uniform1f(U('hon' + i), T.t ? 1 : 0); });
     gl.activeTexture(gl.TEXTURE8); gl.bindTexture(gl.TEXTURE_2D, clean || black); gl.uniform1f(U('cpon'), clean ? 1 : 0);
     tiles.forEach((T, i) => { gl.activeTexture(gl.TEXTURE9 + i); gl.bindTexture(gl.TEXTURE_2D, T.w || black); });
-    gl.uniform1f(U('tm2'), t); gl.uniform1f(U('cloudsOn'), still ? 0 : 1);
+    gl.uniform1f(U('tm2'), t);
+    if (sky === undefined) sky = still ? null : createSky(gl);
+    if (sky) {
+      // the sky's two passes at half resolution, then back to the picture
+      sky.render({ w: canvas.width, h: canvas.height, res: canvas.width > 2000 ? 0.4 : 0.5, scale: sc, zoom: Z, zc: ZC, time: t });
+      gl.useProgram(pr); gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.activeTexture(gl.TEXTURE12); gl.bindTexture(gl.TEXTURE_2D, sky.cloud);
+      gl.activeTexture(gl.TEXTURE13); gl.bindTexture(gl.TEXTURE_2D, sky.rays);
+    }
+    gl.uniform1f(U('skyOn'), sky ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     if (!still || mix < 1 || pull > 0 || camGoal || movie) raf = requestAnimationFrame(frame);
   };
