@@ -14,9 +14,13 @@
   img, canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
   canvas { opacity: 0; transition: opacity 1.2s ease; }
   canvas.on { opacity: 1; }
+  .words { position: fixed; left: clamp(20px, 6vw, 96px); top: clamp(28px, 9vh, 110px); z-index: 1; color: #eef0f2; text-shadow: 0 1px 14px rgb(20 26 34 / .55); font-family: Georgia, "Iowan Old Style", serif; }
+  .words p { margin: 0 0 14px; font: 600 12px/1 ui-monospace, Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; opacity: .85; }
+  .words h1 { margin: 0; font-weight: 400; font-size: clamp(44px, 7vw, 96px); line-height: 1; letter-spacing: -.01em; }
 </style>
 </head>
 <body>
+<div class="words"><p>03:12 · Home, Earth</p><h1>Vigil</h1></div>
 <figure>
   <img src="media/photo-home-earth-2400.webp" width="2400" height="1351" alt="A lone house with one lit window far across dusk moorland." fetchpriority="high">
 </figure>
@@ -27,8 +31,8 @@ import { mount } from './app/depthview.js';
 const fig = document.querySelector('figure'), img = fig.querySelector('img');
 // Where the house is in the photo (fractions of the 16:9 frame), and how large the photo is drawn against the screen.
 // The depth view draws the photo at 1/0.9 of its frame around the centre, so the house's place in the frame is pushed out by that.
-const P = [0.69, 0.585], HOUSE = P.map(v => (v - 0.5) / 0.9 + 0.5), AT = [0.5, 0.5];
-const zoom = () => innerWidth / innerHeight > 1 ? 2.6 : 1.6;
+const P = [0.69, 0.585], HOUSE = P.map(v => (v - 0.5) / 0.9 + 0.5), AT = [0.69, 0.6];
+const zoom = () => 1;
 function frame() {
   const W = innerWidth, H = innerHeight, w = Math.max(W, H * 16 / 9) * zoom(), h = w * 9 / 16;
   const x = Math.min(0, Math.max(W - w, W * AT[0] - w * HOUSE[0])), y = Math.min(0, Math.max(H - h, H * AT[1] - h * HOUSE[1]));
