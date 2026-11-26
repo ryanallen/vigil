@@ -15,10 +15,29 @@
   .words { position: fixed; left: clamp(20px, 6vw, 96px); top: clamp(28px, 9vh, 110px); z-index: 2; color: #eef0f2; text-shadow: 0 1px 14px rgb(20 26 34 / .55); font-family: Georgia, "Iowan Old Style", serif; pointer-events: none; }
   .words p { margin: 0 0 14px; font: 600 12px/1 ui-monospace, Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; opacity: .85; }
   .words h1 { margin: 0; font-weight: 400; font-size: clamp(44px, 7vw, 96px); line-height: 1; letter-spacing: -.01em; }
+  /* The pointer: a white arrow with the title's shadow, a ring round it that fills while it rests on the house, and the ping. */
+  @media (pointer: fine) { html, body, * { cursor: none; } }
+  .cursor, .ping { position: fixed; left: 0; top: 0; z-index: 3; pointer-events: none; filter: drop-shadow(0 1px 6px rgb(20 26 34 / .6)); }
+  .cursor { width: 64px; height: 64px; margin: -32px 0 0 -32px; opacity: 0; transition: opacity .2s; }
+  .cursor.on { opacity: 1; }
+  .cursor svg, .ping svg { width: 100%; height: 100%; overflow: visible; }
+  .cursor .track, .cursor .fill { fill: none; stroke: #fff; stroke-width: 2.5; }
+  .cursor .track { opacity: 0; transition: opacity .25s; }
+  .cursor.near .track { opacity: .35; }
+  .cursor .fill { stroke-linecap: round; transform: rotate(-90deg); transform-origin: 32px 32px; }
+  .cursor .arrow { fill: none; stroke: #fff; stroke-width: 2.8; stroke-linejoin: round; }
+  .ping { width: 64px; height: 64px; margin: -32px 0 0 -32px; opacity: 0; }
+  .ping circle { fill: none; stroke: #fff; stroke-width: 2.5; }
+  .ping.go { animation: ping .75s ease-out forwards; }
+  @keyframes ping { from { transform: scale(1); opacity: 1; } to { transform: scale(2.6); opacity: 0; } }
 </style>
 </head>
 <body>
 <div class="words"><p>03:12 · Home, Earth</p><h1>Vigil</h1></div>
+<div class="cursor" aria-hidden="true"><svg viewBox="0 0 64 64">
+  <circle class="track" cx="32" cy="32" r="27"/><circle class="fill" cx="32" cy="32" r="27" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+  <path class="arrow" d="M23 19 L45 30 L36 33 L42 42 L38 45 L32 36 L26 42 Z"/></svg></div>
+<div class="ping" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27"/></svg></div>
 <figure>
   <img src="../media/photo-home-earth-2400.webp" width="2400" height="1351" alt="A lone house with one lit window far across dusk moorland." fetchpriority="high">
 </figure>
@@ -26,7 +45,7 @@
 // The live page as it is (the photograph with depth, focus racked to the pointer, the tilt-shift look), and a zoom on top: the wheel,
 // a drag or the arrow keys magnify it about the lit window. The house is modelled and rendered from the photograph's own camera
 // at many times its pixels and laid over it, so it keeps its detail all the way in. ?z= (0-1) sets the zoom.
-import { mount } from './depthview-zoom.js?v=1795712536';
+import { mount } from './depthview-zoom.js?v=1795713917';
 const fig = document.querySelector('figure'), words = document.querySelector('.words');
 const P = [0.69, 0.585], HOUSE = P.map(v => (v - 0.5) / 0.9 + 0.5), AT = [0.69, 0.6];
 function frame() {
@@ -38,12 +57,12 @@ frame(); addEventListener('resize', frame);
 const c = document.createElement('canvas'); c.setAttribute('aria-hidden', 'true'); fig.append(c);
 const v = mount(c);
 if (!v) { c.remove(); throw 0; }
-await v.show('../media/photo-home-earth-2400.webp', './depth.webp?v=1795712536');
+await v.show('../media/photo-home-earth-2400.webp', './depth.webp?v=1795713917');
 c.classList.add('on');
 v.sharpen('../media/photo-home-earth-6688.webp');
 // the boxes in the photograph (1672 x 941): the land x 820-1450, y 455-790; the house x 1068-1204, y 488-600
-v.tile(0, './land.webp?v=1795712536', [820 / 1672, 455 / 941, 1450 / 1672, 790 / 941]);
-v.tile(1, './house.webp?v=1795712536', [1068 / 1672, 488 / 941, 1204 / 1672, 600 / 941]);
+v.tile(0, './land.webp?v=1795713917', [820 / 1672, 455 / 941, 1450 / 1672, 790 / 941]);
+v.tile(1, './house.webp?v=1795713917', [1068 / 1672, 488 / 941, 1204 / 1672, 600 / 941]);
 
 // The zoom: s runs 0-1, the picture magnified ZMAX^s times about the lit window's centre.
 const ZMAX = 16, CENTRE = [0.678, 0.5986];
@@ -55,7 +74,54 @@ let dragY = null;
 addEventListener('pointerdown', e => { if (e.pointerType === 'touch') dragY = e.clientY; });
 addEventListener('pointermove', e => { if (dragY != null) { nudge((dragY - e.clientY) * .002); dragY = e.clientY; } });
 addEventListener('pointerup', () => { dragY = null; });
+// Finding the house: on a mouse, resting on it fills the ring round the pointer, then it pings and the zoom carries itself in;
+// leaving the house empties the ring. A tap on the house pings and zooms at once.
+const cur = document.querySelector('.cursor'), fillC = cur.querySelector('.fill'), ping = document.querySelector('.ping');
+const HOUSE_BOX = [1080 / 1672, 500 / 941, 1200 / 1672, 597 / 941], FILL = .3, MOVING = 900;
+let px = -1, py = -1, speed = 0, lastMove = 0, load = 0, auto = null;
+const toScreen = (u, w_) => {                        // the photograph's 0-1 point to the screen, at the zoom showing now
+  const st = v.state(), z = Math.pow(ZMAX, s), r = fig.getBoundingClientRect();
+  const qx = CENTRE[0] + (u - CENTRE[0]) * z, qy = CENTRE[1] + (w_ - CENTRE[1]) * z;
+  return [r.left + ((qx - .5) / st.sc[0] + .5) * r.width, r.top + ((qy - .5) / st.sc[1] + .5) * r.height];
+};
+const onHouse = (x, y) => { const a = toScreen(HOUSE_BOX[0], HOUSE_BOX[1]), b = toScreen(HOUSE_BOX[2], HOUSE_BOX[3]); return x > a[0] && x < b[0] && y > a[1] && y < b[1]; };
+const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function go(x, y) {
+  if (auto || s > .95) return;
+  ping.style.left = x + 'px'; ping.style.top = y + 'px';
+  ping.classList.remove('go'); void ping.offsetWidth; ping.classList.add('go');
+  auto = { from: s, t0: performance.now() + 250, dur: 1400 + 2600 * (1 - s) };
+}
+addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const now = performance.now(), dt = Math.max(1, now - lastMove);
+  if (px >= 0) speed = speed * .7 + .3 * Math.hypot(e.clientX - px, e.clientY - py) / dt * 1000;
+  px = e.clientX; py = e.clientY; lastMove = now;
+  cur.style.left = px + 'px'; cur.style.top = py + 'px'; cur.classList.add('on');
+});
+document.addEventListener('pointerleave', () => { cur.classList.remove('on'); px = -1; });
+let tap = null;
+addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') tap = [e.clientX, e.clientY, performance.now()]; });
+addEventListener('pointerup', e => {
+  if (!tap || e.pointerType === 'mouse') return;
+  const [x, y, t] = tap; tap = null;
+  if (Math.hypot(e.clientX - x, e.clientY - y) < 12 && performance.now() - t < 400 && onHouse(x, y)) go(x, y);
+});
+addEventListener('wheel', () => { auto = null; }, { passive: true });
+let tPrev = performance.now();
 function tick() {
+  const now = performance.now(), dt = Math.min(.05, (now - tPrev) / 1000); tPrev = now;
+  if (performance.now() - lastMove > 80) speed *= .8;
+  const near = px >= 0 && !auto && s < .95 && onHouse(px, py);
+  cur.classList.toggle('near', near);
+  load = near ? (speed < MOVING ? Math.min(1, load + dt / FILL) : load) : Math.max(0, load - dt / .2);
+  fillC.style.strokeDashoffset = String(1 - load);
+  if (load >= 1) { load = 0; fillC.style.strokeDashoffset = '1'; go(px, py); }
+  if (auto) {
+    const k = Math.min(1, Math.max(0, (now - auto.t0) / auto.dur));
+    s = goal = auto.from + (1 - auto.from) * easeInOut(k);
+    if (k >= 1) auto = null;
+  }
   s += (goal - s) * .08; if (Math.abs(goal - s) < 1e-4) s = goal;
   v.zoom(Math.pow(ZMAX, s), CENTRE);
   words.style.opacity = String(Math.max(0, 1 - s / .04));

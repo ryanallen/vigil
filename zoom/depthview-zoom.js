@@ -17,7 +17,7 @@ uniform sampler2D c0, d0, c1, d1, v1, hc0, hc1;
 // The land and the house, modelled and rendered from the photograph's own camera at many times its pixels, each laid over
 // its box of the photograph (hr0, hr1, in its 0-1 space) once loaded (hon0, hon1): the land first, the house over it.
 uniform vec4 hr0, hr1; uniform float hon0, hon1;
-vec3 tile(sampler2D hc, vec4 hr, vec2 s, vec3 col, float raw, float soft, float tw) {
+vec3 tile(sampler2D hc, vec4 hr, vec2 s, vec3 col, float raw, float soft, float tw, float zm) {
   vec2 tu = (s - hr.xy) / (hr.zw - hr.xy);
   if (any(lessThan(tu, vec2(0.0))) || any(greaterThan(tu, vec2(1.0)))) return col;
   // the same softness, sized for the tile's denser pixels
@@ -30,7 +30,7 @@ vec3 tile(sampler2D hc, vec4 hr, vec2 s, vec3 col, float raw, float soft, float 
   h += textureLod(hc, tu + tp * vec2(-0.9, -0.3), lt).rgb * 0.16;
   h += textureLod(hc, tu + tp * vec2( 0.3, -0.9), lt).rgb * 0.16;
   vec2 e = min(tu, 1.0 - tu) / 0.07;   // its edge fades into what is under it
-  return mix(col, h, clamp(min(e.x, e.y), 0.0, 1.0));
+  return mix(col, h, clamp(min(e.x, e.y), 0.0, 1.0) * smoothstep(2.6, 4.0, zm));
 }
 uniform float useV;   // the live picture plays a video loop: its sharp image comes from v1, its soft levels from the photo
 uniform vec2 cam, scale, fpt, zc;
@@ -88,8 +88,8 @@ vec3 shade(sampler2D c, sampler2D d, vec2 q, float vid) {
   col += textureLod(c, s + px * vec2(-0.9, -0.3), lod).rgb * 0.16;
   col += textureLod(c, s + px * vec2( 0.3, -0.9), lod).rgb * 0.16;
   if (vid > 0.5) col = mix(texture(v1, s).rgb, col, clamp(lod / 1.4, 0.0, 1.0));
-  if (hon0 > 0.5) col = tile(hc0, hr0, s, col, raw, soft, tw);
-  if (hon1 > 0.5) col = tile(hc1, hr1, s, col, raw, soft, tw);
+  if (hon0 > 0.5) col = tile(hc0, hr0, s, col, raw, soft, tw, zoom);
+  if (hon1 > 0.5) col = tile(hc1, hr1, s, col, raw, soft, tw, zoom);
   return col;
 }
 void main() {
