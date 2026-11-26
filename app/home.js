@@ -21,13 +21,31 @@ export default {
     { at: '03:28', show: { power: 'P02', field: 'F05' }, from: 'Home', say: 'Reserve estimate: 19 minutes at the present load.' },
     { at: '03:31', show: { field: 'F06', garden: 'G03' }, from: 'Home', say: 'Automatic floodlight on.' },
     { at: '03:34', id: 'lights', show: { power: 'P03' }, from: 'Home', say: 'Reserve cannot hold all three lights through the outage. Keep two on.',
-      keep: { options: ['Keep desk and garden lit', 'Keep desk and camera lit', 'Keep garden and camera lit'], note: 'You can change the pair while power remains.', readout: 'Reserve estimate: {n} minutes at the present load.', until: '03:51' },
+      keep: { options: ['Keep desk and garden lit', 'Keep desk and camera lit', 'Keep garden and camera lit'], off: ['camera', 'garden', 'desk'], note: 'You can change the pair while power remains.', readout: 'Reserve estimate: {n} minutes at the present load.', until: '03:51' },
       choose: [['Return to the wall', 'end:left']] },
     ...outage(),
   ],
   branches: {
     window: [{ at: '03:51', show: { desk: 'D03' }, cut: 'desk', end: 'window' }],
     door: [{ at: '03:51', show: { desk: 'D04' }, cut: 'desk', end: 'door' }],
+  },
+  // Live light on each photo, in the same 0-1 space as the reveals: the tower's red light until it goes out at 03:16,
+  // the desk lamp's pool, the feed glass, the house robot's charging light, the power cabinet's three indicators.
+  // Where each of the three lights falls in each photo, so the one left off goes dark wherever it is seen: the desk
+  // lamp's pool on the desk and through the garden window, the garden floodlight on the outside wall and grass, the
+  // camera lamp that fills the desk camera's view.
+  sources: {
+    desk: ['D01', 'D02', 'D03', 'D04'].map(photo => ({ photo, x: 0.62, y: 0.52, r: 0.22, a: 0.6 })).concat(['G01', 'G02', 'G03', 'G04'].map(photo => ({ photo, x: 0.49, y: 0.6, r: 0.17, a: 0.7 }))),
+    garden: ['G03', 'G04'].map(photo => ({ photo, x: 0.38, y: 0.62, r: 0.6, a: 0.55 })),
+    camera: ['D01', 'D02', 'D03', 'D04'].map(photo => ({ photo, x: 0.5, y: 0.5, r: 0.95, a: 0.45 })),
+  },
+  lights: {
+    D01: [{ x: 0.62, y: 0.52, r: 0.13, a: 0.05, kind: 'flicker', src: 'desk' }, { x: 0.76, y: 0.65, r: 0.09, a: 0.06, kind: 'pulse' }, { x: 0.43, y: 0.585, r: 0.018, a: 0.7, kind: 'blink' }, { x: 0.868, y: 0.245, r: 0.012, a: 1.2, kind: 'blink' }],
+    D02: [{ x: 0.62, y: 0.52, r: 0.13, a: 0.05, kind: 'flicker', src: 'desk' }, { x: 0.76, y: 0.65, r: 0.09, a: 0.06, kind: 'pulse' }, { x: 0.43, y: 0.585, r: 0.018, a: 0.7, kind: 'blink' }],
+    F01: [{ x: 0.845, y: 0.245, r: 0.012, a: 1.2, kind: 'blink' }],
+    G01: [{ x: 0.49, y: 0.6, r: 0.16, a: 0.04, kind: 'flicker', src: 'desk' }, { x: 0.935, y: 0.38, r: 0.012, a: 1.2, kind: 'blink' }],
+    G02: [{ x: 0.49, y: 0.6, r: 0.16, a: 0.04, kind: 'flicker', src: 'desk' }],
+    P01: [0.85, 0.87, 0.89].map(x => ({ x, y: 0.47, r: 0.012, a: 0.45, kind: 'pulse' })),
   },
   // Coordinates are fractions of the full 16:9 photograph from its upper left.
   reveals: [
@@ -52,7 +70,8 @@ export default {
 // The outage runs the same whichever pair is kept: the garden lead shorts at 03:46 and the last reserve fails at 03:51.
 function outage() {
   return [
+    { at: '03:46', fail: ['garden'] },
     { at: '03:49', show: { garden: 'G04' } },
-    { at: '03:51', choose: [['Look at the window', 'branch:window'], ['Keep the camera on the door', 'branch:door']] },
+    { at: '03:51', fail: ['desk', 'camera', 'garden'], choose: [['Look at the window', 'branch:window'], ['Keep the camera on the door', 'branch:door']] },
   ];
 }

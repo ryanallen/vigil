@@ -13,7 +13,22 @@ precision highp float;
 in vec2 uv; out vec4 o;
 uniform sampler2D c0, d0, c1, d1;
 uniform vec2 cam, scale, fpt;
-uniform float mixv, pull, strength, band, tilt;
+uniform float mixv, pull, strength, band, tilt, tm;
+// Live light on the current photo: up to eight soft regions (x, y, radius, strength) that flicker, pulse or blink on
+// a loop, so lamps, LEDs and glows breathe the way real ones do. Kinds: 0 flicker, 1 slow pulse, 2 blink, 3 steady.
+uniform vec4 L[8]; uniform float LK[8]; uniform int LN;
+float wave(float k, float i) {
+  float t = tm + i * 7.31;
+  if (k < 0.5) { float n = sin(t * 13.0) * 0.5 + sin(t * 29.7 + 1.1) * 0.3 + sin(t * 3.1) * 0.2; return n * 0.5 - step(0.985, fract(sin(floor(t * 9.0) * 91.7 + i) * 4375.5)) * 1.6; }
+  if (k < 1.5) return sin(t * 1.3);
+  if (k > 2.5) return 1.0;   // 3: steady, for a light that is off (negative strength) or on
+  return smoothstep(0.2, 0.3, fract(t * 0.45)) - smoothstep(0.6, 0.7, fract(t * 0.45));
+}
+vec3 lit(vec3 col, vec2 q) {
+  float g = 0.0;
+  for (int i = 0; i < 8; i++) { if (i >= LN) break; vec2 d = (q - L[i].xy) * vec2(1.0, 0.5625); g += L[i].w * wave(LK[i], float(i)) * smoothstep(L[i].z, 0.0, length(d)); }
+  return col * max(0.0, 1.0 + g);
+}
 // Steep parallax: step along the camera's offset until the ray meets the depth surface, so near edges cover what's
 // behind them instead of smearing.
 vec2 march(sampler2D d, vec2 q) {
@@ -49,7 +64,7 @@ vec3 shade(sampler2D c, sampler2D d, vec2 q) {
 void main() {
   vec2 q = (uv - 0.5) * scale + 0.5;
   vec3 a = shade(c0, d0, q), b = shade(c1, d1, q);
-  vec3 col = mix(a, b, mixv);
+  vec3 col = mix(a, lit(b, q), mixv);
   float v = smoothstep(0.95, 0.35, length((uv - 0.5) * vec2(1.0, 0.8)));
   o = vec4(col * mix(0.86, 1.0, v), 1.0);
 }`;
@@ -116,6 +131,9 @@ export function mount(canvas) {
     gl.uniform1f(U('tilt'), 1.0);
     gl.uniform1f(U('mixv'), mix);
     gl.uniform1f(U('pull'), pull);
+    gl.uniform1f(U('tm'), t);
+    gl.uniform1i(U('LN'), lights.length);
+    if (lights.length) { gl.uniform4fv(U('L'), lights.flatMap(l => [l.x, l.y, l.r, l.a])); gl.uniform1fv(U('LK'), lights.map(l => ({ flicker: 0, pulse: 1, blink: 2, steady: 3 })[l.kind] ?? 0)); }
     [a.c, a.d, b.c, b.d].forEach((x, i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, x); });
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     if (!still || mix < 1 || pull > 0 || camGoal) raf = requestAnimationFrame(frame);
@@ -140,12 +158,14 @@ export function mount(canvas) {
   document.addEventListener('visibilitychange', kick);
   new ResizeObserver(kick).observe(canvas);
 
+  let lights = [];
   let want = '';
   return {
     // Where focus sits, in the photo's own 0–1 space, and whether it has settled there.
     focus() { return { x: (fp[0] - 0.5) * sc[0] + 0.5, y: (fp[1] - 0.5) * sc[1] + 0.5, settled: !!fpGoal && Math.hypot(fp[0] - fpGoal[0], fp[1] - fpGoal[1]) < 0.02 }; },
-    async show(colour, depth) {
-      const key = colour + '|' + depth; if (key === want) return; want = key;
+    // lights: [{ x, y, r, a, kind: 'flicker' | 'pulse' | 'blink' }] in the photo's own 0–1 space
+    async show(colour, depth, lit = []) {
+      const key = colour + '|' + depth; lights = lit.slice(0, 8); if (key === want) return; want = key;
       const [ci, di] = await Promise.all([load(colour), load(depth)]);
       if (want !== key || !ci) return;
       aspect = ci.width / ci.height;

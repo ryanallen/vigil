@@ -26,7 +26,7 @@ export function run(S, root, { onWall } = {}) {
   let beside = null, fresh = new Set(), list, offset = 0, night, beat, held, heldSince, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
   function reset() {
     list = S.beats; offset = 0; night = mins(S.start); beat = 0; held = null; current = null; ff = null;
-    keeping = null; beside = null; photoOf = {}; fresh = new Set(); open = new Set(); found = new Set(); waiting = false; mode = 'night'; stop = null;
+    keeping = null; kept = null; failed = []; dark = new Set(); beside = null; photoOf = {}; fresh = new Set(); open = new Set(); found = new Set(); waiting = false; mode = 'night'; stop = null;
     $('.wire').innerHTML = ''; $('.notes').innerHTML = ''; $('.panel').innerHTML = ''; root.classList.remove('ended');
     $('.hint').textContent = touch ? S.hint.touch : S.hint.pointer; $('.hint').hidden = false;
     $('.lag').textContent = S.lagLine || '';
@@ -45,7 +45,7 @@ export function run(S, root, { onWall } = {}) {
     current = id; fresh.delete(id);
     if (changed) { root.classList.remove('cutting'); void root.offsetWidth; root.classList.add('cutting'); }
     const p = photoOf[id];
-    if (view) view.show(media(p, size()), depthOf(p)); else $('.cam-fallback').src = media(p, size());
+    if (view) view.show(media(p, size()), depthOf(p), litFor(p)); else $('.cam-fallback').src = media(p, size());
     stamp(); drawStrip();
   }
   // The camera's own time: Kirra's clock, a link's length behind Home's.
@@ -114,6 +114,7 @@ export function run(S, root, { onWall } = {}) {
     if ('beside' in b) { beside = b.beside; drawBeside(); }
     if (b.choose) { panel(b.note ? `<p class="offer">${esc(b.note)}</p>` : ''); b.choose.forEach(([label, to, sub]) => { addControl(label, () => take(to)); if (sub) { const p = document.createElement('p'); p.className = 'sub'; p.textContent = sub; $('.panel').append(p); } }); }
     if (b.keep) keepPair(b.keep);
+    if (b.fail) { failed = [...failed, ...b.fail]; lightsOff([...failed, ...(kept ? [kept] : [])]); }
     if (b.route) offerRoute();
     if (b.leave) addControl(S.route.leave, () => end('surface'));
     if (b.end) setTimeout(() => end(b.end), (b.hold || 3) * 1000);   // a beat that closes the watch after its picture has been seen
@@ -128,13 +129,24 @@ export function run(S, root, { onWall } = {}) {
     addControl(S.route.keep, () => { panel(''); addControl(S.route.offer, () => go(S.route.first)); });
   }
 
+  // A light that is off is dark in every photo that shows it: a story's `sources` name, per light, the patch of each
+  // photo it lights; while that light is off its patch is drawn dark, and its own flicker stops.
+  let dark = new Set();
+  function litFor(p) {
+    const src = S.sources || {}, out = [];
+    for (const l of (S.lights || {})[p] || []) if (!l.src || !dark.has(l.src)) out.push(l);
+    for (const [name, spots] of Object.entries(src)) if (dark.has(name)) for (const sp of spots) if (sp.photo === p) out.push({ ...sp, kind: 'steady', a: -(sp.a ?? 0.7) });
+    return out;
+  }
+  function lightsOff(names) { dark = new Set(names); if (current) cut(current); }
+
   // Home's lights: a pair kept on, changeable while power lasts, and the reserve's own estimate counting down to the
   // minute the script says it fails. Which pair is kept changes nothing the script doesn't; the choice is the player's.
-  let keeping = null;
+  let keeping = null, kept = null, failed = [];
   function keepPair(k) {
     const box = document.createElement('div'); box.className = 'keep';
     box.innerHTML = (k.note ? `<p class="offer">${esc(k.note)}</p>` : '') + k.options.map((o, i) => `<button type="button" aria-pressed="false" data-k="${i}">${esc(o)}</button>`).join('');
-    box.onclick = e => { const t = e.target.closest('[data-k]'); if (!t) return; box.querySelectorAll('[data-k]').forEach(x => x.setAttribute('aria-pressed', x === t)); };
+    box.onclick = e => { const t = e.target.closest('[data-k]'); if (!t) return; box.querySelectorAll('[data-k]').forEach(x => x.setAttribute('aria-pressed', x === t)); kept = k.off[+t.dataset.k]; lightsOff([...failed, kept]); };
     $('.panel').prepend(box); keeping = k;
   }
   function readout() {
