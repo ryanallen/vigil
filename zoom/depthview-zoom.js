@@ -13,7 +13,10 @@ void main() { uv = p * 0.5 + 0.5; uv.y = 1.0 - uv.y; gl_Position = vec4(p, 0.0, 
 const FS = `#version 300 es
 precision highp float;
 in vec2 uv; out vec4 o;
-uniform sampler2D c0, d0, c1, d1, v1;
+uniform sampler2D c0, d0, c1, d1, v1, hc;
+// The house, modelled and rendered from the photograph's own camera at many times its pixels, laid over its box (hr, in
+// the photograph's 0-1 space) once loaded (hon).
+uniform vec4 hr; uniform float hon;
 uniform float useV;   // the live picture plays a video loop: its sharp image comes from v1, its soft levels from the photo
 uniform vec2 cam, scale, fpt, zc;
 uniform float zoom, resw;
@@ -60,8 +63,8 @@ vec3 shade(sampler2D c, sampler2D d, vec2 q, float vid) {
   // far the picture is magnified and however many pixels the photograph has; what is in focus takes the photograph's
   // finest pixels the screen can show.
   float tw = float(textureSize(c, 0).x);
-  float fine = max(1.0, tw * scale.x / (resw * zoom));
-  lod = log2(fine + (exp2(lod) - 1.0) * tw / 2400.0 / zoom);
+  float raw = tw * scale.x / (resw * zoom), fine = max(1.0, raw), soft = (exp2(lod) - 1.0) * tw / 2400.0 / zoom;
+  lod = log2(fine + soft);
   // A small disc of taps at that level, so deep blur reads as a lens and not as blocky mip squares; in focus the disc closes.
   vec2 px = (exp2(lod) - 0.8 * fine) / vec2(textureSize(c, 0));
   vec3 col = textureLod(c, s, lod).rgb * 0.36;
@@ -70,6 +73,20 @@ vec3 shade(sampler2D c, sampler2D d, vec2 q, float vid) {
   col += textureLod(c, s + px * vec2(-0.9, -0.3), lod).rgb * 0.16;
   col += textureLod(c, s + px * vec2( 0.3, -0.9), lod).rgb * 0.16;
   if (vid > 0.5) col = mix(texture(v1, s).rgb, col, clamp(lod / 1.4, 0.0, 1.0));
+  vec2 tu = (s - hr.xy) / (hr.zw - hr.xy);
+  if (hon > 0.5 && all(greaterThan(tu, vec2(0.0))) && all(lessThan(tu, vec2(1.0)))) {
+    // the same softness, sized for the house's denser pixels
+    vec2 ts = vec2(textureSize(hc, 0));
+    float R = ts.x / (hr.z - hr.x) / tw, tf = max(1.0, raw * R), lt = log2(tf + soft * R);
+    vec2 tp = (exp2(lt) - 0.8 * tf) / ts;
+    vec4 h = textureLod(hc, tu, lt) * 0.36;
+    h += textureLod(hc, tu + tp * vec2( 0.9,  0.3), lt) * 0.16;
+    h += textureLod(hc, tu + tp * vec2(-0.3,  0.9), lt) * 0.16;
+    h += textureLod(hc, tu + tp * vec2(-0.9, -0.3), lt) * 0.16;
+    h += textureLod(hc, tu + tp * vec2( 0.3, -0.9), lt) * 0.16;
+    vec2 e = min(tu, 1.0 - tu) / 0.04;   // its edge fades into the photograph under it
+    col = mix(col, h.rgb, clamp(min(e.x, e.y), 0.0, 1.0));
+  }
   return col;
 }
 void main() {
@@ -93,7 +110,8 @@ export function mount(canvas) {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
   const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   const U = n => gl.getUniformLocation(pr, n);
-  ['c0', 'd0', 'c1', 'd1', 'v1'].forEach((n, i) => gl.uniform1i(U(n), i));
+  ['c0', 'd0', 'c1', 'd1', 'v1', 'hc'].forEach((n, i) => gl.uniform1i(U(n), i));
+  let house = null, houseRect = [0, 0, 0, 0];
 
   const solid = v => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([v, v, v, 255])); return t; };
   const black = solid(0), flat = solid(128);
@@ -164,6 +182,8 @@ export function mount(canvas) {
     if (movie && movieFresh && movie.readyState >= 2) { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, movie); movieFresh = false; movieUp = true; }
     gl.uniform1f(U('useV'), movie && movieUp && mix >= 1 ? 1 : 0);
     [a.c, a.d, b.c, b.d].forEach((x, i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, x); });
+    gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, house || black);
+    gl.uniform4f(U('hr'), ...houseRect); gl.uniform1f(U('hon'), house ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     if (!still || mix < 1 || pull > 0 || camGoal || movie) raf = requestAnimationFrame(frame);
   };
@@ -191,6 +211,8 @@ export function mount(canvas) {
   let want = '';
   return {
     zoom(z, centre) { Z = z; ZC = centre; kick(); },
+    // The modelled house over its box of the photograph (x0, y0, x1, y1 in its 0-1 space), once loaded.
+    async house(url, rect) { const im = await load(url); if (!im) return; house = texOf(im); houseRect = rect; kick(); },
     // The same photograph with more pixels takes the place of the one showing, with no fade, once it has loaded.
     async sharpen(colour) {
       const key = want, ci = await load(colour);
