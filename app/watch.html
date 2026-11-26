@@ -66,10 +66,12 @@ const PLACES = [
   ['Atlas Works', 'Ceres', 'salt sample', atlas],
   ['Home', 'Earth', 'storm expected', homeWatch],
 ];
+// A place can be watched once its photographs are in; until then it stays on the wall, quiet.
+const READY = new Set([homeWatch]);
 if (new URLSearchParams(location.search).has('fast')) PLACES.forEach(p => { p[3].pace = 0.04; }); // for checking a whole night quickly
 const home = document.getElementById('home'), watch = document.getElementById('watch');
-document.getElementById('places').innerHTML = PLACES.map(([n, p, s, story], i) =>
-  `<li${story ? '' : ' class="quiet"'}><b>${n}</b><span>${p}</span>${s ? `<em>${s}</em>` : ''}${story ? `<button type="button" data-i="${i}">Watch ${n.split(' ')[0]}</button>` : ''}</li>`).join('');
+document.getElementById('places').innerHTML = PLACES.map(([n, p, s, story], i) => { const ok = READY.has(story);
+  return `<li${ok ? '' : ' class="quiet"'}><b>${n}</b><span>${p}</span>${s ? `<em>${s}</em>` : ''}${ok ? `<button type="button" data-i="${i}">Watch ${n.split(' ')[0]}</button>` : ''}</li>`; }).join('');
 const hv = mount(home.querySelector('.home-canvas'));
 if (hv) hv.show(new URL('../media/photo-home-earth-1600.webp', import.meta.url).href, new URL('../media/photo-home-earth-depth.webp', import.meta.url).href);
 // One watch runs per page: going back to the wall keeps it waiting where it was; choosing another place starts that one fresh.
@@ -82,7 +84,7 @@ function start(i) {
   q.set('play', i); location.search = q.toString();
 }
 document.getElementById('places').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) start(+b.dataset.i); });
-if (q.has('play')) start(+q.get('play'));
+if (q.has('play') && READY.has(PLACES[+q.get('play')]?.[3])) start(+q.get('play'));
 </script>
 </body>
 </html>

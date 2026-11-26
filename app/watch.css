@@ -69,7 +69,7 @@ html, body { margin: 0; background: #0b0d0c; }
 .places button { align-self: flex-start; margin-top: 10px; padding: 9px 16px; border: 0; border-radius: 3px; background: #e9e8e2; color: #0b0d0c; font: 600 14px system-ui, sans-serif; cursor: pointer; }
 
 /* The watch's quiet lines and controls. */
-.watch .lag { position: absolute; left: 22px; top: 40px; margin: 0; font: 400 12px/1.4 system-ui, sans-serif; color: rgb(233 232 226 / .6); }
+.watch .lag { position: absolute; left: 22px; top: 40px; max-width: calc(100% - 220px); margin: 0; font: 400 12px/1.4 system-ui, sans-serif; color: rgb(233 232 226 / .6); }
 .watch .hint { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); margin: 0; font: 400 13px system-ui, sans-serif; color: rgb(233 232 226 / .75); transition: opacity 1s; }
 .watch .hint[hidden] { display: block; opacity: 0; }
 .watch .wire .then { margin-top: 8px; font-style: italic; }
@@ -89,7 +89,7 @@ html, body { margin: 0; background: #0b0d0c; }
 }
 @media (prefers-reduced-motion: reduce) { .watch *, .watch *::before, .watch *::after { animation: none !important; transition: none !important; } }
 
-.to-wall { position: absolute; left: 22px; top: 42px; z-index: 3; padding: 6px 10px; border: 1px solid rgba(233,232,226,.35); border-radius: 3px; background: rgba(11,13,12,.55); color: #e9e8e2; font: 600 12px/1.2 system-ui, sans-serif; cursor: pointer; }
+.to-wall { position: absolute; right: 22px; top: 58px; z-index: 3; padding: 6px 10px; border: 1px solid rgba(233,232,226,.35); border-radius: 3px; background: rgba(11,13,12,.55); color: #e9e8e2; font: 600 12px/1.2 system-ui, sans-serif; cursor: pointer; }
 .to-wall:hover { background: rgba(11,13,12,.8); }
 .watch .cams button.fresh::after { content: ''; position: absolute; right: 6px; top: 6px; width: 7px; height: 7px; border-radius: 50%; background: #e8c48e; }
 .watch .cams button { position: relative; }
@@ -98,6 +98,14 @@ html, body { margin: 0; background: #0b0d0c; }
 .watch .panel .sub { margin: 2px 0 8px; font-size: 13px; color: rgba(233,232,226,.7); }
 .watch .panel .keep { display: grid; gap: 6px; margin-bottom: 10px; }
 .watch .panel .keep button[aria-pressed="true"] { outline: 2px solid #e8c48e; outline-offset: 1px; }
-.watch .beside { position: absolute; right: 22px; top: 64px; z-index: 2; width: min(36vw, 520px); margin: 0; border: 1px solid rgba(233,232,226,.3); background: #0b0d0c; }
+.watch .beside { position: absolute; right: 22px; top: 100px; z-index: 2; width: min(36vw, 520px); margin: 0; border: 1px solid rgba(233,232,226,.3); background: #0b0d0c; }
 .watch .beside img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .watch .beside span { display: block; padding: 6px 8px; font: 600 11px/1 ui-monospace, Consolas, monospace; letter-spacing: .12em; text-transform: uppercase; color: rgba(233,232,226,.8); }
+@media (max-width: 620px) {
+  .watch .cam-label { left: 16px; max-width: calc(100% - 130px); flex-wrap: wrap; line-height: 1.4; }
+  .watch .clock { right: 16px; }
+  .to-wall { right: 16px; top: 52px; }
+  .watch .lag { left: 16px; top: 58px; max-width: calc(100% - 180px); }
+  .watch .hint { left: 16px; right: 16px; top: auto; bottom: 230px; transform: none; text-align: left; }
+  .watch .beside { right: 16px; top: 120px; width: 46vw; }
+}
