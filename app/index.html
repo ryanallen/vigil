@@ -36,7 +36,8 @@
     <button type="button" class="to-wall"></button>
     <figure class="beside" hidden></figure>
   </div>
-  <div class="reveal" hidden></div>
+  <div class="pings"></div>
+  <div class="brief" role="dialog" hidden></div>
   <div class="notes" aria-live="polite"></div>
   <div class="ending" role="dialog" aria-live="polite"></div>
 </div>
@@ -68,6 +69,7 @@ const PLACES = [
 ];
 // A place can be watched once its photographs are in; until then it stays on the wall, quiet.
 const READY = new Set([homeWatch]);
+if (new URLSearchParams(location.search).has('all')) PLACES.forEach(p => READY.add(p[3]));   // for checking stories before their photos are in
 if (new URLSearchParams(location.search).has('fast')) PLACES.forEach(p => { p[3].pace = 0.04; }); // for checking a whole night quickly
 const home = document.getElementById('home'), watch = document.getElementById('watch');
 document.getElementById('places').innerHTML = PLACES.map(([n, p, s, story], i) => { const ok = READY.has(story);

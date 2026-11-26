@@ -5,7 +5,7 @@ export default {
   place: 'Atlas Works · Ceres',
   start: '03:12',
   lag: 17,                       // minutes each way, Earth to Ceres tonight
-  pace: 4,
+  pace: 2.5,
   media: 'atlas',
   lagLine: 'Atlas pictures arrive 17 minutes after they are taken.',
   hint: { pointer: 'Point and hold to focus. Switch cameras along the bottom.', touch: 'Tap and hold to focus. Switch cameras below.' },

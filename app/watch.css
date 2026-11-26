@@ -109,3 +109,25 @@ html, body { margin: 0; background: #0b0d0c; }
   .watch .hint { left: 16px; right: 16px; top: auto; bottom: 230px; transform: none; text-align: left; }
   .watch .beside { right: 16px; top: 120px; width: 46vw; }
 }
+
+/* The opening card: where you are, what is happening, what you can do. */
+.watch .brief { position: absolute; inset: 0; z-index: 6; display: grid; place-content: center; padding: 24px; background: linear-gradient(90deg, rgb(11 13 12 / .86), rgb(11 13 12 / .55)); color: #e9e8e2; text-align: left; }
+.watch .brief[hidden] { display: none; }
+.watch .brief > * { max-width: 560px; }
+.watch .brief .when { margin: 0 0 8px; font: 600 11px/1 ui-monospace, Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; color: rgb(233 232 226 / .7); }
+.watch .brief h2 { margin: 0 0 14px; font: 400 clamp(32px, 5vw, 52px)/1.05 Georgia, serif; }
+.watch .brief p { margin: 0 0 10px; font: 400 17px/1.5 Georgia, serif; color: rgb(233 232 226 / .88); }
+.watch .brief ul { margin: 10px 0 22px; padding-left: 18px; font: 400 15px/1.6 system-ui, sans-serif; color: rgb(233 232 226 / .8); }
+.watch .brief button { justify-self: start; padding: 12px 22px; border: 0; border-radius: 3px; background: #e9e8e2; color: #111; font: 700 15px system-ui, sans-serif; cursor: pointer; }
+
+/* Places of interest: a small ping; resting on it fills a ring; when the ring closes it blips and the detail opens. */
+.watch .pings { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.watch .ping { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto; --k: 0; }
+.watch .ping i { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #e8c48e; box-shadow: 0 0 0 0 rgb(232 196 142 / .6); animation: ping 2.4s ease-out infinite; }
+.watch .ping svg { position: absolute; inset: 0; transform: rotate(-90deg); opacity: calc(var(--k) * 4); transition: opacity .3s; }
+.watch .ping circle { fill: rgb(11 13 12 / .35); stroke: #e8c48e; stroke-width: 2.5; stroke-dasharray: 119.4; stroke-dashoffset: calc(119.4 * (1 - var(--k))); }
+.watch .ping.blip { animation: blip .45s ease-out forwards; }
+.watch .ping:focus-visible { outline: 2px solid #e8c48e; outline-offset: 2px; border-radius: 50%; }
+@keyframes ping { 0% { box-shadow: 0 0 0 0 rgb(232 196 142 / .55); } 70%, 100% { box-shadow: 0 0 0 12px rgb(232 196 142 / 0); } }
+@keyframes blip { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.9); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .watch .ping i { animation: none; } .watch .ping.blip { animation: none; opacity: 0; } }

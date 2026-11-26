@@ -14,6 +14,8 @@ const mins = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; 
 const hhmm = n => `${String(Math.floor(n / 60) % 24).padStart(2, '0')}:${String(Math.floor(n % 60)).padStart(2, '0')}`;
 const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const touch = matchMedia('(hover: none)').matches;
+// How to look, the same in every watch: details are marked by pings that open when the pointer rests on them.
+const HINT = { pointer: 'Rest the pointer on a ping to read what is there. Switch cameras along the bottom.', touch: 'Tap a ping to read what is there. Switch cameras below.' };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 export function run(S, root, { onWall } = {}) {
@@ -23,12 +25,12 @@ export function run(S, root, { onWall } = {}) {
   if (!view) $('.cam-fallback').hidden = false;
   air($('.atmos')).set('still');
 
-  let beside = null, fresh = new Set(), list, offset = 0, night, beat, held, heldSince, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
+  let beside = null, fresh = new Set(), list, offset = 0, night, beat, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
   function reset() {
-    list = S.beats; offset = 0; night = mins(S.start); beat = 0; held = null; current = null; ff = null;
+    list = S.beats; offset = 0; night = mins(S.start); beat = 0; current = null; ff = null;
     keeping = null; kept = null; failed = []; dark = new Set(); beside = null; photoOf = {}; fresh = new Set(); open = new Set(); found = new Set(); waiting = false; mode = 'night'; stop = null;
     $('.wire').innerHTML = ''; $('.notes').innerHTML = ''; $('.panel').innerHTML = ''; root.classList.remove('ended');
-    $('.hint').textContent = touch ? S.hint.touch : S.hint.pointer; $('.hint').hidden = false;
+    $('.hint').textContent = touch ? HINT.touch : HINT.pointer; $('.hint').hidden = false;
     $('.lag').textContent = S.lagLine || '';
     const w = $('.to-wall'); w.textContent = S.wallLabel || 'Return to the wall'; w.onclick = () => onWall && onWall();
   }
@@ -46,7 +48,7 @@ export function run(S, root, { onWall } = {}) {
     if (changed) { root.classList.remove('cutting'); void root.offsetWidth; root.classList.add('cutting'); }
     const p = photoOf[id];
     if (view) view.show(media(p, size()), depthOf(p), litFor(p)); else $('.cam-fallback').src = media(p, size());
-    stamp(); drawStrip();
+    stamp(); drawStrip(); drawPings();
   }
   // The camera's own time: Kirra's clock, a link's length behind Home's.
   function stamp() { if (current) $('.cam-label').innerHTML = `<i></i>${esc(S.cameras[current].name)} · ${esc(S.place)} · ${hhmm(night - (S.lag || 0))}`; }
@@ -76,24 +78,47 @@ export function run(S, root, { onWall } = {}) {
     let i = 0; const t = setInterval(() => { i += 2; el.textContent = text.slice(0, i); if (i >= text.length) { clearInterval(t); done && done(); } }, 30);
   }
 
-  // ---- Focus reveals -----------------------------------------------------------------
+  // ---- Places of interest ------------------------------------------------------------
+  // Each unread detail in the picture on screen shows a small ping. Resting the pointer on it fills a ring around it;
+  // when the ring closes it blips and the detail opens. Moving away lets the ring drain back. A tap starts the fill.
   // Photo space to screen: the depth view shows the photo cover-fitted at 0.9 of the canvas.
   function place(el, x, y) {
     const c = $('.cam-canvas').getBoundingClientRect(), a = 16 / 9, v = c.width / c.height, m = 0.9;
     const sx = v > a ? m : m * v / a, sy = v > a ? m * a / v : m;
     el.style.left = ((x - 0.5) / sx + 0.5) * 100 + '%'; el.style.top = ((y - 0.5) / sy + 0.5) * 100 + '%';
   }
-  function watchFocus(now) {
-    const mark = $('.reveal');
-    if (!view || !current || mode === 'ended') { mark.hidden = true; return; }
-    const f = view.focus(), p = photoOf[current];
-    const r = S.reveals.find(r => !found.has(r.id) && r.photo === p && Math.hypot(f.x - r.x, (f.y - r.y) * 0.5625) < r.r);
-    if (!r || !f.settled) { held = null; mark.hidden = true; return; }
-    if (held !== r) { held = r; heldSince = now; }
-    const k = Math.min(1, (now - heldSince) / 1100);
-    mark.hidden = false; mark.style.setProperty('--k', k); place(mark, r.x, r.y);
-    if (k < 1) return;
-    found.add(r.id); held = null; mark.hidden = true; $('.hint').hidden = true;
+  const FILL = 1100;   // milliseconds for the ring to close
+  let pings = [];
+  function drawPings() {
+    const box = $('.pings'); box.innerHTML = ''; pings = [];
+    if (!current || mode === 'ended') return;
+    const p = photoOf[current];
+    for (const r of S.reveals) {
+      if (found.has(r.id) || r.photo !== p) continue;
+      const el = document.createElement('button'); el.type = 'button'; el.className = 'ping'; el.setAttribute('aria-label', 'A detail to read');
+      el.innerHTML = '<i></i><svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19"/></svg>';
+      place(el, r.x, r.y); box.append(el);
+      const ping = { r, el, k: 0, over: false };
+      el.addEventListener('pointerenter', () => { ping.over = true; });
+      el.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') ping.over = false; });
+      el.addEventListener('pointerdown', () => { ping.over = true; });
+      el.addEventListener('focus', () => { ping.over = true; });
+      el.addEventListener('blur', () => { ping.over = false; });
+      pings.push(ping);
+    }
+  }
+  function tickPings(dt) {
+    for (const p of pings) {
+      if (p.done) continue;
+      p.k = Math.max(0, Math.min(1, p.k + (p.over ? dt : -dt * 1.6) / (FILL / 1000)));
+      p.el.style.setProperty('--k', p.k.toFixed(3));
+      p.el.classList.toggle('filling', p.k > 0);
+      if (p.k >= 1) openDetail(p);
+    }
+  }
+  function openDetail(p) {
+    const r = p.r; p.done = true; found.add(r.id); $('.hint').hidden = true;
+    p.el.classList.add('blip'); setTimeout(() => p.el.remove(), 450);
     const n = document.createElement('p'); n.className = 'note'; place(n, r.x, r.y); $('.notes').append(n);
     typeOut(n, r.text);
     // some details open a way forward when they are read (Tethys: "Go to the buoy.")
@@ -191,7 +216,7 @@ export function run(S, root, { onWall } = {}) {
 
   // ---- Endings ------------------------------------------------------------------------------
   function end(id) {
-    const E = S.endings[id]; mode = 'ended'; panel('');
+    const E = S.endings[id]; mode = 'ended'; panel(''); drawPings();
     $('.ending').innerHTML = `<p class="when">${hhmm(night)} · Home, Earth</p><h2>${esc(E.title)}</h2><p>${esc(E.text)}</p>`
       + (E.last ? `<p class="last"></p>` : '')
       + `<p class="count">${found.size} of ${S.reveals.length} details read</p>`
@@ -230,12 +255,20 @@ export function run(S, root, { onWall } = {}) {
     } else if (mode !== 'ended') night += dt / 60; // once the bulletins stop, and between pictures, Home's clock runs at its real pace
     $('.clock').textContent = hhmm(night);
     stamp(); readout();
-    watchFocus(now);
+    tickPings(dt);
     requestAnimationFrame(tick);
   }
 
+  // Before the night starts, one card says where you are, what is happening and what you can do; the night waits on it.
+  function brief(go) {
+    const c = $('.brief'); const first = S.beats[0];
+    if (first.show) { show(first.show); (first.open || []).forEach(id => open.add(id)); cut(first.cut || [...open][0]); }
+    c.innerHTML = `<p class="when">${esc(S.start)} · ${esc(S.place)}</p><h2>${esc(S.title)}</h2>`
+      + (first.text ? `<p>${esc(first.text)}</p>` : '') + (S.lagLine ? `<p>${esc(S.lagLine)}</p>` : '')
+      + `<ul><li>${esc(touch ? HINT.touch : HINT.pointer)}</li><li>Pictures and messages arrive on the clock. A small dot on a camera means its picture has changed.</li><li>When a choice comes, it changes what happens.</li></ul>`
+      + `<button type="button">Begin</button>`;
+    c.hidden = false; c.querySelector('button').onclick = () => { c.hidden = true; go(); }; c.querySelector('button').focus();
+  }
   reset();
-  lastTick = performance.now();
-  play(list[beat++]);
-  requestAnimationFrame(tick);
+  brief(() => { lastTick = performance.now(); play(list[beat++]); requestAnimationFrame(tick); });
 }

@@ -5,7 +5,7 @@ export default {
   place: 'Home · Earth',
   start: '03:12',
   lag: 0,
-  pace: 4,
+  pace: 2.5,
   media: 'home',
   hint: { pointer: 'Point and hold to focus. Switch cameras along the bottom.', touch: 'Tap and hold to focus. Switch cameras below.' },
   cameras: {
@@ -47,18 +47,18 @@ export default {
     G02: [{ x: 0.49, y: 0.6, r: 0.16, a: 0.04, kind: 'flicker', src: 'desk' }],
     P01: [0.85, 0.87, 0.89].map(x => ({ x, y: 0.47, r: 0.012, a: 0.45, kind: 'pulse' })),
   },
-  // Coordinates are fractions of the full 16:9 photograph from its upper left.
+  // Coordinates are fractions of the full 16:9 photograph from its upper left, set on the thing in each photo.
   reveals: [
-    { id: 'O1', photo: 'F01', x: 0.74, y: 0.31, r: 0.06, text: 'A plain service tower. One small maintenance light burns near the top.' },
-    { id: 'O2', photo: 'F03', x: 0.73, y: 0.30, r: 0.05, text: 'The upper opening has no shutter. It is black behind the frame.' },
-    { id: 'O3', photo: 'F04', x: 0.73, y: 0.30, r: 0.07, text: "There is a shape inside the opening. Its edge has no relation to the tower's straight frame." },
-    { id: 'O4', photo: 'G02', x: 0.47, y: 0.52, r: 0.07, text: 'The desk lamp is reflected once. The chair inside is empty.' },
-    { id: 'O5', photo: 'P03', x: 0.61, y: 0.45, r: 0.08, text: 'The three lights draw more than the battery can give. One has to go dark.' },
-    { id: 'O6', photo: 'F06', x: 0.74, y: 0.31, r: 0.08, text: 'The dark opening looks wider. Its metal frame has not moved.' },
-    { id: 'O7', photo: 'G03', x: 0.51, y: 0.65, r: 0.08, text: 'Nothing sits in the chair while the garden light is on.' },
-    { id: 'O8', photo: 'G04', x: 0.51, y: 0.65, r: 0.09, text: 'The chair is occupied in this picture. No door has opened.' },
-    { id: 'O9', photo: 'D03', x: 0.67, y: 0.38, r: 0.10, text: 'The glass holds a second shape at the height of a person. The room behind it is empty.' },
-    { id: 'O10', photo: 'D04', x: 0.31, y: 0.78, r: 0.08, text: 'The darkness under the door moves against the hall light.' },
+    { id: 'O1', photo: 'F01', x: 0.845, y: 0.245, r: 0.06, text: 'A plain service tower. One small maintenance light burns near the top.' },
+    { id: 'O2', photo: 'F03', x: 0.845, y: 0.24, r: 0.05, text: 'The upper opening has no shutter. It is black behind the frame.' },
+    { id: 'O3', photo: 'F04', x: 0.845, y: 0.24, r: 0.07, text: "There is a shape inside the opening. Its edge has no relation to the tower's straight frame." },
+    { id: 'O4', photo: 'G02', x: 0.45, y: 0.63, r: 0.07, text: 'The desk lamp is reflected once. The chair inside is empty.' },
+    { id: 'O5', photo: 'P03', x: 0.77, y: 0.47, r: 0.08, text: 'The three lights draw more than the battery can give. One has to go dark.' },
+    { id: 'O6', photo: 'F06', x: 0.845, y: 0.24, r: 0.08, text: 'The dark opening looks wider. Its metal frame has not moved.' },
+    { id: 'O7', photo: 'G03', x: 0.49, y: 0.7, r: 0.08, text: 'Nothing sits in the chair while the garden light is on.' },
+    { id: 'O8', photo: 'G04', x: 0.49, y: 0.7, r: 0.09, text: 'The chair is occupied in this picture. No door has opened.' },
+    { id: 'O9', photo: 'D03', x: 0.72, y: 0.3, r: 0.10, text: 'The glass holds a second shape at the height of a person. The room behind it is empty.' },
+    { id: 'O10', photo: 'D04', x: 0.2, y: 0.86, r: 0.08, text: 'The darkness under the door moves against the hall light.' },
   ],
   endings: {
     window: { title: 'There is someone in the glass.', text: 'The room behind the camera is empty. The second shape remains in the window after your lamp goes out.', controls: [['Watch Home again', 'restart'], ['Return to the wall', 'wall']] },

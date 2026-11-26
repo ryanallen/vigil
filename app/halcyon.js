@@ -5,7 +5,7 @@ export default {
   place: 'Halcyon Station · Earth orbit',
   start: '03:12',
   lag: 0,
-  pace: 4,
+  pace: 2.5,
   media: 'halcyon',
   lagLine: 'Live from Halcyon · Earth orbit.',
   hint: { pointer: 'Point and hold to focus. Switch cameras along the bottom.', touch: 'Tap and hold to focus. Switch cameras below.' },

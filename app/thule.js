@@ -5,7 +5,7 @@ export default {
   place: 'Thule Ice · Europa',
   start: '03:12',
   lag: 28,                       // minutes each way, Earth to Europa tonight
-  pace: 4,
+  pace: 2.5,
   media: 'thule',
   lagLine: 'Europa pictures arrive 28 minutes after they are taken.',
   hint: { pointer: 'Point and hold to focus. Switch cameras along the bottom.', touch: 'Tap and hold to focus. Switch cameras below.' },

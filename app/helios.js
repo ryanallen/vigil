@@ -5,7 +5,7 @@ export default {
   place: 'Helios Array · near the Sun',
   start: '03:12',
   lag: 8,                        // minutes each way, Earth to the array tonight
-  pace: 4,
+  pace: 2.5,
   media: 'helios',
   lagLine: 'Helios picture taken 8 minutes ago.',
   hint: { pointer: 'Point and hold to focus. Switch cameras along the bottom.', touch: 'Tap and hold to focus. Switch cameras below.' },

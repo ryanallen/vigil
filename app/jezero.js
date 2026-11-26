@@ -6,7 +6,7 @@ export default {
   place: 'Jezero House · Mars',
   start: '03:12',
   lag: 12,                       // minutes each way, Earth to Mars tonight
-  pace: 4,
+  pace: 2.5,
   media: 'jezero',
   lagLine: 'Jezero pictures arrive 12 minutes after they are taken.',
   hint: { pointer: 'Point and hold to focus. Switch cameras along the bottom.', touch: 'Tap and hold to focus. Switch cameras below.' },

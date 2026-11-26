@@ -6,7 +6,7 @@ export default {
   place: 'Shackleton Foundry · Moon',
   start: '03:12',
   lag: 0,
-  pace: 4,
+  pace: 2.5,
   media: 'shackleton',
   lagLine: 'Live from Shackleton · Moon.',
   hint: { pointer: 'Point and hold to focus. Switch cameras along the bottom.', touch: 'Tap and hold to focus. Switch cameras below.' },
