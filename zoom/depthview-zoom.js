@@ -16,7 +16,7 @@ in vec2 uv; out vec4 o;
 uniform sampler2D c0, d0, c1, d1, v1;
 uniform float useV;   // the live picture plays a video loop: its sharp image comes from v1, its soft levels from the photo
 uniform vec2 cam, scale, fpt, zc;
-uniform float zoom;
+uniform float zoom, resw;
 uniform float mixv, pull, strength, band, tilt, tm;
 // Live light on the current photo: up to eight soft regions (x, y, radius, strength) that flicker, pulse or blink on
 // a loop, so lamps, LEDs and glows breathe the way real ones do. Kinds: 0 flicker, 1 slow pulse, 2 blink, 3 steady.
@@ -56,8 +56,14 @@ vec3 shade(sampler2D c, sampler2D d, vec2 q, float vid) {
   float byDepth = max(0.0, abs(depth - focus) - band) * 7.0;
   float byScreen = smoothstep(0.12, 0.55, abs(uv.y - fpt.y)) * 2.2;
   float lod = clamp(max(byDepth, byScreen) * tilt, 0.0, 3.4) + pull;
-  // A small disc of taps at that level, so deep blur reads as a lens and not as blocky mip squares.
-  vec2 px = exp2(lod) / vec2(textureSize(c, 0));
+  // The softness is sized on the screen, as it is on a 2400-pixel photograph unmagnified, so it stays the same size however
+  // far the picture is magnified and however many pixels the photograph has; what is in focus takes the photograph's
+  // finest pixels the screen can show.
+  float tw = float(textureSize(c, 0).x);
+  float fine = max(1.0, tw * scale.x / (resw * zoom));
+  lod = log2(fine + (exp2(lod) - 1.0) * tw / 2400.0 / zoom);
+  // A small disc of taps at that level, so deep blur reads as a lens and not as blocky mip squares; in focus the disc closes.
+  vec2 px = (exp2(lod) - 0.8 * fine) / vec2(textureSize(c, 0));
   vec3 col = textureLod(c, s, lod).rgb * 0.36;
   col += textureLod(c, s + px * vec2( 0.9,  0.3), lod).rgb * 0.16;
   col += textureLod(c, s + px * vec2(-0.3,  0.9), lod).rgb * 0.16;
@@ -144,7 +150,7 @@ export function mount(canvas) {
     gl.uniform2f(U('scale'), sc[0], sc[1]);
     gl.uniform2f(U('cam'), cam[0] * 0.022, cam[1] * 0.014);
     gl.uniform2f(U('fpt'), fp[0], fp[1]);
-    gl.uniform1f(U('zoom'), Z); gl.uniform2f(U('zc'), ZC[0], ZC[1]);
+    gl.uniform1f(U('resw'), canvas.width); gl.uniform1f(U('zoom'), Z); gl.uniform2f(U('zc'), ZC[0], ZC[1]);
     gl.uniform1f(U('strength'), 1.0);
     gl.uniform1f(U('band'), 0.06);
     gl.uniform1f(U('tilt'), 1.0);
@@ -185,6 +191,12 @@ export function mount(canvas) {
   let want = '';
   return {
     zoom(z, centre) { Z = z; ZC = centre; kick(); },
+    // The same photograph with more pixels takes the place of the one showing, with no fade, once it has loaded.
+    async sharpen(colour) {
+      const key = want, ci = await load(colour);
+      if (!ci || want !== key || Math.max(ci.width, ci.height) > gl.getParameter(gl.MAX_TEXTURE_SIZE)) return;
+      const t = texOf(ci); if (a === b) a = b = { c: t, d: b.d }; else b = { c: t, d: b.d }; kick();
+    },
     // The focus point and the drift, in the canvas's 0–1 space (y down), and the scale the photo is drawn at.
     state() { return { fp: fp.slice(), cam: cam.slice(), sc: sc.slice() }; },
     // Where focus sits, in the photo's own 0–1 space, and whether it has settled there.

@@ -28,8 +28,8 @@
 // The live page as it is (the photograph with depth, focus racked to the pointer, the tilt-shift look), and a zoom on top: the wheel,
 // a drag or the arrow keys magnify it about the lit window until the photograph runs out of detail, then the 3D view of the house
 // takes over through the same look and carries on in along its line of sight to the window. ?z= (0-1) sets the zoom.
-import { mount } from './depthview-zoom.js?v=1795704836';
-import { mountEngine } from './engine.js?v=1795704836';
+import { mount } from './depthview-zoom.js?v=1795706414';
+import { mountEngine } from './engine.js?v=1795706414';
 const fig = document.querySelector('figure'), img = fig.querySelector('img'), words = document.querySelector('.words'), nearCv = document.getElementById('near');
 const P = [0.69, 0.585], HOUSE = P.map(v => (v - 0.5) / 0.9 + 0.5), AT = [0.69, 0.6];
 let rect = [0, 0, innerWidth, innerHeight];
@@ -42,14 +42,17 @@ frame(); addEventListener('resize', frame);
 const c = document.createElement('canvas'); c.setAttribute('aria-hidden', 'true'); fig.append(c);
 const v = mount(c);
 if (!v) { c.remove(); throw 0; }
-await v.show('../media/photo-home-earth-2400.webp', '../media/photo-home-earth-depth.webp');
+await v.show('../media/photo-home-earth-2400.webp', './depth.webp?v=1795706414');
 c.classList.add('on');
+v.sharpen('../media/photo-home-earth-6688.webp');
 
 // The zoom: s runs 0-1. Up to HAND the flat photograph magnifies about the window to ZH times; across the last stretch of that
 // the 3D view fades in, drawing the same picture; past it the 3D camera moves in along its line of sight to the window.
 const HAND = .4, ZH = 3;
-let s = Math.min(1, Math.max(0, +(new URLSearchParams(location.search).get('z') || 0))), goal = s;
-const nudge = d => { goal = Math.min(1, Math.max(0, goal + d)); };
+// The zoom stops where the photograph's pixels run out at twice its size.
+const END = HAND * Math.log(2) / Math.log(ZH);
+let s = Math.min(END, Math.max(0, +(new URLSearchParams(location.search).get('z') || 0))), goal = s;
+const nudge = d => { goal = Math.min(END, Math.max(0, goal + d)); };
 addEventListener('wheel', e => { e.preventDefault(); nudge(e.deltaY * .0005); }, { passive: false });
 addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'PageDown') nudge(.05); if (e.key === 'ArrowUp' || e.key === 'PageUp') nudge(-.05); });
 let dragY = null;
