@@ -4,204 +4,72 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vigil</title>
+<meta name="theme-color" content="#5b6575">
 <style>
-  html, body { margin: 0; height: 100%; background: #2e343b; overflow: hidden; }
-  canvas { display: block; width: 100%; height: 100%; }
+  html, body { margin: 0; height: 100%; background: #2e343b; }
+  body { overflow: hidden; touch-action: none; }
+  figure { position: fixed; margin: 0; overflow: hidden; }
+  img, canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  figure canvas { opacity: 0; transition: opacity 1.2s ease; }
+  figure canvas.on { opacity: 1; }
+  #near { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 1; opacity: 0; pointer-events: none; }
+  .words { position: fixed; left: clamp(20px, 6vw, 96px); top: clamp(28px, 9vh, 110px); z-index: 2; color: #eef0f2; text-shadow: 0 1px 14px rgb(20 26 34 / .55); font-family: Georgia, "Iowan Old Style", serif; pointer-events: none; }
+  .words p { margin: 0 0 14px; font: 600 12px/1 ui-monospace, Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; opacity: .85; }
+  .words h1 { margin: 0; font-weight: 400; font-size: clamp(44px, 7vw, 96px); line-height: 1; letter-spacing: -.01em; }
 </style>
 </head>
 <body>
-<canvas></canvas>
+<div class="words"><p>03:12 · Home, Earth</p><h1>Vigil</h1></div>
+<figure>
+  <img src="../media/photo-home-earth-2400.webp" width="2400" height="1351" alt="A lone house with one lit window far across dusk moorland." fetchpriority="high">
+</figure>
+<canvas id="near" aria-hidden="true"></canvas>
 <script type="module">
-// Vigil's first engine pass. The moor is a mesh traced from the photograph's depth; the house is real geometry from the fit
-// (house-fit.json). Both take their colour from the photograph projected from its own camera, so the first frame is the photograph,
-// and the camera flies from that spot to the lit window as the wheel or ?t= moves it (0 the photo, 1 at the glass).
-const q = new URLSearchParams(location.search);
-const J = await (await fetch('house-fit.json')).json();
-const cv = document.querySelector('canvas'), gl = cv.getContext('webgl2', { antialias: true });
-const [PW, PH] = J.size, F = J.f;
-
-// The photograph's camera: world -> camera rotation, as in house_fit.py (camera looks along +z, y up).
-function rot(yaw, pitch, roll) {
-  const [cy, sy, cp, sp, cr, sr] = [Math.cos(yaw), Math.sin(yaw), Math.cos(pitch), Math.sin(pitch), Math.cos(roll), Math.sin(roll)];
-  const Ry = [[cy, 0, -sy], [0, 1, 0], [sy, 0, cy]], Rx = [[1, 0, 0], [0, cp, sp], [0, -sp, cp]], Rz = [[cr, -sr, 0], [sr, cr, 0], [0, 0, 1]];
-  const mul = (A, B) => A.map(r => [0, 1, 2].map(j => r[0] * B[0][j] + r[1] * B[1][j] + r[2] * B[2][j]));
-  return mul(Rz, mul(Rx, Ry));
-}
-const R0 = rot(J.yaw, J.pitch, J.roll), C0 = J.cam;
-
-function shader(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(s); return s; }
-function program(vs, fs) { const p = gl.createProgram(); gl.attachShader(p, shader(gl.VERTEX_SHADER, vs)); gl.attachShader(p, shader(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw gl.getProgramInfoLog(p); return p; }
-const VS = `#version 300 es
-in vec3 pos; in vec3 col; in vec2 tuv;
-uniform mat4 view, proj; out vec3 wp; out vec3 c; out vec2 tu;
-void main(){ wp = pos; c = col; tu = tuv; gl_Position = proj * view * vec4(pos, 1.); }`;
-// Colour: the photograph projected from its camera (uR, uC, uF). col.x > 0.5 marks a face the photograph cannot see
-// (it takes the flat colour col.yz-coded instead); the window's glass glows warm.
-// Colour: the photograph projected from its own camera. Where one photo pixel covers more than a screen pixel, the photo has
-// run out of detail, so a Codex texture takes over there, scaled to the photo's own local colour (detail transfer), so the
-// colour never shifts. c.x: 1 = a face the photograph never saw (the texture alone, tinted to the house's whitewash);
-// c.y: material (0 ground, 1 wall, 2 roof, 3 window frame and glass).
-const FS = `#version 300 es
-precision highp float;
-in vec3 wp; in vec3 c; in vec2 tu; uniform sampler2D photo, tWall, tRoof, tGround, tWin, tSide, tPatch;
-uniform mat3 uR; uniform vec3 uC; uniform float uF; uniform vec2 uSize; uniform vec4 avg[3]; uniform vec4 win; uniform float houseW, s0;
-out vec4 o;
-vec3 detail(int m, out vec3 a){
-  vec3 n = normalize(cross(dFdx(wp), dFdy(wp)));
-  if (m == 0) { a = avg[0].rgb; return texture(tGround, wp.xz / 2.).rgb; }
-  if (m == 2) { a = avg[2].rgb; return texture(tRoof, vec2(wp.z, length(vec2(wp.x - houseW * .5, wp.y))) / 2.).rgb; }
-  a = avg[1].rgb; return texture(tWall, (abs(n.z) > abs(n.x) ? wp.xy : wp.zy) / 2.).rgb;
-}
-void main(){
-  vec3 q = uR * (wp - uC);
-  vec2 px = vec2(uSize.x * .5 + uF * q.x / q.z, uSize.y * .5 - uF * q.y / q.z), uv = px / uSize;
-  // Derivatives first, in uniform control flow: a texture read after a per-pixel branch has no defined mip level and comes out blurred.
-  vec2 gx = dFdx(uv), gy = dFdy(uv); float fw = max(fwidth(px.x), fwidth(px.y)) / s0;
-  vec3 sharp = textureGrad(photo, uv, gx, gy).rgb;
-  int m = int(c.y + .5);
-  if (m == 3) {                                   // the gable window: Codex's frame, warm lit glass behind it
-    vec2 wu = vec2((wp.x - win.x) / (win.y - win.x), 1. - (wp.y - win.z) / (win.w - win.z));
-    vec3 f = texture(tWin, mix(vec2(.053, .045), vec2(.944, .954), wu)).rgb; float frame = smoothstep(.06, .16, max(f.r, max(f.g, f.b)));
-    vec3 glass = vec3(1., .6, .26) * (.7 + .35 * (1. - length(wu - vec2(.45, .62))));   // lamp-lit from low inside
-    glass = mix(glass, vec3(.55, .6, .68), .12 * smoothstep(.55, .0, wu.y));               // the dusk sky faintly on the upper panes
-    o = vec4(mix(glass, f * .45, frame), 1.); return;
-  }
-  if (m == 4 || m == 5) {                         // the long side's three openings and the stained patch under the gable's peak
-    vec3 t = m == 4 ? texture(tSide, tu).rgb : texture(tPatch, tu).rgb;
-    float k2 = smoothstep(.8, .3, fw);
-    float edge = m == 5 ? smoothstep(0., .18, min(min(tu.x, 1. - tu.x), min(tu.y, 1. - tu.y))) * .7 : 1.;
-    o = vec4(mix(sharp, t * (m == 4 ? .8 : .7), k2), m == 5 ? mix(1., edge, k2) : 1.); return;
-  }
-  vec3 a, d = detail(m, a);
-  float k = smoothstep(.8, .3, fw);   // 0 until the camera is well closer than the photo's
-  if (c.x > .5) { o = vec4(d * vec3(.62, .66, .72) / a * (c.z > 0. ? c.z : .55), 1.); return; }
-  vec3 soft = textureLod(photo, uv, m == 0 ? 4. : 1.5).rgb;
-  o = vec4(mix(sharp, soft * d / a, k), 1.);
-}`;
-const prog = program(VS, FS);
-
-// Meshes: positions and a per-vertex code (0 = photograph; 1 = flat grey for faces the photo never saw).
-function mesh(pos, col, idx, tuv = new Float32Array(pos.length / 3 * 2)) {
-  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
-  const put = (data, name, n) => { const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); const l = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, n, gl.FLOAT, false, 0, 0); };
-  put(pos, 'pos', 3); put(col, 'col', 3); put(tuv, 'tuv', 2);
-  const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
-  return { vao, n: idx.length, type: idx instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT };
-}
-const tv = new Float32Array(await (await fetch('terrain.f32')).arrayBuffer()), ti = new Uint32Array(await (await fetch('terrain.u32')).arrayBuffer());
-const nv = tv.length / 5, tp = new Float32Array(nv * 3);
-for (let i = 0; i < nv; i++) tp.set(tv.subarray(i * 5, i * 5 + 3), i * 3);
-const terrain = mesh(tp, new Float32Array(nv * 3), ti);
-const SP = [], SI = [], NS = 48;
-for (let i = 0; i <= NS; i++) for (let j = 0; j <= NS * 2; j++) {
-  const th = Math.PI * i / NS, ph = Math.PI * j / NS, R_ = 30000;
-  SP.push(C0[0] + R_ * Math.sin(th) * Math.cos(ph), C0[1] + R_ * Math.cos(th), C0[2] + R_ * Math.sin(th) * Math.sin(ph));
-  if (i < NS && j < NS * 2) { const a_ = i * (NS * 2 + 1) + j, b_ = a_ + NS * 2 + 1; SI.push(a_, b_, a_ + 1, a_ + 1, b_, b_ + 1); }
-}
-const backdrop = mesh(new Float32Array(SP), new Float32Array(SP.length), new Uint32Array(SI));
-
-// The house from the fit: walls, gables, roof with overhang, chimney, shed, posts. Faces the photograph saw keep its colour.
-const { w, L, wall: h, ridge: r } = J, P = [], Cc = [], I = [], T = [];
-let shade = 0;
-function quad(a, b, c, d, hidden, mat = 1, uv = [0, 1, 1, 0]) { const k = P.length / 3; for (const v of [a, b, c, d]) { P.push(...v); Cc.push(hidden ? 1 : 0, mat, shade); } T.push(uv[0], uv[1], uv[2], uv[1], uv[2], uv[3], uv[0], uv[3]); I.push(k, k + 1, k + 2, k, k + 2, k + 3); }
-function tri(a, b, c, hidden) { const k = P.length / 3; for (const v of [a, b, c]) { P.push(...v); Cc.push(hidden ? 1 : 0, 1, 0); T.push(0, 0); } I.push(k, k + 1, k + 2); }
-function box(x0, y0, z0, x1, y1, z1, seen = [1, 1, 1, 1, 1, 1]) { // seen: -z, +x, +y, -x, +z, -y
-  quad([x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], !seen[0]); quad([x1, y0, z0], [x1, y0, z1], [x1, y1, z1], [x1, y1, z0], !seen[1]);
-  quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1], !seen[2]); quad([x0, y0, z1], [x0, y0, z0], [x0, y1, z0], [x0, y1, z1], !seen[3]);
-  quad([x1, y0, z1], [x0, y0, z1], [x0, y1, z1], [x1, y1, z1], !seen[4]);
-}
-const o = .25;
-quad([0, 0, 0], [w, 0, 0], [w, h, 0], [0, h, 0]);                 // gable wall (seen)
-quad([w, 0, 0], [w, 0, L], [w, h, L], [w, h, 0]);                 // long side (seen)
-quad([w, 0, L], [0, 0, L], [0, h, L], [w, h, L], true);           // back gable
-quad([0, 0, L], [0, 0, 0], [0, h, 0], [0, h, L], true);           // far long side
-tri([0, h, 0], [w, h, 0], [w / 2, r, 0]); tri([w, h, L], [0, h, L], [w / 2, r, L], true);
-quad([w + o, h - o * .55, -o], [w + o, h - o * .55, L + o], [w / 2, r + .05, L + o], [w / 2, r + .05, -o], false, 2);   // near roof slope
-quad([w / 2, r + .05, -o], [w / 2, r + .05, L + o], [-o, h - o * .55, L + o], [-o, h - o * .55, -o], true, 2);
-const W_ = J.window; quad([W_.x0, W_.y0, -.03], [W_.x1, W_.y0, -.03], [W_.x1, W_.y1, -.03], [W_.x0, W_.y1, -.03], false, 3); // far slope
-const [chx, chy, chz, chw] = J.chimney; box(chx - chw / 2, r - .3, chz - chw / 2, chx + chw / 2, chy, chz + chw / 2, [1, 1, 1, 0, 0, 0]);
-shade = .16; const [sx, sy] = J.shed; box(sx, 0, -1.2, 0, sy, -.05, [1, 0, 1, 1, 0, 0]);
-for (const [px, py, pz] of J.posts) box(px - .06, py, pz - .06, px + .06, py + 1.1, pz + .06, [1, 1, 1, 0, 0, 0]);
-shade = 0;
-// The three openings on the long side (plane x = w) and the stain under the gable's peak, each with its piece of Codex's texture.
-const RUNS = [[.186, .281], [.453, .548], [.719, .814]];
-J.side_openings.slice().sort((p_, q_) => p_[0] - q_[0]).forEach(([z0, z1, y0, y1], i) => {
-  const [u0, u1] = RUNS[i]; quad([w + .03, y0, z0], [w + .03, y0, z1], [w + .03, y1, z1], [w + .03, y1, z0], false, 4, [u0, .885, u1, .11]);
-});
-if (J.patch) { const [x0, y0, x1, y1] = J.patch; quad([x0, y0, -.02], [x1, y0, -.02], [x1, y1, -.02], [x0, y1, -.02], false, 5, [.027, .988, .969, .033]); }
-const house = mesh(new Float32Array(P), new Float32Array(Cc), new Uint16Array(I), new Float32Array(T));
-
-// The moor takes the clean plate (the photograph with the house, shed, posts and light spill painted out) so the ground
-// behind the house is there when the house moves against it; the house takes the photograph itself.
-async function texture(src) {
-  const t = gl.createTexture(), im = new Image(); im.src = src; await im.decode();
-  gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, im);
-  gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  return t;
-}
-const photoTex = await texture('photo.webp'), cleanTex = await texture(q.has('noclean') ? 'photo.webp' : 'clean.webp');
-terrain.tex = cleanTex; house.tex = photoTex; backdrop.tex = cleanTex;
-async function tiled(src) {               // a repeating Codex texture, and its average colour for the detail transfer
-  const t = await texture(src); gl.bindTexture(gl.TEXTURE_2D, t);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-  gl.texParameterf(gl.TEXTURE_2D, gl.getExtension('EXT_texture_filter_anisotropic')?.TEXTURE_MAX_ANISOTROPY_EXT ?? 0x84FE, 8);
-  const im = new Image(); im.src = src; await im.decode(); const c2 = new OffscreenCanvas(1, 1).getContext('2d'); c2.drawImage(im, 0, 0, 1, 1);
-  const [r_, g_, b_] = c2.getImageData(0, 0, 1, 1).data; t.avg = [r_ / 255, g_ / 255, b_ / 255, 1]; return t;
-}
-const tGround = await tiled('tex/moor_ground.webp'), tWall = await tiled('tex/wall.webp'), tRoof = await tiled('tex/roof.webp'), tWin = await texture('tex/gable_window.webp'), tSide = await texture('tex/side_openings.webp'), tPatch = await texture('tex/gable_apex_patch.webp');
-
-// The flight: from the photograph's camera to 0.6 m in front of the glass, eased; the view turns from the photo's to square-on.
-const win = J.window, WC = [(win.x0 + win.x1) / 2, (win.y0 + win.y1) / 2, 0];
-const sub = (a, b) => a.map((v, i) => v - b[i]), add = (a, b) => a.map((v, i) => v + b[i]), sc = (a, s) => a.map(v => v * s);
-const norm = a => sc(a, 1 / Math.hypot(...a)), cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-const STOP = 4.2, F0 = R0[2], END = [WC[0], WC[1], -STOP];   // the flight ends with the whole window filling the view
-function lookRot(fwd) { const z = norm(fwd), x = norm(cross([0, 1, 0], z)), y = cross(z, x); return [x, y, z]; }
-let t = +(q.get('t') || 0), target = t, mx = 0, my = 0;
-addEventListener('wheel', e => { target = Math.min(1, Math.max(0, target + e.deltaY * .0006)); }, { passive: true });
-addEventListener('pointermove', e => { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; });
-// The flight glides down from the photograph's height to the window's, so the camera never skims the ground the photograph saw from
-// above. It turns from the photograph's view to face the window as it goes.
-const sstep = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
-function camera(t) {
-  const H0 = [C0[0] - END[0], C0[2] - END[2]], d0 = Math.hypot(...H0), hd = [H0[0] / d0, H0[1] / d0];
-  const r = (d0 * Math.pow(STOP / d0, t) - STOP) * d0 / (d0 - STOP);           // ground distance still to go, even in log scale
-  const straighten = sstep(.55, 1, t);
-  const side = [END[0] + hd[0] * r, END[2] + hd[1] * r], front = [END[0], END[2] - r];
-  let pos = [side[0] + (front[0] - side[0]) * straighten, END[1] + (C0[1] - END[1]) * Math.sqrt(r / d0), side[1] + (front[1] - side[1]) * straighten];   // height falls with the square root of the distance left: a steady glide down
-  const aim = sstep(0, .4, t);
-  const fwd = norm(add(sc(R0[2], 1 - aim), sc(norm(sub(WC, pos)), aim))), up0 = norm(add(sc(R0[1], 1 - aim), sc([0, 1, 0], aim)));
-  const x = norm(cross(up0, fwd)), y = cross(fwd, x), d = Math.hypot(...sub(WC, pos));
-  pos = add(pos, add(sc(x, mx * d * .004), sc(y, -my * d * .0025)));          // parallax from the pointer, scaled to the distance
-  return { pos, R: [x, y, fwd] };
-}
-const s0 = () => { const aspect = cv.width / cv.height, fx = Math.max(2 * F / PW, 2 * F / PH / aspect); return PW / (cv.width * fx * PW / (2 * F)); };
-function resize() { const s = Math.min(devicePixelRatio, 2); cv.width = innerWidth * s; cv.height = innerHeight * s; gl.viewport(0, 0, cv.width, cv.height); }
-resize(); addEventListener('resize', resize);
-const U = n => gl.getUniformLocation(prog, n);
+// The live page as it is (the photograph with depth, focus racked to the pointer, the tilt-shift look), and a zoom on top: the wheel,
+// a drag or the arrow keys magnify it about the lit window until the photograph runs out of detail, then the 3D view of the house
+// takes over through the same look and carries on in along its line of sight to the window. ?z= (0-1) sets the zoom.
+import { mount } from './depthview-zoom.js';
+import { mountEngine } from './engine.js';
+const fig = document.querySelector('figure'), img = fig.querySelector('img'), words = document.querySelector('.words'), nearCv = document.getElementById('near');
+const P = [0.69, 0.585], HOUSE = P.map(v => (v - 0.5) / 0.9 + 0.5), AT = [0.69, 0.6];
+let rect = [0, 0, innerWidth, innerHeight];
 function frame() {
-  t += (target - t) * .06; if (Math.abs(target - t) < 1e-4) t = target;
-  const { pos, R } = camera(t);
-  // view matrix from rows of R (camera looks along +z; GL looks along -z, so flip z and y handled by proj).
-  const v = new Float32Array(16), tr = [0, 1, 2].map(i => -(R[i][0] * pos[0] + R[i][1] * pos[1] + R[i][2] * pos[2]));
-  for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) v[j * 4 + i] = (i === 2 ? -1 : 1) * R[i][j]; v[12 + i] = (i === 2 ? -1 : 1) * tr[i]; }
-  v[15] = 1;
-  // Projection: the photo's focal length, the photo's frame covering the screen (cover fit), near plane small for the window.
-  const aspect = cv.width / cv.height, fx = Math.max(2 * F / PW, 2 * F / PH / aspect), fy = fx * aspect, n = .05, fz = 80000;
-  const p = new Float32Array([fx, 0, 0, 0, 0, fy, 0, 0, 0, 0, -(fz + n) / (fz - n), -1, 0, 0, -2 * fz * n / (fz - n), 0]);
-  gl.clearColor(.36, .4, .46, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-  gl.useProgram(prog); gl.uniformMatrix4fv(U('view'), false, v); gl.uniformMatrix4fv(U('proj'), false, p);
-  gl.uniformMatrix3fv(U('uR'), true, R0.flat()); gl.uniform3fv(U('uC'), C0); gl.uniform1f(U('uF'), F); gl.uniform2f(U('uSize'), PW, PH);
-  gl.uniform4fv(U('avg'), [...tGround.avg, ...tWall.avg, ...tRoof.avg]); gl.uniform4f(U('win'), J.window.x0, J.window.x1, J.window.y0, J.window.y1); gl.uniform1f(U('houseW'), J.w);
-  [['tGround', tGround], ['tWall', tWall], ['tRoof', tRoof], ['tWin', tWin], ['tSide', tSide], ['tPatch', tPatch]].forEach(([n, t_], i) => { gl.activeTexture(gl.TEXTURE1 + i); gl.bindTexture(gl.TEXTURE_2D, t_); gl.uniform1i(U(n), 1 + i); });
-  gl.uniform1i(U('photo'), 0); gl.activeTexture(gl.TEXTURE0);
-  gl.uniform1f(U('s0'), s0());
-  gl.depthMask(false); gl.bindTexture(gl.TEXTURE_2D, backdrop.tex); gl.bindVertexArray(backdrop.vao); gl.drawElements(gl.TRIANGLES, backdrop.n, backdrop.type, 0); gl.depthMask(true);
-  for (const m of [terrain, house]) { gl.bindTexture(gl.TEXTURE_2D, m.tex); gl.bindVertexArray(m.vao); gl.drawElements(gl.TRIANGLES, m.n, m.type, 0); }
-  requestAnimationFrame(frame);
+  const W = innerWidth, H = innerHeight, w = Math.max(W, H * 16 / 9), h = w * 9 / 16;
+  const x = Math.min(0, Math.max(W - w, W * AT[0] - w * HOUSE[0])), y = Math.min(0, Math.max(H - h, H * AT[1] - h * HOUSE[1]));
+  Object.assign(fig.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' }); rect = [x, y, w, h];
 }
-frame();
-window.__vigil = { set t(x) { t = target = x; } };
+frame(); addEventListener('resize', frame);
+const c = document.createElement('canvas'); c.setAttribute('aria-hidden', 'true'); fig.append(c);
+const v = mount(c);
+if (!v) { c.remove(); throw 0; }
+await v.show('../media/photo-home-earth-2400.webp', '../media/photo-home-earth-depth.webp');
+c.classList.add('on');
+
+// The zoom: s runs 0-1. Up to HAND the flat photograph magnifies about the window to ZH times; across the last stretch of that
+// the 3D view fades in, drawing the same picture; past it the 3D camera moves in along its line of sight to the window.
+const HAND = .4, ZH = 3;
+let s = Math.min(1, Math.max(0, +(new URLSearchParams(location.search).get('z') || 0))), goal = s;
+const nudge = d => { goal = Math.min(1, Math.max(0, goal + d)); };
+addEventListener('wheel', e => { e.preventDefault(); nudge(e.deltaY * .0005); }, { passive: false });
+addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'PageDown') nudge(.05); if (e.key === 'ArrowUp' || e.key === 'PageUp') nudge(-.05); });
+let dragY = null;
+addEventListener('pointerdown', e => { if (e.pointerType === 'touch') dragY = e.clientY; });
+addEventListener('pointermove', e => { if (dragY != null) { nudge((dragY - e.clientY) * .002); dragY = e.clientY; } });
+addEventListener('pointerup', () => { dragY = null; });
+
+const eng = await mountEngine(nearCv);
+const centre = eng ? eng.centre : [0.68, 0.6];
+function tick() {
+  s += (goal - s) * .08; if (Math.abs(goal - s) < 1e-4) s = goal;
+  const z = Math.pow(ZH, Math.min(1, s / HAND)), dolly = Math.max(0, (s - HAND) / (1 - HAND));
+  v.zoom(z, centre);
+  words.style.opacity = String(Math.max(0, 1 - s / .12));
+  const show = eng ? Math.min(1, Math.max(0, (s - (HAND - .06)) / .06)) : 0;
+  nearCv.style.opacity = String(show);
+  if (show > 0) { const st = v.state(); eng.draw({ z, dolly, fig: rect, fp: st.fp, cam: st.cam, sc: st.sc }); }
+  requestAnimationFrame(tick);
+}
+tick();
 </script>
 </body>
 </html>
