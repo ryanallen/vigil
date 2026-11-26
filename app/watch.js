@@ -25,7 +25,7 @@ export function run(S, root, { onWall } = {}) {
   if (!view) $('.cam-fallback').hidden = false;
   air($('.atmos')).set('still');
 
-  let beside = null, fresh = new Set(), list, offset = 0, night, beat, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
+  let frames = 0, beside = null, fresh = new Set(), list, offset = 0, night, beat, current, photoOf, open, found, waiting, mode, stop, lastTick, ff;
   function reset() {
     list = S.beats; offset = 0; night = mins(S.start); beat = 0; current = null; ff = null;
     keeping = null; kept = null; failed = []; dark = new Set(); beside = null; photoOf = {}; fresh = new Set(); open = new Set(); found = new Set(); waiting = false; mode = 'night'; stop = null;
@@ -38,7 +38,7 @@ export function run(S, root, { onWall } = {}) {
   // ---- Cameras -----------------------------------------------------------------
   function drawStrip() {
     $('.cams').innerHTML = [...open].map(id => `<button type="button" data-cam="${id}" aria-pressed="${id === current}"${fresh.has(id) ? ' class="fresh"' : ''}>
-      <img src="${media(photoOf[id], 800)}" alt="" loading="lazy"><span>${esc(S.cameras[id].name)}</span></button>`).join('');
+      <img src="${media(photoOf[id], 800)}" alt="" loading="lazy"><span>${esc(S.cameras[id].name)}</span>${unread(id) ? `<b class="count" title="Details to read">${unread(id)}</b>` : ''}</button>`).join('');
   }
   $('.cams').addEventListener('click', e => { const b = e.target.closest('[data-cam]'); if (b) cut(b.dataset.cam); });
   function cut(id) {
@@ -76,6 +76,23 @@ export function run(S, root, { onWall } = {}) {
   function typeOut(el, text, done) {
     if (still) { el.textContent = text; done && done(); return; }
     let i = 0; const t = setInterval(() => { i += 2; el.textContent = text.slice(0, i); if (i >= text.length) { clearInterval(t); done && done(); } }, 30);
+  }
+
+  const unread = cam => S.reveals.filter(r => !found.has(r.id) && r.photo === photoOf[cam]).length;
+  // What's next, always in words: a choice waiting, or what to look at, and when the next report is due.
+  function nextLine() {
+    const el = $('.next'); if (!el) return;
+    if (mode === 'ended') { el.textContent = ''; return; }
+    const parts = [];
+    if ($('.panel button')) parts.push('A choice is waiting, at the right');
+    const here = current ? unread(current) : 0;
+    if (here) parts.push(`${here} ${here > 1 ? 'things' : 'thing'} to look at on ${S.cameras[current].name}`);
+    const nf = [...fresh].filter(c => open.has(c));
+    if (nf.length) parts.push(`New picture on ${nf.map(c => S.cameras[c].name).join(', ')}`);
+    else if (!here) { const other = [...open].find(c => c !== current && unread(c)); if (other) parts.push(`Something to look at on ${S.cameras[other].name}`); }
+    if (ff) parts.push(`Next picture due ${hhmm(ff.to)}`);
+    else if (mode === 'night' && beat < list.length) parts.push(`Next report about ${hhmm(mins(list[beat].at) + offset)}`);
+    el.textContent = parts.join(' · ');
   }
 
   // ---- Places of interest ------------------------------------------------------------
@@ -117,7 +134,7 @@ export function run(S, root, { onWall } = {}) {
     }
   }
   function openDetail(p) {
-    const r = p.r; p.done = true; found.add(r.id); $('.hint').hidden = true;
+    const r = p.r; p.done = true; found.add(r.id); $('.hint').hidden = true; drawStrip();
     p.el.classList.add('blip'); setTimeout(() => p.el.remove(), 450);
     const n = document.createElement('p'); n.className = 'note'; place(n, r.x, r.y); $('.notes').append(n);
     typeOut(n, r.text);
@@ -255,7 +272,7 @@ export function run(S, root, { onWall } = {}) {
     } else if (mode !== 'ended') night += dt / 60; // once the bulletins stop, and between pictures, Home's clock runs at its real pace
     $('.clock').textContent = hhmm(night);
     stamp(); readout();
-    tickPings(dt);
+    tickPings(dt); if (!(++frames % 15)) nextLine();
     requestAnimationFrame(tick);
   }
 

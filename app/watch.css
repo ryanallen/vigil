@@ -131,3 +131,9 @@ html, body { margin: 0; background: #0b0d0c; }
 @keyframes ping { 0% { box-shadow: 0 0 0 0 rgb(232 196 142 / .55); } 70%, 100% { box-shadow: 0 0 0 12px rgb(232 196 142 / 0); } }
 @keyframes blip { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.9); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .watch .ping i { animation: none; } .watch .ping.blip { animation: none; opacity: 0; } }
+
+/* What's next: one plain line above the reports. */
+.watch .next { position: absolute; left: 50%; top: 66px; transform: translateX(-50%); width: max-content; max-width: min(60%, 760px); text-align: center; z-index: 2; margin: 0; padding: 6px 12px; border-radius: 3px; background: rgb(11 13 12 / .55); font: 600 13px/1.4 system-ui, sans-serif; color: #e8c48e; text-shadow: 0 1px 6px rgb(0 0 0 / .8); }
+.watch .cams .count { position: absolute; left: 6px; top: 6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #e8c48e; color: #111; font: 700 11px/18px system-ui, sans-serif; text-align: center; }
+@media (max-width: 620px) { .watch .next { left: 16px; right: 16px; top: 142px; transform: none; width: auto; max-width: none; text-align: left; } }
+.watch .next:empty { display: none; }
