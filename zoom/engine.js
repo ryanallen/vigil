@@ -5,10 +5,11 @@
 // drift, so the hand-over from the flat photograph to this does not show. Past the hand-over the camera moves in along its own
 // line of sight to the lit window; where the photograph runs out of pixels, Codex's textures take over in the photograph's colours.
 // mountEngine(canvas) -> { draw(view), centre } or null without WebGL2.
+const V = '1795666408';
 export async function mountEngine(canvas) {
   const cv = canvas, gl = cv.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: false });
   if (!gl) return null;
-  const J = await (await fetch('house-fit.json')).json();
+  const J = await (await fetch('house-fit.json?v=' + V)).json();
   const [PW, PH] = J.size, F = J.f;
   function rot(yaw, pitch, roll) {
     const [cy, sy, cp, sp, cr, sr] = [Math.cos(yaw), Math.sin(yaw), Math.cos(pitch), Math.sin(pitch), Math.cos(roll), Math.sin(roll)];
@@ -78,7 +79,7 @@ export async function mountEngine(canvas) {
     const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
     return { vao, n: idx.length, type: idx instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT };
   }
-  const tv = new Float32Array(await (await fetch('terrain.f32')).arrayBuffer()), ti = new Uint32Array(await (await fetch('terrain.u32')).arrayBuffer());
+  const tv = new Float32Array(await (await fetch('terrain.f32?v=' + V)).arrayBuffer()), ti = new Uint32Array(await (await fetch('terrain.u32?v=' + V)).arrayBuffer());
   const nv = tv.length / 5, tp = new Float32Array(nv * 3);
   for (let i = 0; i < nv; i++) tp.set(tv.subarray(i * 5, i * 5 + 3), i * 3);
   const terrain = mesh(tp, new Float32Array(nv * 3), ti);
@@ -138,7 +139,7 @@ export async function mountEngine(canvas) {
     const im = new Image(); im.src = src; await im.decode(); const c2 = new OffscreenCanvas(1, 1).getContext('2d'); c2.drawImage(im, 0, 0, 1, 1);
     const [r_, g_, b_] = c2.getImageData(0, 0, 1, 1).data; t.avg = [r_ / 255, g_ / 255, b_ / 255, 1]; return t;
   }
-  const tGround = await tiled('tex/moor_ground.webp'), tWall = await tiled('tex/wall.webp'), tRoof = await tiled('tex/roof.webp'), tWin = await texture('tex/gable_window.webp'), tSide = await texture('tex/side_openings.webp'), tPatch = await texture('tex/gable_apex_patch.webp');
+  const tGround = await tiled('tex/moor_ground.webp?v=' + V), tWall = await tiled('tex/wall.webp?v=' + V), tRoof = await tiled('tex/roof.webp?v=' + V), tWin = await texture('tex/gable_window.webp?v=' + V), tSide = await texture('tex/side_openings.webp?v=' + V), tPatch = await texture('tex/gable_apex_patch.webp?v=' + V);
 
 
   const win = J.window, WC = [(win.x0 + win.x1) / 2, (win.y0 + win.y1) / 2, 0];
