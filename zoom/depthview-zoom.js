@@ -1,4 +1,3 @@
-import { createSky } from './sky.js?v=5';
 // A photograph that behaves like a 3D space: its depth map shifts near parts more than far ones as the camera moves,
 // and focus follows the depth under the pointer, so what you point at racks sharp and the rest falls soft: the
 // tilt-shift miniature look, made live from sharp photographs.
@@ -119,35 +118,12 @@ vec3 shade(sampler2D c, sampler2D d, vec2 q, float vid) {
   if (cH > 0.001) col = tile(hc2, sw2, hr2, s, col, raw, soft, tw, zoom, 1.0, lod);
   return col;
 }
-// The sky (sky.js): its cloud, drawn at half resolution (over the sky: the cloud's light and cover; over the moor: the
-// shadow it casts), and the sun's shafts swept out from it.
-uniform float skyOn; uniform sampler2D cloudT, rayT;
-const mat3 CAM = mat3(0.828835, -0.023750, 0.558988, -0.000549, 0.999064, 0.043263, -0.559492, -0.036165, 0.828046);
 void main() {
   vec2 q = (uv - 0.5) * scale + 0.5;
   q = zc + (q - zc) / zoom;
   // the second picture is drawn only while one fades into another
   vec3 b = shade(c1, d1, q, useV);
   vec3 col = mixv < 1.0 ? mix(shade(c0, d0, q, 0.0), lit(b, q), mixv) : lit(b, q);
-  if (skyOn > 0.5) {
-    vec2 tc = vec2(uv.x, 1.0 - uv.y);
-    // the half-resolution cloud, softened over a few of its texels so its march leaves no pattern
-    vec2 ct = 1.0 / vec2(textureSize(cloudT, 0));
-    vec4 cl = (texture(cloudT, tc) * 2.0 + texture(cloudT, tc + ct * vec2(1.0, 0.5)) + texture(cloudT, tc - ct * vec2(1.0, 0.5))
-             + texture(cloudT, tc + ct * vec2(-0.5, 1.0)) + texture(cloudT, tc - ct * vec2(-0.5, 1.0))) / 6.0;
-    float ray = texture(rayT, tc).r;
-    float skyA = hon0 > 0.5 ? 1.0 - textureLod(hc0, q, 0.0).a : smoothstep(0.06, 0.02, texture(d1, q).r);
-    vec3 rd = normalize(CAM * vec3((q.x - 0.5) * 1672.0 / 2296.89, -(q.y - 0.5) * 941.0 / 2296.89, 1.0));
-    // the sky: the photograph's own colour and gradient behind the deck, the deck over it
-    vec3 base = textureLod(c1, q, 5.0).rgb;
-    vec3 sky = base * (1.0 - cl.a) + cl.rgb * 0.85;
-    // the moor: the cloud's shadow passing over it (only where the cloud pass looked down at the ground)
-    float shadow = rd.y <= 0.0 ? cl.r : 1.0;
-    vec3 land = col * mix(0.72, 1.06, shadow);
-    col = mix(land, sky, skyA);
-    // the sun's shafts, over the sky and falling across the moor
-    col += min(ray, 1.5) * vec3(1.0, 0.8, 0.62) * mix(0.07, 0.11, skyA);
-  }
   float v = smoothstep(0.95, 0.35, length((uv - 0.5) * vec2(1.0, 0.8)));
   // a fine still grain, heavier in the shadows, so the rendered moor carries the photograph's own film texture
   vec2 gp = floor(gl_FragCoord.xy);
@@ -168,8 +144,7 @@ export function mount(canvas) {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
   const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   const U = n => gl.getUniformLocation(pr, n);
-  ['c0', 'd0', 'c1', 'd1', 'v1', 'hc0', 'hc1', 'hc2', 'cp', 'sw0', 'sw1', 'sw2', 'cloudT', 'rayT'].forEach((n, i) => gl.uniform1i(U(n), i));
-  let sky;
+  ['c0', 'd0', 'c1', 'd1', 'v1', 'hc0', 'hc1', 'hc2', 'cp', 'sw0', 'sw1', 'sw2'].forEach((n, i) => gl.uniform1i(U(n), i));
   let clean = null;
   const tiles = [{ t: null, r: [0, 0, 0, 0], w: null }, { t: null, r: [0, 0, 0, 0], w: null }, { t: null, r: [0, 0, 0, 0], w: null }];
 
@@ -255,15 +230,6 @@ export function mount(canvas) {
     gl.activeTexture(gl.TEXTURE8); gl.bindTexture(gl.TEXTURE_2D, clean || black); gl.uniform1f(U('cpon'), clean ? 1 : 0);
     tiles.forEach((T, i) => { gl.activeTexture(gl.TEXTURE9 + i); gl.bindTexture(gl.TEXTURE_2D, T.w || black); });
     gl.uniform1f(U('tm2'), t);
-    if (sky === undefined) sky = still ? null : createSky(gl);
-    if (sky) {
-      // the sky's two passes at half resolution, then back to the picture
-      sky.render({ w: canvas.width, h: canvas.height, res: canvas.width > 2000 ? 0.4 : 0.5, scale: sc, zoom: Z, zc: ZC, time: t });
-      gl.useProgram(pr); gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.activeTexture(gl.TEXTURE12); gl.bindTexture(gl.TEXTURE_2D, sky.cloud);
-      gl.activeTexture(gl.TEXTURE13); gl.bindTexture(gl.TEXTURE_2D, sky.rays);
-    }
-    gl.uniform1f(U('skyOn'), sky ? 1 : 0);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     if (!still || mix < 1 || pull > 0 || camGoal || movie) raf = requestAnimationFrame(frame);
   };

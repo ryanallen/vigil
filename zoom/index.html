@@ -45,7 +45,7 @@
 // The live page as it is (the photograph with depth, focus racked to the pointer, the tilt-shift look), and a zoom on top: the wheel,
 // a drag or the arrow keys magnify it about the lit window. The house is modelled and rendered from the photograph's own camera
 // at many times its pixels and laid over it, so it keeps its detail all the way in. ?z= (0-1) sets the zoom.
-import { mount } from './depthview-zoom.js?v=1795722647';
+import { mount } from './depthview-zoom.js?v=1795723480';
 const fig = document.querySelector('figure'), words = document.querySelector('.words');
 const P = [0.69, 0.585], HOUSE = P.map(v => (v - 0.5) / 0.9 + 0.5), AT = [0.69, 0.6];
 function frame() {
@@ -57,14 +57,14 @@ frame(); addEventListener('resize', frame);
 const c = document.createElement('canvas'); c.setAttribute('aria-hidden', 'true'); fig.append(c);
 const v = mount(c);
 if (!v) { c.remove(); throw 0; }
-await v.show('../media/photo-home-earth-2400.webp', './depth.webp?v=1795722647');
+await v.show('../media/photo-home-earth-2400.webp', './depth.webp?v=1795723480');
 c.classList.add('on');
 v.sharpen('../media/photo-home-earth-6688.webp');
 // the boxes in the photograph (1672 x 941): the moor the whole frame; the land x 820-1450, y 455-790; the house x 1068-1204, y 488-600
-v.tile(0, './moor.webp?v=1795722647', [0, 0, 1, 1]);
-v.tile(1, './land.webp?v=1795722647', [820 / 1672, 455 / 941, 1450 / 1672, 790 / 941]);
-v.plate('./clean.webp?v=1795722647');
-v.tile(2, './house.webp?v=1795722647', [1068 / 1672, 488 / 941, 1204 / 1672, 600 / 941]);
+v.tile(0, './moor.webp?v=1795723480', [0, 0, 1, 1]);
+v.tile(1, './land.webp?v=1795723480', [820 / 1672, 455 / 941, 1450 / 1672, 790 / 941]);
+v.plate('./clean.webp?v=1795723480');
+v.tile(2, './house.webp?v=1795723480', [1068 / 1672, 488 / 941, 1204 / 1672, 600 / 941]);
 
 // The zoom: s runs 0-1, the picture magnified ZMAX^s times about the lit window's centre.
 const ZMAX = 16, CENTRE = [0.678, 0.5986];
